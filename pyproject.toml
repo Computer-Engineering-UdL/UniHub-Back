@@ -1,0 +1,27 @@
+[project]
+name = "uniroom-back"
+version = "0.1.0"
+description = "UniRoom FastAPI backend"
+authors = [
+    { name = "Matias Medina", email = "therealsmuks@gmail.com" },
+    { name = "Aniol Serrano", email = "a@gmail.com" },
+    { name = "Cesar", email = "a@gmail.com" },
+    { name = "Carles Sànchez", email = "a@gmail.com" }
+]
+license = { text = "MIT" }
+readme = "README.md"
+requires-python = ">=3.13.7"
+
+dependencies = [
+    "fastapi>=0.118.0",
+    "pydantic-settings>=2.11.0",
+    "ruff>=0.13.2",
+    "sqlalchemy>=2.0.43",
+    "uvicorn[standard]",
+]
+
+[project.optional-dependencies]
+dev = [
+    "pytest",
+    "httpx",
+]
