@@ -30,7 +30,7 @@
 - [Python](https://www.python.org) `>=3.13`
 - [uv](https://github.com/astral-sh/uv) (recommended) or pip
 - [Docker](https://www.docker.com) (optional, for containerized deployment)
-- [PostgreSQL](https://www.postgresql.org) `>=16` (if running locally)
+- [PostgreSQL](https://www.postgresql.org) `>=18` (if running locally)
 
 ## Installation
 
@@ -126,3 +126,4 @@ tests/                     # Test files
 - [TheSmuks](https://github.com/TheSmuks)
 - [carless7](https://github.com/carless7)
 - [cesarcres](https://github.com/cesarcres)
+- [JerzyLeg](https://github.com/JerzyLeg)
