@@ -25,7 +25,8 @@ dependencies = [
 dev = [
     "pytest",
     "httpx",
-    "pre-commit"
+    "pre-commit",
+    "ruff"
 ]
 
 [tool.ruff]

@@ -129,3 +129,5 @@ secrets.yaml
 .Trashes
 ehthumbs.db
 Thumbs.db
+
+requirements.txt
