@@ -1,4 +1,5 @@
 from fastapi import FastAPI
+
 from app.api.v1.endpoints import student
 from app.core.config import settings
 
