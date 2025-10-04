@@ -16,8 +16,7 @@ jobs:
       - name: Install dependencies
         run: |
           pip install uv
-          uv pip compile pyproject.toml -o requirements.txt
-          uv pip sync --system requirements.txt
+          uv pip install ruff --system
       - name: Lint with ruff
         run: ruff check .
 
