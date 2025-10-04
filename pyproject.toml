@@ -4,11 +4,12 @@ version = "0.1.0"
 description = "UniRoom FastAPI backend"
 authors = [
     { name = "Matias Medina", email = "therealsmuks@gmail.com" },
-    { name = "Aniol Serrano", email = "a@gmail.com" },
-    { name = "Cesar", email = "a@gmail.com" },
-    { name = "Carles Sànchez", email = "a@gmail.com" }
+    { name = "Aniol Serrano", email = "aniol0012@gmail.com" },
+    { name = "Cesar Crespo", email = "crespocesar9898@gmail.com" },
+    { name = "Carles Sànchez", email = "theselra15@gmail.com" },
+    { name = "Jurek Legaszewski", email = "jurek.legaszewski@gmail.com" }
 ]
-license = { text = "MIT" }
+license = { text = "TBD" }
 readme = "README.md"
 requires-python = ">=3.13.7"
 
