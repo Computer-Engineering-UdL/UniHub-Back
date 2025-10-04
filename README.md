@@ -3,12 +3,9 @@
 [![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.118.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
 [![SQLAlchemy](https://img.shields.io/badge/SQLAlchemy-2.0.43-red?logo=sqlalchemy&logoColor=white)](https://www.sqlalchemy.org/)
-[![Pydantic](https://img.shields.io/badge/Pydantic-2.11.0-E92063?logo=pydantic&logoColor=white)](https://docs.pydantic.dev/)
-[![Uvicorn](https://img.shields.io/badge/Uvicorn-latest-2094f3?logo=uvicorn&logoColor=white)](https://www.uvicorn.org/)
 [![uv](https://img.shields.io/badge/uv-package%20manager-purple?logo=python&logoColor=white)](https://github.com/astral-sh/uv)
-[![Ruff](https://img.shields.io/badge/Ruff-0.13.2-orange?logo=ruff&logoColor=white)](https://docs.astral.sh/ruff/)
+[![pytest](https://img.shields.io/badge/pytest-8.0+-0A9EDC?logo=pytest&logoColor=white)](https://pytest.org/)
 [![Docker](https://img.shields.io/badge/Docker-enabled-2496ED?logo=docker&logoColor=white)](https://www.docker.com/)
-[![Conventional Commits](https://img.shields.io/badge/Conventional%20Commits-1.0.0-%23FE5196?logo=conventionalcommits&logoColor=white)](https://conventionalcommits.org)
 
 ## Features
 
@@ -17,24 +14,34 @@
 ## Tech Stack
 
 - **Framework**: FastAPI
-- **Database**: PostgreSQL with SQLAlchemy ORM
-- **Authentication**: JWT tokens
-- **Validation**: Pydantic v2
+- **Database**: PostgreSQL with SQLAlchemy
 - **Package Manager**: uv
-- **Containerization**: Docker & Docker Compose
 - **Testing**: pytest
-- **Code Quality**: Ruff (linting & formatting)
+- **Code Quality**: Ruff
+- **CI/CD**: GitHub Actions
 
-## Prerequisites
+## Getting Started
 
-- [Python](https://www.python.org) `>=3.13`
-- [uv](https://github.com/astral-sh/uv) (recommended) or pip
-- [Docker](https://www.docker.com) (optional, for containerized deployment)
-- [PostgreSQL](https://www.postgresql.org) `>=18` (if running locally)
+### 1. Install uv
 
-## Installation
+**macOS/Linux:**
+```bash
+curl -LsSf https://astral.sh/uv/install.sh | sh
+```
 
-### Using uv (Recommended)
+**Windows (PowerShell):**
+```powershell
+powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | iex"
+```
+
+**Alternative (using pip):**
+```bash
+pip install uv
+```
+
+> **Note:** After installation, restart your terminal or run `source ~/.bashrc` (Linux/macOS) or restart PowerShell (Windows).
+
+### 2. Clone and Install
 
 ```bash
 git clone https://github.com/Computer-Engineering-UdL/UniRoom-Back
@@ -42,9 +49,9 @@ cd UniRoom-Back
 uv sync
 ```
 
-## Configuration
+### 3. Configure Environment
 
-Create a `.env` file in the root directory:
+Create a `.env` file:
 
 ```env
 DATABASE_URL=postgresql://user:password@localhost:5432/uniroom
@@ -53,71 +60,65 @@ API_V1_STR=/api/v1
 PROJECT_NAME=UniRoom API
 ```
 
-## Running the project
-
-### Development Server
+### 4. Run the Server
 
 ```bash
-source .venv/bin/activate  # On Windows: .venv\Scripts\activate
 uv run uvicorn app.main:app --reload --host 0.0.0.0 --port 8080
 ```
 
-### Using Docker
-
-```bash
-docker build -t uniroom-backend .
-docker run -p 8080:8080 uniroom-backend
-```
-
-The API will be available at `http://localhost:8080`
-
-API documentation will be available at:
-- Swagger UI: `http://localhost:8080/docs`
-- ReDoc: `http://localhost:8080/redoc`
+Visit:
+- API: `http://localhost:8080`
+- Docs: `http://localhost:8080/docs`
 
 ## Development
 
-### Running Tests
+### Run Tests
 
 ```bash
 uv run pytest
 ```
 
-### Code Formatting
+### Check Code Quality
 
 ```bash
+# Format code
 uv run ruff format .
-```
 
-### Linting
-
-```bash
+# Check for issues
 uv run ruff check .
 ```
 
-### Adding Dependencies
+### Add Dependencies
 
 ```bash
-# Add a package
+# Production dependency
 uv add package-name
 
-# Add a dev dependency
+# Development dependency
 uv add --dev package-name
+```
+
+## Docker
+
+```bash
+# Build image
+docker build -t uniroom-backend .
+
+# Run container
+docker run -p 8080:8080 uniroom-backend
 ```
 
 ## Project Structure
 
 ```
 app/
-├── api/
-│   └── v1/
-│       └── endpoints/      # API route handlers
-├── core/                   # Core configuration
-├── crud/                   # Database operations
-├── models/                 # Data models (Pydantic & SQLAlchemy)
-├── services/              # Business logic
-└── main.py                # Application entry point
-tests/                     # Test files
+├── api/v1/endpoints/    # API routes
+├── core/                # Configuration
+├── crud/                # Database operations
+├── models/              # Data models
+├── services/            # Business logic
+└── main.py              # Entry point
+tests/                   # Tests
 ```
 
 ## Authors
