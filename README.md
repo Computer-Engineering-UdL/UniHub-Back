@@ -56,8 +56,8 @@ powershell -ExecutionPolicy ByPass -c "irm https://astral.sh/uv/install.ps1 | ie
 pip install uv
 ```
 
-> **Note:** After installation, restart your terminal or run `source ~/.bashrc` (Linux/macOS) or restart PowerShell (
-> Windows).
+> [!NOTE]
+> After installation, restart your terminal or run `source ~/.bashrc` (Linux/macOS) or restart PowerShell (Windows).
 
 ### 2. Clone and Install
 
