@@ -1,6 +1,6 @@
 """Mock data for users and announcements - to be replaced by DB calls in the future."""
 
-from typing import List, Dict, Any
+from typing import Any, Dict, List
 
 from app.core.security import hash_password
 from app.models.auth import UserInDB
@@ -62,7 +62,8 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
         "id": 1,
         "title": "Maintenance Notice - Building A",
-        "content": "Scheduled maintenance will occur in Building A from 9 AM to 12 PM on Saturday. Please plan accordingly.",
+        "content": "Scheduled maintenance will occur in Building A from 9 AM to 12 PM on Saturday. Please plan "
+                   "accordingly.",
         "priority": "high",
         "created_by": 1,  # User ID
         "target_rooms": ["A101", "A102", "A103", "A201", "A202"],
@@ -73,7 +74,8 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
         "id": 2,
         "title": "New WiFi Network Available",
-        "content": "A new high-speed WiFi network 'UniRoom-5G' is now available in all dormitories. Contact IT for access credentials.",
+        "content": "A new high-speed WiFi network 'UniRoom-5G' is now available in all dormitories. Contact IT for "
+                   "access credentials.",
         "priority": "medium",
         "created_by": 2,
         "target_rooms": [],  # Empty means all rooms
@@ -106,7 +108,8 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
         "id": 5,
         "title": "Fire Drill Scheduled",
-        "content": "A fire drill will be conducted next Tuesday at 2 PM. Please evacuate promptly when the alarm sounds.",
+        "content": "A fire drill will be conducted next Tuesday at 2 PM. Please evacuate promptly when the alarm "
+                   "sounds.",
         "priority": "high",
         "created_by": 2,
         "target_rooms": [],

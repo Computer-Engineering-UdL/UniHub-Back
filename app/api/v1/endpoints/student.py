@@ -1,11 +1,12 @@
+from typing import Any, Dict, List
+
 from fastapi import APIRouter, HTTPException
-from typing import List, Dict, Any
 
 from app.services.mock_data import (
     MOCK_USERS,
-    get_user_by_id,
     get_active_users,
-    get_users_by_room
+    get_user_by_id,
+    get_users_by_room,
 )
 
 router = APIRouter()

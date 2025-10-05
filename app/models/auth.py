@@ -1,5 +1,6 @@
+from typing import Literal, Optional
+
 from pydantic import BaseModel, EmailStr
-from typing import Optional, Literal
 
 Role = Literal["Basic", "Admin"]
 Provider = Literal["local", "google", "github"]
