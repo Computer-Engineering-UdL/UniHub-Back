@@ -21,6 +21,9 @@ def client(app):
 
 class TestStudentEndpoints:
     """Group related student endpoint tests"""
+
+    def test_fetch_students_success(self, client):
+        pass
     # TODO: Re-enable and create tests when implementing this task
     # def test_fetch_students_success(self, client):
     #     """Test successful retrieval of all students"""
