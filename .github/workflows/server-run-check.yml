@@ -1,0 +1,37 @@
+name: Server run check
+
+on:
+  push:
+    branches:
+      - main
+      - devel
+  pull_request:
+    branches:
+      - '**'
+
+jobs:
+  server-check:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v5
+      - name: Set up Python
+        uses: actions/setup-python@v6
+        with:
+          python-version: '3.11'
+      - name: Install uv
+        run: pip install uv
+      - name: Install dependencies
+        run: |
+          uv pip compile pyproject.toml --extra dev -o requirements.txt
+          uv pip sync --system requirements.txt
+      - name: Start FastAPI server
+        run: |
+          uvicorn app.main:app --host 0.0.0.0 --port 8080 &
+          sleep 10
+      - name: Check server is running
+        run: |
+          curl --fail http://localhost:8080/docs
+      - name: Stop FastAPI server
+        run: |
+          pkill -f "uvicorn app.main:app" || true
+
