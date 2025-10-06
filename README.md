@@ -200,35 +200,82 @@ erDiagram
       int sender_user_id FK
       int channel_id FK  "nullable"
       int private_chat_id FK  "nullable"
+      int reply_to_message_id FK "nullable"
       string content
       datetime created_at
     }
 
-    MARKETPLACE_ITEM {
+    HOUSING_OFFER {
       int id PK
       int user_id FK
+      int category_id FK
       string title
       string description
       date posted_date
-      string location
+      date start_date
+      date end_date                "nullable"
+      date offer_valid_until
+      string city
+      string district             "nullable"
+      string street
+      string address_details      
       decimal price
-      string category  "general | house | work"
-      string photo_url
+      decimal deposit             "nullable"
+      decimal area
+      int num_rooms               "nullable"   
+      int num_bathrooms           "nullable"
+      boolean furnished
+      boolean utilities_included
+      boolean internet_included
+      string gender_preference    "any | male | female | nullable"
+      string photo_url            "nullable"
+      string status               "active | expired | rented | inactive"
     }
 
-    HOUSE {
-      int item_id PK, FK
-      int bedrooms
-      int bathrooms
-      float area_m2
+    HOUSING_CATEGORY {
+        int id PK
+        string name    "room | flat | house"
     }
 
-    WORK {
-      int item_id PK, FK
-      string job_title
-      string company
-      string contract_type
+    MARKET_OFFER {
+        int id PK
+        int user_id FK
+        int category_id 
+        string title
+        string description
+        decimal price
+        boolean is_new              
+        string location             "nullable"
+        string photo_url            "nullable"
+        date posted_date
+        date offer_valid_until
+        string status               "active | sold | expired"
     }
+
+    MARKET_CATEGORY {
+        int id PK
+        string name    "sport & hobby | music |books | electronics"
+    }
+
+    JOB_OFFER {
+        int id PK
+        int user_id FK 
+        int category_id FK
+        string title
+        string description
+        string location
+        decimal salary              "nullable"
+        string contract_type        "part-time | full-time | internship | freelance"
+        date posted_date
+        date offer_valid_until
+        string status               "active | expired | closed"
+    }
+
+    JOB_CATEGORY {
+        int id PK
+        string name   "IT | construction | architecture | marketing | education"
+    }
+
 
     REPORT {
       int id PK
@@ -253,10 +300,15 @@ erDiagram
     CHANNEL ||--o{ MESSAGE : contains
     PRIVATE_CHAT ||--o{ MESSAGE : contains
     USER ||--o{ MESSAGE : sends
+    MESSAGE ||--o{ MESSAGE : replies_to
 
-    USER ||--o{ MARKETPLACE_ITEM : posts
-    MARKETPLACE_ITEM ||--|| HOUSE : details
-    MARKETPLACE_ITEM ||--|| WORK : details
+    USER ||--o{ HOUSING_OFFER : creates
+    USER ||--o{ MARKET_OFFER : creates
+    USER ||--o{ JOB_OFFER : creates
+
+    HOUSING_CATEGORY ||--o{ HOUSING_OFFER : classifies
+    MARKET_CATEGORY ||--o{ MARKET_OFFER : classifies
+    JOB_CATEGORY ||--o{ JOB_OFFER : classifies
 
     USER ||--o{ REPORT : files
 ```
