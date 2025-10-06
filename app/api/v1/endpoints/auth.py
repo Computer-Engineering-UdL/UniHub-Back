@@ -1,7 +1,8 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.core.security import create_access_token
-from app.models.auth import AuthResponse, LoginRequest, UserPublic
+from app.models import UserPublic
+from app.models.auth import AuthResponse, LoginRequest
 from app.services.mock_data import MOCK_USERS
 
 router = APIRouter()
@@ -16,11 +17,5 @@ def login(payload: LoginRequest) -> AuthResponse:
     if not user or payload.password != DEFAULT_PASSWORD:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token(sub=str(user["id"]))
-    user_public = UserPublic(
-        id=str(user["id"]),
-        email=user["email"],
-        name=user["name"],
-        provider="local",
-        role="Basic"
-    )
+    user_public = UserPublic(id=str(user["id"]), email=user["email"], name=user["name"], provider="local", role="Basic")
     return AuthResponse(token=token, user=user_public)

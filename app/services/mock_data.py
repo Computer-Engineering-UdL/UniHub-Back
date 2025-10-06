@@ -3,7 +3,7 @@
 from typing import Any, Dict, List
 
 from app.core.security import hash_password
-from app.models.auth import UserInDB
+from app.models import UserInDB
 
 MOCK_USERS: List[Dict[str, Any]] = [
     {
@@ -27,7 +27,7 @@ MOCK_USERS: List[Dict[str, Any]] = [
         "is_active": True,
         "created_at": "2025-10-05T11:20:00Z",
         "student_id": 2,
-    }
+    },
 ]
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
@@ -35,7 +35,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "id": 1,
         "title": "Maintenance Notice - Building A",
         "content": "Scheduled maintenance will occur in Building A from 9 AM to 12 PM on Saturday. Please plan "
-                   "accordingly.",
+        "accordingly.",
         "priority": "high",
         "created_by": 1,  # User ID
         "target_rooms": ["A101", "A102", "A103", "A201", "A202"],
@@ -47,7 +47,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "id": 2,
         "title": "New WiFi Network Available",
         "content": "A new high-speed WiFi network 'UniRoom-5G' is now available in all dormitories. Contact IT for "
-                   "access credentials.",
+        "access credentials.",
         "priority": "medium",
         "created_by": 2,
         "target_rooms": [],  # Empty means all rooms
@@ -81,14 +81,14 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "id": 5,
         "title": "Fire Drill Scheduled",
         "content": "A fire drill will be conducted next Tuesday at 2 PM. Please evacuate promptly when the alarm "
-                   "sounds.",
+        "sounds.",
         "priority": "high",
         "created_by": 2,
         "target_rooms": [],
         "is_active": False,  # Past announcement
         "created_at": "2024-02-25T10:00:00Z",
         "expires_at": "2024-03-01T23:59:59Z",
-    }
+    },
 ]
 
 MOCK_USERS_AUTH: dict[str, UserInDB] = {}
@@ -142,10 +142,12 @@ def get_active_announcements() -> List[Dict[str, Any]]:
 def get_announcements_for_room(room_number: str) -> List[Dict[str, Any]]:
     """Get announcements that target a specific room or all rooms."""
     return [
-        announcement for announcement in MOCK_ANNOUNCEMENTS
-        if announcement["is_active"] and (
-                not announcement["target_rooms"] or  # Targets all rooms
-                room_number in announcement["target_rooms"]
+        announcement
+        for announcement in MOCK_ANNOUNCEMENTS
+        if announcement["is_active"]
+        and (
+            not announcement["target_rooms"]  # Targets all rooms
+            or room_number in announcement["target_rooms"]
         )
     ]
 
@@ -153,6 +155,7 @@ def get_announcements_for_room(room_number: str) -> List[Dict[str, Any]]:
 def get_announcements_by_priority(priority: str) -> List[Dict[str, Any]]:
     """Get active announcements by priority level."""
     return [
-        announcement for announcement in MOCK_ANNOUNCEMENTS
+        announcement
+        for announcement in MOCK_ANNOUNCEMENTS
         if announcement["is_active"] and announcement["priority"] == priority
     ]

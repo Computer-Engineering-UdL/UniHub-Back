@@ -1,18 +1,18 @@
 import uuid
 from datetime import datetime
-from typing import List, Literal, Optional
+from typing import TYPE_CHECKING, List, Literal, Optional
 
 import sqlalchemy as sa
 from pydantic import BaseModel, Field, HttpUrl
 from sqlalchemy import Column, ForeignKey, Table
-from sqlalchemy.orm import declarative_base, relationship
+from sqlalchemy.orm import relationship
 
-from app.models.user import User
+from app.core.database import Base
+
+if TYPE_CHECKING:
+    from app.models.user import User
 
 ChannelType = Literal["public", "private", "announcement"]
-
-
-Base = declarative_base()
 
 channel_members = Table(
     "channel_members",
@@ -36,7 +36,7 @@ class Channel(BaseModel):
     channel_type: ChannelType = Field(default="public")
     created_at: datetime = Field(default_factory=datetime.now)
     channel_logo: Optional[HttpUrl] = None
-    members: List[User] = Field(default_factory=list)
+    members: List["User"] = Field(default_factory=list)
 
     class Config:
         from_attributes = True

@@ -1,10 +1,25 @@
+from contextlib import asynccontextmanager
+
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
-from app.api.v1.endpoints import announcement, auth, student
+import app.models
+from app.api.v1.endpoints import announcement, auth, channel, message, student
 from app.core.config import settings
+from app.core.database import Base, engine
 
-app = FastAPI(title=settings.APP_NAME)
+
+@asynccontextmanager
+async def lifespan(app: FastAPI):
+    # Startup logic
+    Base.metadata.create_all(bind=engine)
+    print("Tables created, app starting...")
+    yield
+    # Shutdown logic
+    print("App shutting down...")
+
+
+app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
 app.add_middleware(
     CORSMiddleware,
@@ -14,11 +29,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(student.router, prefix=f"{settings.API_V1_STR}/students", tags=["students"])
+app.include_router(student.router, prefix=f"{settings.API_VERSION}/students", tags=["students"])
+app.include_router(message.router, prefix=f"{settings.API_VERSION}/message", tags=["message"])
+app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
 
-app.include_router(announcement.router, prefix=f"{settings.API_V1_STR}/announcements", tags=["announcements"])
+app.include_router(announcement.router, prefix=f"{settings.API_VERSION}/announcements", tags=["announcements"])
 
-app.include_router(auth.router, prefix=f"{settings.API_V1_STR}/auth", tags=["auth"])
+app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
 
 
 @app.get("/")
