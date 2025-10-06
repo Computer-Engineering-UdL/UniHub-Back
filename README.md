@@ -240,7 +240,7 @@ erDiagram
     MARKET_OFFER {
         int id PK
         int user_id FK
-        int category_id 
+        int category_id FK
         string title
         string description
         decimal price
