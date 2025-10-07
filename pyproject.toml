@@ -37,3 +37,9 @@ dev = [
 ]
 
 [tool.ruff]
+
+[dependency-groups]
+dev = [
+    "pytest>=8.4.2",
+    "ruff>=0.13.2",
+]

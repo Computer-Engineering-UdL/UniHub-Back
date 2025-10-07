@@ -16,6 +16,8 @@ class Settings(BaseSettings):
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
     DEBUG: bool = False
+    SECRET_KEY: str = "secret"
+    ALGORITHM: str = "HS256"
 
     model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
 
