@@ -29,6 +29,7 @@ class UserTableModel(Base):
 
     channels = relationship("ChannelTableModel", secondary="channel_members", back_populates="members")
     messages = relationship("MessageTableModel", back_populates="user")
+    housing_offers = relationship("HousingOfferTableModel", back_populates="user")
 
 
 class User(BaseModel):
