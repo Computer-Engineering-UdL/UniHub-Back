@@ -61,3 +61,10 @@ class ChannelCRUD:
             query = query.filter(ChannelTableModel.id.has(channel_id=channel_id))
 
         return [Message.model_validate(msg, from_attributes=True) for msg in query.offset(skip).limit(limit).all()]
+
+    @staticmethod
+    def delete(db: Session, channel_id: str) -> bool:
+        query = db.query(ChannelTableModel).filter(ChannelTableModel.id.has(channel_id=channel_id))
+        deleted_count = query.delete()
+        db.commit()
+        return deleted_count > 0

@@ -5,7 +5,7 @@ from typing import Literal, Optional
 from uuid import UUID
 
 import sqlalchemy as sa
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 
@@ -37,8 +37,7 @@ class HousingOffer(BaseModel):
     photo_url: Optional[str] = None
     status: OfferStatus = Field(default="active")
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class HousingOfferTableModel(Base):

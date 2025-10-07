@@ -5,3 +5,8 @@ select = ["E", "F", "I"]
 
 [format]
 quote-style = "double"
+
+[lint.isort]
+known-first-party = ["app"]
+section-order = ["future", "standard-library", "third-party", "first-party", "local-folder"]
+force-sort-within-sections = false
