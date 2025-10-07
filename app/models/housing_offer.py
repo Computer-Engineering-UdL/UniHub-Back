@@ -1,17 +1,15 @@
 import uuid
+from datetime import date, datetime
 from decimal import Decimal
-from uuid import UUID
 from typing import Literal, Optional
-from datetime import datetime, date
-
-from pydantic import BaseModel, Field
-from app.core.database import Base
+from uuid import UUID
 
 import sqlalchemy as sa
+from pydantic import BaseModel, Field
 from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 
-
+from app.core.database import Base
 
 GenderPreferences = Literal["any", "male", "female" ]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
