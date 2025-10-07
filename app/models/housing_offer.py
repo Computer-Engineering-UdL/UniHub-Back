@@ -15,6 +15,7 @@ from sqlalchemy.orm import relationship
 
 GenderPreferences = Literal["any", "male", "female" ]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
+Category = Literal["room", "flat", "house"]
 
 class HousingOffer(BaseModel):
     id: UUID = Field(default_factory=uuid.uuid4)
@@ -67,4 +68,21 @@ class HousingOfferTableModel(Base):
     status = sa.Column(sa.String, nullable=False, default="active")  # active | expired | rented | inactive
 
     user = relationship("UserTableModel", back_populates="housing_offers")
-    #category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
+    category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
+
+    class HousingCategoryTableModel(Base):
+        __tablename__ = "housing_category"
+
+        id = Column(sa.Integer, primary_key=True, autoincrement=True)
+        name = Column(sa.String(50), nullable=False, unique=True)
+
+        housing_offers = relationship("HousingOfferTableModel", back_populates="category")
+
+    class HousingCategory(BaseModel):
+        id: Optional[int] = None
+        name: Category
+
+        class Config:
+            from_attributes = True
+
+            
