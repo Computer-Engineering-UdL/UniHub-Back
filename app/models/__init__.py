@@ -1,7 +1,12 @@
 from app.models.auth import AuthResponse, LoginRequest
-from app.models.channel import Channel, ChannelTableModel, channel_members, channel_messages
+from app.models.channel import Channel, ChannelTableModel, channel_members
+from app.models.housing_offer import HousingOffer, HousingOfferTableModel
 from app.models.message import Message, MessageTableModel
 from app.models.user import User, UserInDB, UserPublic, UserTableModel
+
+User.model_rebuild()
+Channel.model_rebuild()
+Message.model_rebuild()
 
 __all__ = [
     "User",
@@ -12,7 +17,8 @@ __all__ = [
     "AuthResponse",
     "Message",
     "MessageTableModel",
-    "channel_messages",
+    "HousingOffer",
+    "HousingOfferTableModel",
     "channel_members",
     "ChannelTableModel",
     "Channel",

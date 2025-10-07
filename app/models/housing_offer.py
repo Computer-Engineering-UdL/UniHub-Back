@@ -11,13 +11,14 @@ from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
-GenderPreferences = Literal["any", "male", "female" ]
+GenderPreferences = Literal["any", "male", "female"]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
+
 
 class HousingOffer(BaseModel):
     id: UUID = Field(default_factory=uuid.uuid4)
     user_id: UUID
-    category_id: UUID
+    # category_id: UUID
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
     posted_date: datetime = Field(default_factory=datetime.now)
@@ -45,7 +46,7 @@ class HousingOfferTableModel(Base):
 
     id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
     user_id = sa.Column(sa.UUID, sa.ForeignKey("user.id"), nullable=False)
-    category_id = sa.Column(sa.UUID, sa.ForeignKey("housing_category.id"), nullable=False)
+    # category_id = sa.Column(sa.UUID, sa.ForeignKey("housing_category.id"), nullable=False)
     title = sa.Column(sa.String, nullable=False)
     description = sa.Column(sa.String, nullable=False)
     posted_date = sa.Column(sa.DateTime, nullable=False, default=date.today)
@@ -65,4 +66,4 @@ class HousingOfferTableModel(Base):
     status = sa.Column(sa.String, nullable=False, default="active")  # active | expired | rented | inactive
 
     user = relationship("UserTableModel", back_populates="housing_offers")
-    #category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
+    # category = relationship("HousingCategoryTableModel", back_populates="housing_offers")

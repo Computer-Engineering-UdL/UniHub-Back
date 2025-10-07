@@ -3,7 +3,7 @@ from datetime import datetime
 from typing import TYPE_CHECKING, List, Literal, Optional
 
 import sqlalchemy as sa
-from pydantic import BaseModel, Field, HttpUrl
+from pydantic import BaseModel, ConfigDict, Field, HttpUrl
 from sqlalchemy import Column, ForeignKey, Table
 from sqlalchemy.orm import relationship
 
@@ -30,7 +30,7 @@ channel_messages = Table(
 
 
 class Channel(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: uuid.UUID = Field(default_factory=lambda: str(uuid.uuid4()))
     name: str = Field(min_length=1, max_length=60)
     description: Optional[str] = Field(None, max_length=120)
     channel_type: ChannelType = Field(default="public")
@@ -38,8 +38,7 @@ class Channel(BaseModel):
     channel_logo: Optional[HttpUrl] = None
     members: List["User"] = Field(default_factory=list)
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class ChannelTableModel(Base):

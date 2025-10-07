@@ -3,18 +3,18 @@ from datetime import datetime
 from typing import TYPE_CHECKING, Optional
 
 import sqlalchemy as sa
-from pydantic import BaseModel, Field
+from pydantic import BaseModel, ConfigDict, Field
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models.user import User
+    from app.models import User
 
 
 class Message(BaseModel):
-    id: str = Field(default_factory=lambda: str(uuid.uuid4()))
+    id: uuid.UUID = Field(default_factory=lambda: str(uuid.uuid4()))
     content: str = Field(min_length=1, max_length=500)
     channel_id: str
     user_id: str
@@ -25,8 +25,7 @@ class Message(BaseModel):
 
     user: Optional["User"] = None
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class MessageTableModel(Base):
