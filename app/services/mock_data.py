@@ -1,41 +1,42 @@
 """Mock data for users and announcements - to be replaced by DB calls in the future."""
 
+import uuid
 from typing import Any, Dict, List
 
 from app.core.security import hash_password
-from app.models.auth import UserInDB
+from app.models import UserInDB
 
 MOCK_USERS: List[Dict[str, Any]] = [
     {
-        "id": 1,
-        "name": "Aniol Serrano",
+        "id": uuid.UUID("32ac1969-9800-4ed7-815d-968f5094039e"),
+        "username": "aniol0012",
         "email": "aniol0012@gmail.com",
-        "room_number": "A101",
-        "year": 3,
-        "major": "Computer Science",
-        "is_active": True,
-        "created_at": "2025-10-05T10:30:00Z",
-        "student_id": 1,
+        "first_name": "Aniol",
+        "last_name": "Serrano",
+        "provider": "local",
+        "role": "Basic",
+        "phone": "+34612345678",
+        "university": "Universitat Politècnica de Catalunya",
     },
     {
-        "id": 2,
-        "name": "Admin",
+        "id": uuid.UUID("0bfeba8c-8e01-49fa-a50a-854ebcd19d41"),
+        "username": "admin",
         "email": "admin@admin.com",
-        "room_number": "B203",
-        "year": 2,
-        "major": "Engineering",
-        "is_active": True,
-        "created_at": "2025-10-05T11:20:00Z",
-        "student_id": 2,
-    }
+        "first_name": "Admin",
+        "last_name": "User",
+        "provider": "local",
+        "role": "Admin",
+        "phone": None,
+        "university": None,
+    },
 ]
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
-        "id": 1,
+        "id": uuid.uuid4(),
         "title": "Maintenance Notice - Building A",
         "content": "Scheduled maintenance will occur in Building A from 9 AM to 12 PM on Saturday. Please plan "
-                   "accordingly.",
+        "accordingly.",
         "priority": "high",
         "created_by": 1,  # User ID
         "target_rooms": ["A101", "A102", "A103", "A201", "A202"],
@@ -44,10 +45,10 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "expires_at": "2024-03-15T23:59:59Z",
     },
     {
-        "id": 2,
+        "id": uuid.uuid4(),
         "title": "New WiFi Network Available",
         "content": "A new high-speed WiFi network 'UniRoom-5G' is now available in all dormitories. Contact IT for "
-                   "access credentials.",
+        "access credentials.",
         "priority": "medium",
         "created_by": 2,
         "target_rooms": [],  # Empty means all rooms
@@ -56,7 +57,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "expires_at": "2024-04-01T23:59:59Z",
     },
     {
-        "id": 3,
+        "id": uuid.uuid4(),
         "title": "Quiet Hours Reminder",
         "content": "Please remember that quiet hours are from 10 PM to 8 AM. Be considerate of your fellow residents.",
         "priority": "low",
@@ -67,7 +68,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "expires_at": "2024-06-01T23:59:59Z",
     },
     {
-        "id": 4,
+        "id": uuid.uuid4(),
         "title": "Laundry Room Updates",
         "content": "New washing machines have been installed in Building C. Old machines are out of service.",
         "priority": "medium",
@@ -78,17 +79,17 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
         "expires_at": "2024-03-20T23:59:59Z",
     },
     {
-        "id": 5,
+        "id": uuid.uuid4(),
         "title": "Fire Drill Scheduled",
         "content": "A fire drill will be conducted next Tuesday at 2 PM. Please evacuate promptly when the alarm "
-                   "sounds.",
+        "sounds.",
         "priority": "high",
         "created_by": 2,
         "target_rooms": [],
         "is_active": False,  # Past announcement
         "created_at": "2024-02-25T10:00:00Z",
         "expires_at": "2024-03-01T23:59:59Z",
-    }
+    },
 ]
 
 MOCK_USERS_AUTH: dict[str, UserInDB] = {}
@@ -108,7 +109,7 @@ def seed_mock_users(default_password: str = "password123") -> None:
             )
 
 
-def get_user_by_id(user_id: int) -> Dict[str, Any] | None:
+def get_user_by_id(user_id: uuid.UUID) -> Dict[str, Any] | None:
     """Get a user by ID from mock data."""
     for user in MOCK_USERS:
         if user["id"] == user_id:
@@ -142,10 +143,12 @@ def get_active_announcements() -> List[Dict[str, Any]]:
 def get_announcements_for_room(room_number: str) -> List[Dict[str, Any]]:
     """Get announcements that target a specific room or all rooms."""
     return [
-        announcement for announcement in MOCK_ANNOUNCEMENTS
-        if announcement["is_active"] and (
-                not announcement["target_rooms"] or  # Targets all rooms
-                room_number in announcement["target_rooms"]
+        announcement
+        for announcement in MOCK_ANNOUNCEMENTS
+        if announcement["is_active"]
+        and (
+            not announcement["target_rooms"]  # Targets all rooms
+            or room_number in announcement["target_rooms"]
         )
     ]
 
@@ -153,6 +156,7 @@ def get_announcements_for_room(room_number: str) -> List[Dict[str, Any]]:
 def get_announcements_by_priority(priority: str) -> List[Dict[str, Any]]:
     """Get active announcements by priority level."""
     return [
-        announcement for announcement in MOCK_ANNOUNCEMENTS
+        announcement
+        for announcement in MOCK_ANNOUNCEMENTS
         if announcement["is_active"] and announcement["priority"] == priority
     ]

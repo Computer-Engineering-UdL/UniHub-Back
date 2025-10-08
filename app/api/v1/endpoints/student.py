@@ -1,4 +1,5 @@
 from typing import Any, Dict, List
+from uuid import UUID
 
 from fastapi import APIRouter, HTTPException
 
@@ -37,7 +38,7 @@ def fetch_students_by_room(room_number: str):
 
 
 @router.get("/{student_id}", response_model=Dict[str, Any])
-def fetch_student(student_id: int):
+def fetch_student(student_id: UUID):
     """
     Retrieve a single student by its ID.
     """

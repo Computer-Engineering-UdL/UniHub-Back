@@ -72,10 +72,12 @@ uv sync
 Create a `.env` file:
 
 ```env
-DATABASE_URL=postgresql://user:password@localhost:5432/uniroom
-SECRET_KEY=your-secret-key-here
-API_V1_STR=/api/v1
-PROJECT_NAME=UniRoom API
+API_VERSION=/api/v1
+POSTGRES_HOST=localhost
+POSTGRES_PORT=5432
+POSTGRES_USER=uniroom
+POSTGRES_PASSWORD="test"
+POSTGRES_DB=uniroom
 ```
 
 ### 4. Run the Server

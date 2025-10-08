@@ -81,4 +81,18 @@ jobs:
         run: >
           curl -X POST
           -u "${{ secrets.N8N_BASIC_AUTH_USER }}:${{ secrets.N8N_BASIC_AUTH_PASSWORD }}"
+          -H "Content-Type: application/json"
+          -d '{
+            "repository": "${{ github.repository }}",
+            "branch": "${{ github.ref_name }}",
+            "commit_sha": "${{ github.sha }}",
+            "commit_message": "${{ github.event.head_commit.message }}",
+            "commit_author": "${{ github.event.head_commit.author.name }}",
+            "commit_url": "${{ github.event.head_commit.url }}",
+            "workflow": "${{ github.workflow }}",
+            "run_id": "${{ github.run_id }}",
+            "run_url": "${{ github.server_url }}/${{ github.repository }}/actions/runs/${{ github.run_id }}",
+            "triggered_by": "${{ github.actor }}",
+            "event_name": "${{ github.event_name }}"
+          }'
           ${{ secrets.N8N_WEBHOOK_URL }}

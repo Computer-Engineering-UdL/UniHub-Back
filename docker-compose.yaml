@@ -1,0 +1,37 @@
+services:
+  uniroom:
+    container_name: uniroom
+    build: ./
+    env_file:
+      - .env
+    volumes:
+      - ./app:/app/app
+    ports:
+      - "8080:8080"
+    networks:
+      - uniroom
+    depends_on:
+      - postgres
+    restart: unless-stopped
+
+  postgres:
+    container_name: uniroom-postgres
+    image: postgres:18-alpine
+    environment:
+      - POSTGRES_USER=${POSTGRES_USER}
+      - POSTGRES_PASSWORD=${POSTGRES_PASSWORD}
+      - POSTGRES_DB=${POSTGRES_DB}
+    volumes:
+      - db-data:/var/lib/postgresql
+    ports:
+       - "5432:5432"
+    networks:
+      - uniroom
+    restart: unless-stopped
+
+volumes:
+  db-data:
+
+networks:
+  uniroom:
+    driver: bridge
