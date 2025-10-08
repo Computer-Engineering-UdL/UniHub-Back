@@ -86,7 +86,7 @@ jobs:
             "repository": "${{ github.repository }}",
             "branch": "${{ github.ref_name }}",
             "commit_sha": "${{ github.sha }}",
-            "commit_message": "${{ github.event.head_commit.message }}",
+            "commit_message": "${{ toJSON(github.event.head_commit.message) }}",
             "commit_author": "${{ github.event.head_commit.author.name }}",
             "commit_url": "${{ github.event.head_commit.url }}",
             "workflow": "${{ github.workflow }}",
