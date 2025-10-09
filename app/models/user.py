@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from uuid import UUID
 
 import sqlalchemy as sa
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, HttpUrl, Field
 from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 
@@ -39,6 +39,7 @@ class UserPublic(BaseModel):
     last_name: str
     provider: Provider
     role: Role
+    avatar_url: Optional[HttpUrl] = None
     phone: Optional[str] = None
     university: Optional[str] = None
 
@@ -55,9 +56,10 @@ class UserTableModel(Base):
     first_name = Column(sa.String(30), nullable=False)
     last_name = Column(sa.String(30), nullable=False)
     provider = Column(sa.String(50), nullable=False, default="local")
-    role = Column(sa.String(50), nullable=False, default="Basic")
-    phone = Column(sa.String(50), nullable=True)
-    university = Column(sa.String(255), nullable=True)
+    role = Column(sa.String(25), nullable=False, default="Basic")
+    avatar_url = Column(sa.String(255), nullable=True)
+    phone = Column(sa.String(25), nullable=True)
+    university = Column(sa.String(125), nullable=True)
 
     channels = relationship("ChannelTableModel", secondary="channel_members", back_populates="members")
     messages = relationship("MessageTableModel", back_populates="user")
