@@ -3,7 +3,7 @@ from typing import Literal, Optional
 from uuid import UUID
 
 import sqlalchemy as sa
-from pydantic import BaseModel, ConfigDict, EmailStr, HttpUrl, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 
