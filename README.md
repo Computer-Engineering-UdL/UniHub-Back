@@ -239,6 +239,14 @@ erDiagram
         string name    "room | flat | house"
     }
 
+    
+    HOUSING_PHOTO {
+          int id PK
+          int listing_id FK "references HOUSING_OFFER.id"
+          string url                "full URL on CDN"
+          datetime uploaded_at
+    }
+    
     MARKET_OFFER {
         int id PK
         int user_id FK
@@ -311,6 +319,8 @@ erDiagram
     HOUSING_CATEGORY ||--o{ HOUSING_OFFER : classifies
     MARKET_CATEGORY ||--o{ MARKET_OFFER : classifies
     JOB_CATEGORY ||--o{ JOB_OFFER : classifies
+
+    HOUSING_OFFER ||--o{ HOUSING_PHOTO : has
 
     USER ||--o{ REPORT : files
 ```
