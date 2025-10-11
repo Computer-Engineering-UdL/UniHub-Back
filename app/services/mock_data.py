@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.security import hash_password
-from app.models import UserInDB
+from app.schemas import UserInDB
 
 MOCK_USERS: List[Dict[str, Any]] = [
     {

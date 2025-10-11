@@ -44,10 +44,7 @@ def fetch_announcements_by_priority(priority: str):
     """
     valid_priorities = ["low", "medium", "high"]
     if priority not in valid_priorities:
-        raise HTTPException(
-            status_code=400, 
-            detail=f"Invalid priority. Must be one of: {', '.join(valid_priorities)}"
-        )
+        raise HTTPException(status_code=400, detail=f"Invalid priority. Must be one of: {', '.join(valid_priorities)}")
     return get_announcements_by_priority(priority)
 
 

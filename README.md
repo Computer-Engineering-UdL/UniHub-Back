@@ -64,7 +64,7 @@ pip install uv
 ```bash
 git clone https://github.com/Computer-Engineering-UdL/UniRoom-Back
 cd UniRoom-Back
-uv sync
+uv sync --group dev
 ```
 
 ### 3. Configure Environment
@@ -220,11 +220,11 @@ erDiagram
       string city
       string district             "nullable"
       string street
-      string address_details      
+      string address_details
       decimal price
       decimal deposit             "nullable"
       decimal area
-      int num_rooms               "nullable"   
+      int num_rooms               "nullable"
       int num_bathrooms           "nullable"
       boolean furnished
       boolean utilities_included
@@ -246,7 +246,7 @@ erDiagram
         string title
         string description
         decimal price
-        boolean is_new              
+        boolean is_new
         string location             "nullable"
         string photo_url            "nullable"
         date posted_date
@@ -261,7 +261,7 @@ erDiagram
 
     JOB_OFFER {
         int id PK
-        int user_id FK 
+        int user_id FK
         int category_id FK
         string title
         string description
