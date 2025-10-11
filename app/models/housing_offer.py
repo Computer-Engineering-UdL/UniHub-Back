@@ -1,4 +1,3 @@
-import uuid
 from datetime import date, datetime
 from decimal import Decimal
 from typing import Literal, Optional
@@ -16,9 +15,11 @@ OfferStatus = Literal["active", "expired", "rented", "inactive"]
 
 
 class HousingOffer(BaseModel):
-    id: UUID = Field(default_factory=uuid.uuid4)
+    """Pydantic model for housing offers."""
+
+    id: int | None = None
     user_id: UUID
-    # category_id: UUID
+    category_id: int
     title: str = Field(min_length=1)
     description: str = Field(min_length=1)
     posted_date: datetime = Field(default_factory=datetime.now)
@@ -34,18 +35,26 @@ class HousingOffer(BaseModel):
     utilities_included: bool = Field(default=False)
     internet_included: bool = Field(default=False)
     gender_preference: Optional[GenderPreferences] = None
-    photo_url: Optional[str] = None
     status: OfferStatus = Field(default="active")
+    photos: list[str] = Field(default_factory=list)  # URLs of photos via CDN
 
     model_config = ConfigDict(from_attributes=True)
 
 
 class HousingOfferTableModel(Base):
+    """
+    SQLAlchemy model representing the housing_offer table in the database.
+
+    Relationships:
+        user: Many-to-one relationship to UserTableModel.
+        category: Many-to-one relationship to HousingCategoryTableModel.
+        photos: One-to-many relationship to HousingPhotoTableModel. Cascades deletes.
+    """
     __tablename__ = "housing_offer"
 
-    id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
+    id = Column(sa.Integer, primary_key=True, autoincrement=True)
     user_id = sa.Column(sa.UUID, sa.ForeignKey("user.id"), nullable=False)
-    # category_id = sa.Column(sa.UUID, sa.ForeignKey("housing_category.id"), nullable=False)
+    category_id = sa.Column(sa.Integer, sa.ForeignKey("housing_category.id"), nullable=False)
     title = sa.Column(sa.String, nullable=False)
     description = sa.Column(sa.String, nullable=False)
     posted_date = sa.Column(sa.DateTime, nullable=False, default=date.today)
@@ -61,8 +70,12 @@ class HousingOfferTableModel(Base):
     utilities_included = sa.Column(sa.Boolean, nullable=False, default=False)
     internet_included = sa.Column(sa.Boolean, nullable=False, default=False)
     gender_preference = sa.Column(sa.String, nullable=True)  # any | male | female
-    photo_url = sa.Column(sa.String, nullable=True)
     status = sa.Column(sa.String, nullable=False, default="active")  # active | expired | rented | inactive
 
     user = relationship("UserTableModel", back_populates="housing_offers")
-    # category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
+    category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
+    photos = relationship(
+        "HousingPhotoTableModel",
+        back_populates="offer",
+        cascade="all, delete-orphan"
+    )
