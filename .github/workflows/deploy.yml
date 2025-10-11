@@ -36,9 +36,8 @@ jobs:
 
       - name: Install dependencies
         run: |
-          uv pip compile pyproject.toml --extra dev -o requirements.txt
-          uv pip sync --system requirements.txt
-
+          uv install --extra dev
+          
       - name: Run tests with coverage
         run: pytest -v --cov=. --cov-report=xml --cov-report=term-missing
 
