@@ -1,55 +1,35 @@
+import datetime
 import uuid
-from datetime import datetime
-from typing import TYPE_CHECKING, List, Literal, Optional
+from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
-from pydantic import BaseModel, ConfigDict, Field, HttpUrl
-from sqlalchemy import Column, ForeignKey, Table
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.literals.channels import ChannelType
 
 if TYPE_CHECKING:
-    from app.models.user import User
-
-ChannelType = Literal["public", "private", "announcement"]
-
-channel_members = Table(
-    "channel_members",
-    Base.metadata,
-    Column("channel_id", sa.UUID, ForeignKey("channel.id"), primary_key=True),
-    Column("user_id", sa.UUID, ForeignKey("user.id"), primary_key=True),
-)
-
-channel_messages = Table(
-    "channel_messages",
-    Base.metadata,
-    Column("channel_id", sa.UUID, ForeignKey("channel.id"), primary_key=True),
-    Column("message_id", sa.UUID, ForeignKey("message.id"), primary_key=True),
-)
+    from app.models import ChannelBan, ChannelMember, ChannelUnban, Message, User
 
 
-class Channel(BaseModel):
-    id: uuid.UUID = Field(default_factory=lambda: str(uuid.uuid4()))
-    name: str = Field(min_length=1, max_length=60)
-    description: Optional[str] = Field(None, max_length=120)
-    channel_type: ChannelType = Field(default="public")
-    created_at: datetime = Field(default_factory=datetime.now)
-    channel_logo: Optional[HttpUrl] = None
-    members: List["User"] = Field(default_factory=list)
+class Channel(Base):
+    """Channel model."""
 
-    model_config = ConfigDict(from_attributes=True)
-
-
-class ChannelTableModel(Base):
     __tablename__ = "channel"
 
-    id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
-    name = Column(sa.String(60), nullable=False)
-    description = Column(sa.String(120), nullable=True)
-    channel_type = Column(sa.String(50), nullable=False, default="public")
-    created_at = Column(sa.DateTime, nullable=False, default=datetime.now)
-    channel_logo = Column(sa.String(255), nullable=True)
+    id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    name: Mapped[str] = mapped_column(sa.String(60), nullable=False, index=True)
+    description: Mapped[str | None] = mapped_column(sa.String(120))
+    channel_type: Mapped[ChannelType] = mapped_column(sa.String(50), default="public")
+    created_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
+    channel_logo: Mapped[str | None] = mapped_column(sa.String(2048))
 
-    members = relationship("UserTableModel", secondary=channel_members, back_populates="channels")
-    messages = relationship("MessageTableModel", back_populates="channel", cascade="all, delete-orphan")
+    memberships: Mapped[List["ChannelMember"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
+
+    members: Mapped[List["User"]] = relationship(secondary="channel_members", back_populates="channels", viewonly=True)
+
+    bans: Mapped[List["ChannelBan"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
+
+    unbans: Mapped[List["ChannelUnban"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
+
+    messages: Mapped[List["Message"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
