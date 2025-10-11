@@ -20,10 +20,7 @@ def client(app):
 
 class TestAuthEndpoints:
     def test_login_success(self, client):
-        response = client.post(
-            "/auth/login",
-            json={"email": "aniol0012@gmail.com", "password": DEFAULT_PASSWORD}
-        )
+        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com", "password": DEFAULT_PASSWORD})
         assert response.status_code == 200
         data = response.json()
         assert "token" in data
@@ -31,24 +28,15 @@ class TestAuthEndpoints:
         assert data["user"]["email"] == "aniol0012@gmail.com"
 
     def test_login_wrong_email(self, client):
-        response = client.post(
-            "/auth/login",
-            json={"email": "noexiste@correo.com", "password": DEFAULT_PASSWORD}
-        )
+        response = client.post("/auth/login", json={"email": "noexiste@correo.com", "password": DEFAULT_PASSWORD})
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_wrong_password(self, client):
-        response = client.post(
-            "/auth/login",
-            json={"email": "aniol0012@gmail.com", "password": "incorrecta"}
-        )
+        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com", "password": "incorrecta"})
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_invalid_payload(self, client):
-        response = client.post(
-            "/auth/login",
-            json={"email": "aniol0012@gmail.com"}
-        )
+        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com"})
         assert response.status_code == 422
