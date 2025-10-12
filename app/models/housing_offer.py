@@ -1,13 +1,17 @@
 import uuid
 from datetime import date, datetime
-from typing import List, Literal
+from typing import TYPE_CHECKING, List, Literal
 
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models import HousingCategoryTableModel, HousingPhotoTableModel, UserTableModel
+
+if TYPE_CHECKING:
+    from app.models.housing_category import HousingCategoryTableModel
+    from app.models.housing_photo import HousingPhotoTableModel
+    from app.models.user import UserTableModel
 
 GenderPreferences = Literal["any", "male", "female"]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
