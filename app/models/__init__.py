@@ -1,7 +1,7 @@
 from app.models.channel import Channel, ChannelTableModel, channel_members
-from app.models.housing_category import HousingCategory, HousingCategoryTableModel
-from app.models.housing_offer import HousingOffer, HousingOfferTableModel
-from app.models.housing_photo import HousingPhoto, HousingPhotoTableModel
+from app.models.housing_category import HousingCategoryTableModel
+from app.models.housing_offer import HousingOfferTableModel
+from app.models.housing_photo import HousingPhotoTableModel
 from app.models.message import Message, MessageTableModel
 from app.models.user import User, UserInDB, UserPublic, UserTableModel
 
@@ -20,11 +20,8 @@ __all__ = [
     "AuthResponse",
     "Message",
     "MessageTableModel",
-    "HousingOffer",
     "HousingOfferTableModel",
-    "HousingCategory",
     "HousingCategoryTableModel",
-    "HousingPhoto",
     "HousingPhotoTableModel",
     "channel_members",
     "ChannelTableModel",
