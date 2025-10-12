@@ -92,6 +92,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     },
 ]
 
+
 MOCK_USERS_AUTH: dict[str, UserInDB] = {}
 
 
