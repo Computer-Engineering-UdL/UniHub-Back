@@ -1,6 +1,6 @@
 from pydantic import BaseModel, EmailStr
 
-from app.models import UserPublic
+from app.schemas import UserPublic
 
 
 class LoginRequest(BaseModel):
