@@ -1,32 +1,22 @@
-from app.models.channel import Channel, ChannelTableModel, channel_members
-from app.models.housing_category import HousingCategory, HousingCategoryTableModel
-from app.models.housing_offer import HousingOffer, HousingOfferTableModel
-from app.models.housing_photo import HousingPhoto, HousingPhotoTableModel
-from app.models.message import Message, MessageTableModel
-from app.models.user import User, UserInDB, UserPublic, UserTableModel
-
-from app.models.auth import AuthResponse, LoginRequest  # isort: skip
-
-User.model_rebuild()
-Channel.model_rebuild()
-Message.model_rebuild()
+from app.models.channel import Channel, ChannelType
+from app.models.channel_ban import ChannelBan, ChannelUnban
+from app.models.channel_member import ChannelMember
+from app.models.housing_category import HousingCategoryTableModel
+from app.models.housing_offer import HousingOfferTableModel, OfferStatus
+from app.models.housing_photo import HousingPhotoTableModel
+from app.models.message import Message
+from app.models.user import User
 
 __all__ = [
     "User",
-    "UserInDB",
-    "UserPublic",
-    "UserTableModel",
-    "LoginRequest",
-    "AuthResponse",
     "Message",
-    "MessageTableModel",
-    "HousingOffer",
     "HousingOfferTableModel",
-    "HousingCategory",
     "HousingCategoryTableModel",
-    "HousingPhoto",
     "HousingPhotoTableModel",
-    "channel_members",
-    "ChannelTableModel",
+    "ChannelMember",
+    "ChannelType",
+    "ChannelBan",
+    "ChannelUnban",
+    "OfferStatus",
     "Channel",
 ]

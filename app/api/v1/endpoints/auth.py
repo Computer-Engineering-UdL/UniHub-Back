@@ -1,7 +1,7 @@
 from fastapi import APIRouter, HTTPException, status
 
 from app.core.security import create_access_token
-from app.models import AuthResponse, LoginRequest, UserPublic
+from app.schemas import AuthResponse, LoginRequest, UserPublic
 from app.services.mock_data import MOCK_USERS
 
 router = APIRouter()

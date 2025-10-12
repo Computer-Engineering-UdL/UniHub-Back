@@ -1,6 +1,6 @@
 from datetime import date, datetime
 from decimal import Decimal
-from typing import Literal, Optional
+from typing import Optional
 from uuid import UUID
 
 import sqlalchemy as sa
@@ -9,9 +9,7 @@ from sqlalchemy import Column
 from sqlalchemy.orm import relationship
 
 from app.core.database import Base
-
-GenderPreferences = Literal["any", "male", "female"]
-OfferStatus = Literal["active", "expired", "rented", "inactive"]
+from app.literals.housing import GenderPreferences, OfferStatus
 
 
 class HousingOffer(BaseModel):
@@ -50,6 +48,7 @@ class HousingOfferTableModel(Base):
         category: Many-to-one relationship to HousingCategoryTableModel.
         photos: One-to-many relationship to HousingPhotoTableModel. Cascades deletes.
     """
+
     __tablename__ = "housing_offer"
 
     id = Column(sa.Integer, primary_key=True, autoincrement=True)
@@ -72,10 +71,6 @@ class HousingOfferTableModel(Base):
     gender_preference = sa.Column(sa.String, nullable=True)  # any | male | female
     status = sa.Column(sa.String, nullable=False, default="active")  # active | expired | rented | inactive
 
-    user = relationship("UserTableModel", back_populates="housing_offers")
+    user = relationship("User", back_populates="housing_offers")
     category = relationship("HousingCategoryTableModel", back_populates="housing_offers")
-    photos = relationship(
-        "HousingPhotoTableModel",
-        back_populates="offer",
-        cascade="all, delete-orphan"
-    )
+    photos = relationship("HousingPhotoTableModel", back_populates="offer", cascade="all, delete-orphan")
