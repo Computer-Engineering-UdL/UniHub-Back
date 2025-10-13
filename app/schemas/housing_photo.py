@@ -1,7 +1,11 @@
+from __future__ import annotations
 from datetime import datetime
+from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, ConfigDict, Field
 
+if TYPE_CHECKING:
+    from app.schemas import HousingOfferList
 
 # Base Schema (Shared Fields)
 class HousingPhotoBase(BaseModel):
@@ -47,8 +51,7 @@ class HousingPhotoList(BaseModel):
 # Detail Schema (For GET with relationships)
 class HousingPhotoDetail(HousingPhotoRead):
     """Detailed schema including related housing offer info."""
-    from app.schemas.housing_offer import HousingOfferList
 
-    offer: HousingOfferList | None = None
+    offer: HousingOfferList
 
     model_config = ConfigDict(from_attributes=True)

@@ -11,7 +11,6 @@ from app.schemas.housing_offer import (
     HousingOfferBase,
     HousingOfferCreate,
     HousingOfferDetail,
-    HousingOfferList,
     HousingOfferRead,
     HousingOfferUpdate,
 )
@@ -19,12 +18,13 @@ from app.schemas.housing_photo import (
     HousingPhotoBase,
     HousingPhotoCreate,
     HousingPhotoDetail,
-    HousingPhotoList,
     HousingPhotoRead,
     HousingPhotoUpdate,
 )
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
 from app.schemas.auth import AuthResponse, LoginRequest  # isort: skip
+from app.schemas.housing_offer import HousingOfferList  # isort: skip
+from app.schemas.housing_photo import HousingPhotoList  # isort: skip
 
 # Rebuild models to resolve forward references
 HousingOfferDetail.model_rebuild()
