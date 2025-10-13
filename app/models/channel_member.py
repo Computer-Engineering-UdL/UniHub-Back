@@ -10,7 +10,8 @@ from app.core.database import Base
 from app.literals.channels import ChannelRole
 
 if TYPE_CHECKING:
-    from app.models import Channel, User
+    from app.models.channel import Channel
+    from app.models.user import User
 
 
 class ChannelMember(Base):

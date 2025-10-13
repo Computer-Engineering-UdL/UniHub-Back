@@ -3,21 +3,33 @@
 import uuid
 from typing import Any, Dict, List
 
-from polyfactory.factories.pydantic_factory import ModelFactory
-
 from app.core.security import hash_password
-from app.schemas import UserCreate, UserList, UserRead
+from app.schemas import UserCreate, UserList
 
-
-class UserCreateFactory(ModelFactory[UserCreate]):
-    __model__ = UserCreate
-
-
-class UserReadFactory(ModelFactory[UserRead]):
-    __model__ = UserRead
-
-
-MOCK_USERS: List[UserCreate] = UserCreateFactory.batch(3)
+MOCK_USERS: List[Dict[str, Any]] = [
+    {
+        "id": uuid.UUID("32ac1969-9800-4ed7-815d-968f5094039e"),
+        "username": "aniol0012",
+        "email": "aniol0012@gmail.com",
+        "first_name": "Aniol",
+        "last_name": "Serrano",
+        "provider": "local",
+        "role": "Basic",
+        "phone": "+34612345678",
+        "university": "Universitat Politècnica de Catalunya",
+    },
+    {
+        "id": uuid.UUID("0bfeba8c-8e01-49fa-a50a-854ebcd19d41"),
+        "username": "admin",
+        "email": "admin@admin.com",
+        "first_name": "Admin",
+        "last_name": "User",
+        "provider": "local",
+        "role": "Admin",
+        "phone": None,
+        "university": None,
+    },
+]
 
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
@@ -90,22 +102,22 @@ def seed_mock_users(default_password: str = "password123") -> None:
         u.password = hash_password(default_password)
 
 
-def get_user_by_id(user_id: uuid.UUID) -> Dict[str, Any] | None:
+def get_user_by_id(user_id: uuid.UUID) -> UserCreate | None:
     """Get a user by ID from mock data."""
     for user in MOCK_USERS:
-        if user["id"] == user_id:
+        if user['id'] == user_id:
             return user
     return None
 
 
-def get_users_by_room(room_number: str) -> List[Dict[str, Any]]:
+def get_users_by_room(room_number: str) -> List[UserCreate]:
     """Get users by room number from mock data."""
-    return [user for user in MOCK_USERS if user["room_number"] == room_number]
+    return [user for user in MOCK_USERS if user.room_number == room_number]
 
 
-def get_active_users() -> List[Dict[str, Any]]:
+def get_active_users() -> List[UserCreate]:
     """Get all active users from mock data."""
-    return [user for user in MOCK_USERS if user["is_active"]]
+    return [user for user in MOCK_USERS if user.is_active]
 
 
 def get_announcement_by_id(announcement_id: int) -> Dict[str, Any] | None:

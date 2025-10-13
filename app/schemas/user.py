@@ -15,6 +15,7 @@ Provider = Literal["local", "google", "github"]
 class UserBase(BaseModel):
     """Base schema with common user fields."""
 
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr
     first_name: str = Field(min_length=1, max_length=100)
@@ -22,6 +23,10 @@ class UserBase(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
     avatar_url: Optional[str] = Field(None, max_length=500)
+    room_number: Optional[str] = Field(None, max_length=20)
+    is_active: bool = Field(default=True)
+    is_verified: bool = Field(default=False)
+    created_at: datetime = Field(default_factory=datetime.utcnow)
 
 
 # ==========================================
@@ -57,7 +62,6 @@ class UserUpdate(BaseModel):
 class UserRead(UserBase):
     """Basic user info for GET responses."""
 
-    id: uuid.UUID
     provider: Provider
     role: Role
     is_active: bool
@@ -87,19 +91,17 @@ class UserList(BaseModel):
 # Public Schema (for external APIs)
 # ==========================================
 class UserPublic(BaseModel):
-    """
-    Public user profile.
-    """
-
     id: uuid.UUID
     username: str
+    email: EmailStr
     first_name: str
     last_name: str
-    avatar_url: Optional[str]
+    provider: Provider
     role: Role
-    created_at: datetime
-    model_config = ConfigDict(from_attributes=True)
+    phone: Optional[str] = None
+    university: Optional[str] = None
 
+    model_config = ConfigDict(from_attributes=True)
 
 # ==========================================
 # Sensitive Operations Schemas
