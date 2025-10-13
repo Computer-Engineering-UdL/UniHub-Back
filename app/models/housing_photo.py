@@ -1,44 +1,42 @@
+import uuid
 from datetime import datetime
+from uuid import UUID
 
 import sqlalchemy as sa
-from pydantic import BaseModel, Field
-from sqlalchemy import Column, ForeignKey
-from sqlalchemy.orm import relationship
+from sqlalchemy import ForeignKey
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
+from app.models import HousingOfferTableModel
 
-
-class HousingPhoto(BaseModel):
-    """
-    Pydantic model representing a housing photo.
-
-    Attributes:
-        id: Optional unique identifier of the photo.
-        listing_id: ID of the housing offer this photo belongs to.
-        url: Full URL of the photo stored on CDN.
-        uploaded_at: Timestamp when the photo was uploaded.
-    """
-    id: int | None = None
-    listing_id: int
-    url: str
-    uploaded_at: datetime = Field(default_factory=datetime.now)
-
-    class Config:
-        from_attributes = True
 
 class HousingPhotoTableModel(Base):
     """
-    SQLAlchemy model representing the housing_photo table in the database.
-
-    Relationships:
-        offer: Many-to-one relationship to HousingOfferTableModel.
-                Each photo belongs to exactly one housing offer.
+    Represents a photo linked to a housing offer.
+    Each photo belongs to exactly one offer.
     """
+
     __tablename__ = "housing_photo"
 
-    id = Column(sa.Integer, primary_key=True, autoincrement=True)
-    listing_id = Column(sa.Integer, ForeignKey("housing_offer.id"), nullable=False)
-    url = Column(sa.String, nullable=False)  # full URL on CDN
-    uploaded_at = Column(sa.DateTime, nullable=False, default=datetime.now)
+    # ----- PRIMARY KEY -----
+    id: Mapped[UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    offer = relationship("HousingOfferTableModel", back_populates="photos")
+    # ----- FOREIGN KEY -----
+    offer_id: Mapped[UUID] = mapped_column(
+        ForeignKey("housing_offer.id"),
+        nullable=False
+    )
+
+    # ----- FIELDS -----
+    url: Mapped[str] = mapped_column(sa.String(255), nullable=False)  # Full CDN URL
+    uploaded_at: Mapped[datetime] = mapped_column(
+        sa.DateTime,
+        default=datetime.now,
+        nullable=False
+    )
+
+    # ----- RELATIONSHIPS -----
+    offer: Mapped["HousingOfferTableModel"] = relationship(back_populates="photos")
+
+    def __repr__(self) -> str:
+        return f"<HousingPhoto(id={self.id}, offer_id={self.offer_id})>"
