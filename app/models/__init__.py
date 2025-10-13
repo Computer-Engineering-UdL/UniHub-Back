@@ -1,4 +1,5 @@
-from app.models.channel import Channel, ChannelType
+from app.literals.channels import ChannelType
+from app.models.channel import Channel
 from app.models.channel_ban import ChannelBan, ChannelUnban
 from app.models.channel_member import ChannelMember
 from app.models.housing_category import HousingCategoryTableModel
