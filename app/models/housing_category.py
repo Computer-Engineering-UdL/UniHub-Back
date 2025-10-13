@@ -1,4 +1,6 @@
+import uuid
 from typing import TYPE_CHECKING, List
+from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
@@ -17,7 +19,7 @@ class HousingCategoryTableModel(Base):
     __tablename__ = "housing_category"
 
     # ----- PRIMARY KEY -----
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # ----- REQUIRED FIELDS -----
     name: Mapped[str] = mapped_column(sa.String(50), nullable=False, unique=True)

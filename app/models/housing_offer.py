@@ -29,7 +29,7 @@ class HousingOfferTableModel(Base):
     __tablename__ = "housing_offer"
 
     # ----- PRIMARY KEY -----
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # ----- FOREIGN KEYS -----
     user_id: Mapped[uuid.UUID] = mapped_column(

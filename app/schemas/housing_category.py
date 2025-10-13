@@ -1,7 +1,8 @@
-from typing import List, TYPE_CHECKING
-
+from typing import TYPE_CHECKING, List
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
+
 if TYPE_CHECKING:
     from app.schemas import HousingOfferList
 
@@ -29,7 +30,7 @@ class HousingCategoryUpdate(BaseModel):
 # Read Schema (For GET single)
 class HousingCategoryRead(HousingCategoryBase):
     """Schema for reading a housing category."""
-    id: int
+    id: UUID
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -37,7 +38,7 @@ class HousingCategoryRead(HousingCategoryBase):
 # List Schema (For LIST/Pagination)
 class HousingCategoryList(BaseModel):
     """Lightweight schema for listing categories."""
-    id: int
+    id: UUID
     name: str
 
     model_config = ConfigDict(from_attributes=True)

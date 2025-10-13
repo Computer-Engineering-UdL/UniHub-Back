@@ -22,6 +22,7 @@ from app.schemas.housing_photo import (
     HousingPhotoUpdate,
 )
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
+
 from app.schemas.auth import AuthResponse, LoginRequest  # isort: skip
 from app.schemas.housing_offer import HousingOfferList  # isort: skip
 from app.schemas.housing_photo import HousingPhotoList  # isort: skip

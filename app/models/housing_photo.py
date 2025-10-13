@@ -1,4 +1,6 @@
+import uuid
 from datetime import datetime
+from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
@@ -17,10 +19,10 @@ class HousingPhotoTableModel(Base):
     __tablename__ = "housing_photo"
 
     # ----- PRIMARY KEY -----
-    id: Mapped[int] = mapped_column(primary_key=True, autoincrement=True)
+    id: Mapped[UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # ----- FOREIGN KEY -----
-    offer_id: Mapped[int] = mapped_column(
+    offer_id: Mapped[UUID] = mapped_column(
         ForeignKey("housing_offer.id"),
         nullable=False
     )

@@ -1,6 +1,8 @@
 from __future__ import annotations
+
 from datetime import datetime
 from typing import TYPE_CHECKING
+from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
@@ -16,14 +18,14 @@ class HousingPhotoBase(BaseModel):
 # Create Schema (For POST)
 class HousingPhotoCreate(HousingPhotoBase):
     """Schema for creating a new housing photo."""
-    offer_id: int
+    offer_id: UUID
 
 
 # Update Schema (For PATCH)
 class HousingPhotoUpdate(BaseModel):
     """Schema for updating a housing photo. All fields optional."""
     url: str | None = Field(None, min_length=1)
-    offer_id: int | None = None
+    offer_id: UUID | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -31,8 +33,8 @@ class HousingPhotoUpdate(BaseModel):
 # Read Schema (For GET single)
 class HousingPhotoRead(HousingPhotoBase):
     """Schema for reading housing photo data."""
-    id: int
-    offer_id: int
+    id: UUID
+    offer_id: UUID
     uploaded_at: datetime = Field(default_factory=datetime.now)
 
     model_config = ConfigDict(from_attributes=True)
@@ -41,7 +43,7 @@ class HousingPhotoRead(HousingPhotoBase):
 # List Schema (For LIST/Pagination)
 class HousingPhotoList(BaseModel):
     """Lightweight schema for list endpoints."""
-    id: int
+    id: UUID
     url: str
     uploaded_at: datetime
 

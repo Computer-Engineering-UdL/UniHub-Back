@@ -1,7 +1,8 @@
 from __future__ import annotations
+
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Literal, TYPE_CHECKING
+from typing import TYPE_CHECKING, List, Literal
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
@@ -16,7 +17,7 @@ OfferStatus = Literal["active", "expired", "rented", "inactive"]
 # Base Schema (Shared Fields)
 class HousingOfferBase(BaseModel):
     """Base schema with shared fields for create/update."""
-    category_id: int
+    category_id: UUID
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=5000)
     price: Decimal = Field(gt=0)
@@ -68,7 +69,7 @@ class HousingOfferUpdate(BaseModel):
     internet_included: bool | None = None
     gender_preference: GenderPreferences | None = None
     status: OfferStatus | None = None
-    category_id: int | None = None
+    category_id: UUID | None = None
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -76,7 +77,7 @@ class HousingOfferUpdate(BaseModel):
 # Read Schema (For GET single)
 class HousingOfferRead(HousingOfferBase):
     """Schema for reading housing offer data."""
-    id: int
+    id: UUID
     user_id: UUID
     posted_date: datetime
     photos: List[str] = []
@@ -87,7 +88,7 @@ class HousingOfferRead(HousingOfferBase):
 # List Schema (For paginated list)
 class HousingOfferList(BaseModel):
     """Lightweight schema for list endpoints."""
-    id: int
+    id: UUID
     title: str
     price: Decimal
     area: Decimal
