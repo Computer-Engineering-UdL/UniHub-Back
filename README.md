@@ -64,7 +64,7 @@ pip install uv
 ```bash
 git clone https://github.com/Computer-Engineering-UdL/UniRoom-Back
 cd UniRoom-Back
-uv sync
+uv sync --group dev
 ```
 
 ### 3. Configure Environment
@@ -220,11 +220,11 @@ erDiagram
       string city
       string district             "nullable"
       string street
-      string address_details      
+      string address_details
       decimal price
       decimal deposit             "nullable"
       decimal area
-      int num_rooms               "nullable"   
+      int num_rooms               "nullable"
       int num_bathrooms           "nullable"
       boolean furnished
       boolean utilities_included
@@ -239,6 +239,14 @@ erDiagram
         string name    "room | flat | house"
     }
 
+    
+    HOUSING_PHOTO {
+          int id PK
+          int listing_id FK "references HOUSING_OFFER.id"
+          string url                "full URL on CDN"
+          datetime uploaded_at
+    }
+    
     MARKET_OFFER {
         int id PK
         int user_id FK
@@ -246,7 +254,7 @@ erDiagram
         string title
         string description
         decimal price
-        boolean is_new              
+        boolean is_new
         string location             "nullable"
         string photo_url            "nullable"
         date posted_date
@@ -261,7 +269,7 @@ erDiagram
 
     JOB_OFFER {
         int id PK
-        int user_id FK 
+        int user_id FK
         int category_id FK
         string title
         string description
@@ -311,6 +319,8 @@ erDiagram
     HOUSING_CATEGORY ||--o{ HOUSING_OFFER : classifies
     MARKET_CATEGORY ||--o{ MARKET_OFFER : classifies
     JOB_CATEGORY ||--o{ JOB_OFFER : classifies
+
+    HOUSING_OFFER ||--o{ HOUSING_PHOTO : has
 
     USER ||--o{ REPORT : files
 ```

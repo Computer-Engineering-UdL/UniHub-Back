@@ -15,6 +15,7 @@ if TYPE_CHECKING:
 
 GenderPreferences = Literal["any", "male", "female"]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
+from app.literals.housing import GenderPreferences, OfferStatus
 
 
 class HousingOfferTableModel(Base):

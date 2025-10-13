@@ -1,52 +1,18 @@
 import uuid
-from typing import Literal, Optional
-from uuid import UUID
+from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
-from pydantic import BaseModel, ConfigDict, EmailStr, Field, HttpUrl
 from sqlalchemy import Column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, relationship
 
 from app.core.database import Base
+from app.literals.users import Role
 
-Role = Literal["Basic", "Admin"]
-Provider = Literal["local", "google", "github"]
-
-
-class User(BaseModel):
-    id: UUID = Field(default_factory=uuid.uuid4)
-    username: str = Field(min_length=1, max_length=20)
-    email: EmailStr
-    first_name: str = Field(min_length=1, max_length=30)
-    last_name: str = Field(min_length=1, max_length=30)
-    provider: Provider = Field(default="local")
-    role: Role = Field(default="Basic")
-    phone: Optional[str] = Field(default=None)
-    university: Optional[str] = Field(default=None)
-
-    model_config = ConfigDict(from_attributes=True)
+if TYPE_CHECKING:
+    from app.models import Channel, ChannelMember
 
 
-class UserInDB(User):
-    hashed_password: str
-
-
-class UserPublic(BaseModel):
-    id: UUID
-    username: str
-    email: EmailStr
-    first_name: str
-    last_name: str
-    provider: Provider
-    role: Role
-    avatar_url: Optional[HttpUrl] = None
-    phone: Optional[str] = None
-    university: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
-
-
-class UserTableModel(Base):
+class User(Base):
     __tablename__ = "user"
 
     id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
@@ -56,11 +22,15 @@ class UserTableModel(Base):
     first_name = Column(sa.String(30), nullable=False)
     last_name = Column(sa.String(30), nullable=False)
     provider = Column(sa.String(50), nullable=False, default="local")
-    role = Column(sa.String(25), nullable=False, default="Basic")
-    avatar_url = Column(sa.String(255), nullable=True)
-    phone = Column(sa.String(25), nullable=True)
-    university = Column(sa.String(125), nullable=True)
+    role: Role = Column(sa.String(50), nullable=False, default="Basic")
+    phone = Column(sa.String(50), nullable=True)
+    university = Column(sa.String(255), nullable=True)
 
-    channels = relationship("ChannelTableModel", secondary="channel_members", back_populates="members")
-    messages = relationship("MessageTableModel", back_populates="user")
+    channel_memberships: Mapped[List["ChannelMember"]] = relationship(
+        back_populates="user", cascade="all, delete-orphan"
+    )
+    channels: Mapped[List["Channel"]] = relationship(
+        secondary="channel_members", back_populates="members", viewonly=True
+    )
+    messages = relationship("Message", back_populates="user")
     housing_offers = relationship("HousingOfferTableModel", back_populates="user")
