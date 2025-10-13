@@ -1,6 +1,6 @@
 import uuid
 from datetime import date, datetime
-from typing import TYPE_CHECKING, List, Literal
+from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
@@ -11,10 +11,8 @@ from app.core.database import Base
 if TYPE_CHECKING:
     from app.models.housing_category import HousingCategoryTableModel
     from app.models.housing_photo import HousingPhotoTableModel
-    from app.models.user import UserTableModel
+    from app.models.user import User
 
-GenderPreferences = Literal["any", "male", "female"]
-OfferStatus = Literal["active", "expired", "rented", "inactive"]
 from app.literals.housing import GenderPreferences, OfferStatus
 
 
@@ -70,7 +68,7 @@ class HousingOfferTableModel(Base):
     end_date: Mapped[date | None] = mapped_column()
 
     # ----- RELATIONSHIPS -----
-    user: Mapped["UserTableModel"] = relationship(back_populates="housing_offers")
+    user: Mapped["User"] = relationship(back_populates="housing_offers")
     category: Mapped["HousingCategoryTableModel"] = relationship(back_populates="housing_offers")
     photos: Mapped[List["HousingPhotoTableModel"]] = relationship(
         back_populates="offer",

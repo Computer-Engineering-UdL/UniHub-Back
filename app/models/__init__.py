@@ -1,18 +1,16 @@
-from app.models.channel import Channel, ChannelTableModel, channel_members
+from app.literals.channels import ChannelType
+from app.models.channel import Channel
+from app.models.channel_ban import ChannelBan, ChannelUnban
+from app.models.channel_member import ChannelMember
 from app.models.housing_category import HousingCategoryTableModel
-from app.models.housing_offer import HousingOfferTableModel
+from app.models.housing_offer import HousingOfferTableModel, OfferStatus
 from app.models.housing_photo import HousingPhotoTableModel
-from app.models.message import Message, MessageTableModel
-from app.models.user import User, UserInDB, UserPublic, UserTableModel
-
-User.model_rebuild()
-Channel.model_rebuild()
-Message.model_rebuild()
+from app.models.message import Message
+from app.models.user import User
 
 __all__ = [
     "User",
     "Message",
-    "MessageTableModel",
     "HousingOfferTableModel",
     "HousingCategoryTableModel",
     "HousingPhotoTableModel",
