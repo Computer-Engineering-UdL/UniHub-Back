@@ -3,33 +3,22 @@
 import uuid
 from typing import Any, Dict, List
 
-from app.core.security import hash_password
-from app.schemas import UserInDB
+from polyfactory.factories.pydantic_factory import ModelFactory
 
-MOCK_USERS: List[Dict[str, Any]] = [
-    {
-        "id": uuid.UUID("32ac1969-9800-4ed7-815d-968f5094039e"),
-        "username": "aniol0012",
-        "email": "aniol0012@gmail.com",
-        "first_name": "Aniol",
-        "last_name": "Serrano",
-        "provider": "local",
-        "role": "Basic",
-        "phone": "+34612345678",
-        "university": "Universitat Politècnica de Catalunya",
-    },
-    {
-        "id": uuid.UUID("0bfeba8c-8e01-49fa-a50a-854ebcd19d41"),
-        "username": "admin",
-        "email": "admin@admin.com",
-        "first_name": "Admin",
-        "last_name": "User",
-        "provider": "local",
-        "role": "Admin",
-        "phone": None,
-        "university": None,
-    },
-]
+from app.core.security import hash_password
+from app.schemas import UserCreate, UserList, UserRead
+
+
+class UserCreateFactory(ModelFactory[UserCreate]):
+    __model__ = UserCreate
+
+
+class UserReadFactory(ModelFactory[UserRead]):
+    __model__ = UserRead
+
+
+MOCK_USERS: List[UserCreate] = UserCreateFactory.batch(3)
+
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
@@ -93,21 +82,12 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
 ]
 
 
-MOCK_USERS_AUTH: dict[str, UserInDB] = {}
+MOCK_USERS_AUTH: dict[str, UserList] = {}
 
 
 def seed_mock_users(default_password: str = "password123") -> None:
     for u in MOCK_USERS:
-        email = u["email"]
-        if email not in MOCK_USERS_AUTH:
-            MOCK_USERS_AUTH[email] = UserInDB(
-                id=str(u["id"]),
-                email=email,
-                name=u["name"],
-                provider="local",
-                role="Basic",
-                hashed_password=hash_password(default_password),
-            )
+        u.password = hash_password(default_password)
 
 
 def get_user_by_id(user_id: uuid.UUID) -> Dict[str, Any] | None:

@@ -1,12 +1,15 @@
 import datetime
 import uuid
+from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
-from app.models import Channel, User
+
+if TYPE_CHECKING:
+    from app.models import Channel, User
 
 
 class ChannelBan(Base):
