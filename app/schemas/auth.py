@@ -13,4 +13,4 @@ class LoginRequest(BaseModel):
 
 class AuthResponse(BaseModel):
     token: str
-    user: UserPublic
+    user: "UserPublic"

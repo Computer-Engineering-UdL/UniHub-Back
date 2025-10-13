@@ -1,6 +1,9 @@
-from typing import List
+from typing import List, TYPE_CHECKING
+
 
 from pydantic import BaseModel, ConfigDict, Field
+if TYPE_CHECKING:
+    from app.schemas import HousingOfferList
 
 
 # Base Schema (Shared Fields)
@@ -43,7 +46,6 @@ class HousingCategoryList(BaseModel):
 # Detail Schema (For GET with relationships)
 class HousingCategoryDetail(HousingCategoryRead):
     """Detailed schema including related housing offers."""
-    from app.schemas.housing_offer import HousingOfferList
 
     housing_offers: List["HousingOfferList"]
     offer_count: int = 0

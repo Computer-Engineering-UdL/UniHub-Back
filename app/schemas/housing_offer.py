@@ -1,9 +1,13 @@
+from __future__ import annotations
 from datetime import date, datetime
 from decimal import Decimal
-from typing import List, Literal
+from typing import List, Literal, TYPE_CHECKING
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field, field_validator
+
+if TYPE_CHECKING:
+    from app.schemas import HousingCategoryRead, HousingPhotoRead
 
 # Type aliases
 GenderPreferences = Literal["any", "male", "female"]
@@ -96,8 +100,7 @@ class HousingOfferList(BaseModel):
 # Detail Schema (For GET with relationships)
 class HousingOfferDetail(HousingOfferRead):
     """Detailed schema with related objects."""
-    from app.schemas.housing_category import HousingCategoryRead
-    from app.schemas.housing_photo import HousingPhotoRead
+
 
     category: "HousingCategoryRead"
     photos: List["HousingPhotoRead"] = []
