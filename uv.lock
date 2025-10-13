@@ -988,7 +988,6 @@ dependencies = [
 dev = [
     { name = "bcrypt" },
     { name = "httpx" },
-    { name = "polyfactory" },
     { name = "pre-commit" },
     { name = "pytest" },
     { name = "pytest-cov" },
@@ -1015,7 +1014,6 @@ requires-dist = [
 dev = [
     { name = "bcrypt", specifier = ">=5.0.0" },
     { name = "httpx", specifier = ">=0.27.0" },
-    { name = "polyfactory", specifier = ">=2.22.2" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-cov", specifier = ">=6.0.0" },

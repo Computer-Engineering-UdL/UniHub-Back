@@ -1,31 +1,35 @@
 """Mock data for users and announcements - to be replaced by DB calls in the future."""
 
 import uuid
-from datetime import datetime
 from typing import Any, Dict, List
 
-from polyfactory.factories.pydantic_factory import ModelFactory
-
 from app.core.security import hash_password
-from app.schemas import UserCreate, UserList, UserRead
+from app.schemas import UserCreate, UserList
 
-
-class UserCreateFactory(ModelFactory[UserCreate]):
-    __model__ = UserCreate
-
-    @classmethod
-    def build(cls) -> UserCreate:
-        user = super().build()
-        user.created_at = datetime.utcnow()
-        user.is_verified = False
-        return user
-
-
-class UserReadFactory(ModelFactory[UserRead]):
-    __model__ = UserRead
-
-
-MOCK_USERS: List[UserCreate] = UserCreateFactory.batch(3)
+MOCK_USERS: List[Dict[str, Any]] = [
+    {
+        "id": uuid.UUID("32ac1969-9800-4ed7-815d-968f5094039e"),
+        "username": "aniol0012",
+        "email": "aniol0012@gmail.com",
+        "first_name": "Aniol",
+        "last_name": "Serrano",
+        "provider": "local",
+        "role": "Basic",
+        "phone": "+34612345678",
+        "university": "Universitat Politècnica de Catalunya",
+    },
+    {
+        "id": uuid.UUID("0bfeba8c-8e01-49fa-a50a-854ebcd19d41"),
+        "username": "admin",
+        "email": "admin@admin.com",
+        "first_name": "Admin",
+        "last_name": "User",
+        "provider": "local",
+        "role": "Admin",
+        "phone": None,
+        "university": None,
+    },
+]
 
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
@@ -101,7 +105,7 @@ def seed_mock_users(default_password: str = "password123") -> None:
 def get_user_by_id(user_id: uuid.UUID) -> UserCreate | None:
     """Get a user by ID from mock data."""
     for user in MOCK_USERS:
-        if user.id == user_id:
+        if user['id'] == user_id:
             return user
     return None
 
