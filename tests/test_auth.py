@@ -20,12 +20,12 @@ def client(app):
 
 class TestAuthEndpoints:
     def test_login_success(self, client):
-        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com", "password": DEFAULT_PASSWORD})
+        response = client.post("/auth/login", json={"email": "admin@admin.com", "password": DEFAULT_PASSWORD})
         assert response.status_code == 200
         data = response.json()
         assert "token" in data
         assert "user" in data
-        assert data["user"]["email"] == "aniol0012@gmail.com"
+        assert data["user"]["email"] == "admin@admin.com"
 
     def test_login_wrong_email(self, client):
         response = client.post("/auth/login", json={"email": "noexiste@correo.com", "password": DEFAULT_PASSWORD})

@@ -91,19 +91,17 @@ class UserList(BaseModel):
 # Public Schema (for external APIs)
 # ==========================================
 class UserPublic(BaseModel):
-    """
-    Public user profile.
-    """
-
     id: uuid.UUID
     username: str
+    email: EmailStr
     first_name: str
     last_name: str
-    avatar_url: Optional[str]
+    provider: Provider
     role: Role
-    created_at: datetime
-    model_config = ConfigDict(from_attributes=True)
+    phone: Optional[str] = None
+    university: Optional[str] = None
 
+    model_config = ConfigDict(from_attributes=True)
 
 # ==========================================
 # Sensitive Operations Schemas
