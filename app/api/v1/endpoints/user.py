@@ -4,9 +4,9 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.utils import handle_crud_errors  # 👈 asegúrate de importar el decorador
+from app.api.utils import handle_crud_errors
 from app.core.database import get_db
-from app.core.security import get_password_hash
+from app.core.security import hash_password
 from app.crud.user import UserCRUD
 from app.schemas.user import UserCreate, UserPublic, UserUpdate
 
@@ -19,8 +19,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     """
     Create a new user.
     """
-    if user_in.password:
-        user_in.password = get_password_hash(user_in.password)
+    user_in.password = hash_password(user_in.password)
     return UserCRUD.create(db, user_in)
 
 
@@ -54,7 +53,7 @@ def update_user(user_id: uuid.UUID, user_in: UserUpdate, db: Session = Depends(g
     Update a user (partial).
     """
     if user_in.password:
-        user_in.password = get_password_hash(user_in.password)
+        user_in.password = hash_password(user_in.password)
     return UserCRUD.update(db, user_id, user_in)
 
 

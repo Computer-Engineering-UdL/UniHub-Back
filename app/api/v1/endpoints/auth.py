@@ -12,9 +12,9 @@ DEFAULT_PASSWORD = "unirromsuperadminsecretpassword"
 
 @router.post("/login", response_model=AuthResponse)
 def login(payload: LoginRequest) -> AuthResponse:
-    user = next((u for u in MOCK_USERS if u["email"] == payload.email), None)
+    user = next((u for u in MOCK_USERS if u.email == payload.email), None)
     if not user or payload.password != DEFAULT_PASSWORD:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     token = create_access_token(sub=str(user["id"]))
-    user_public = UserPublic(**user)
+    user_public = UserPublic(**user.model_dump())
     return AuthResponse(token=token, user=user_public)

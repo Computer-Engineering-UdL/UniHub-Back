@@ -1,5 +1,5 @@
 # DISABLED WORKFLOW
-#name: Server run check
+name: Server run check
 
 # on:
 #  push:
