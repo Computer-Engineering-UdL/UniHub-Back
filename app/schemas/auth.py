@@ -1,6 +1,9 @@
+from typing import TYPE_CHECKING
+
 from pydantic import BaseModel, EmailStr
 
-from app.schemas import UserPublic
+if TYPE_CHECKING:
+    from app.schemas import UserPublic
 
 
 class LoginRequest(BaseModel):

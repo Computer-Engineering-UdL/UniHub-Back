@@ -1,4 +1,3 @@
-from app.schemas.auth import AuthResponse, LoginRequest
 from app.schemas.channel import ChannelBase, ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead
 from app.schemas.housing_category import (
     HousingCategoryBase,
@@ -25,11 +24,30 @@ from app.schemas.housing_photo import (
     HousingPhotoUpdate,
 )
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
+from app.schemas.auth import AuthResponse, LoginRequest  # isort: skip
 
 # Rebuild models to resolve forward references
 HousingOfferDetail.model_rebuild()
+HousingOfferList.model_rebuild()
+HousingOfferRead.model_rebuild()
+HousingOfferUpdate.model_rebuild()
+HousingOfferCreate.model_rebuild()
+HousingOfferBase.model_rebuild()
+
+HousingCategoryList.model_rebuild()
+HousingCategoryRead.model_rebuild()
+HousingCategoryUpdate.model_rebuild()
+HousingCategoryCreate.model_rebuild()
+HousingCategoryBase.model_rebuild()
 HousingCategoryDetail.model_rebuild()
+
 HousingPhotoDetail.model_rebuild()
+HousingPhotoBase.model_rebuild()
+HousingPhotoCreate.model_rebuild()
+HousingPhotoUpdate.model_rebuild()
+HousingPhotoRead.model_rebuild()
+HousingPhotoList.model_rebuild()
+
 ChannelRead.model_rebuild()
 ChannelCreate.model_rebuild()
 ChannelUpdate.model_rebuild()

@@ -45,7 +45,7 @@ class HousingCategoryDetail(HousingCategoryRead):
     """Detailed schema including related housing offers."""
     from app.schemas.housing_offer import HousingOfferList
 
-    housing_offers: List["HousingOfferList"] = []
+    housing_offers: List["HousingOfferList"]
     offer_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
