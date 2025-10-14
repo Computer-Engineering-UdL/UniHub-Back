@@ -15,7 +15,7 @@ from app.schemas import (
     HousingOfferUpdate,
 )
 
-router = APIRouter(prefix="/offers", tags=["Housing Offers"])
+router = APIRouter(prefix="/offers", tags=["housing offers"])
 
 @router.post("/", response_model=HousingOfferRead, status_code=status.HTTP_201_CREATED)
 def create_offer(
