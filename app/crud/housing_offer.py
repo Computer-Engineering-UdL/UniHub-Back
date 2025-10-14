@@ -31,11 +31,23 @@ class HousingOfferCRUD:
             db.rollback()
             raise e
 
-    @staticmethod
-    def get_by_id(db: Session, offer_id: uuid.UUID) -> Optional[HousingOfferRead]:
-        """Get a housing offer by ID."""
-        db_offer = db.query(HousingOfferTableModel).filter(HousingOfferTableModel.id == offer_id).first()
-        return HousingOfferRead.model_validate(db_offer) if db_offer else None
+    # @staticmethod
+    # def get_by_id(db: Session, offer_id: uuid.UUID) -> Optional[HousingOfferDetail]:
+    #     """Get a housing offer with related category and photos."""
+    #     db_offer = (
+    #         db.query(HousingOfferTableModel)
+    #         .options(
+    #             joinedload(HousingOfferTableModel.category),
+    #             joinedload(HousingOfferTableModel.photos)
+    #         )
+    #         .filter(HousingOfferTableModel.id == offer_id)
+    #         .first()
+    #     )
+    #
+    #     if not db_offer:
+    #         return None
+    #
+    #     return HousingOfferDetail.model_validate(db_offer)
 
     @staticmethod
     def get_all(db: Session, skip: int = 0, limit: int = 100) -> List[HousingOfferList]:
