@@ -33,10 +33,10 @@ class TestAuthEndpoints:
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_wrong_password(self, client):
-        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com", "password": "incorrecta"})
+        response = client.post("/auth/login", json={"email": "admin@admin.com", "password": "incorrecta"})
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_invalid_payload(self, client):
-        response = client.post("/auth/login", json={"email": "aniol0012@gmail.com"})
+        response = client.post("/auth/login", json={"email": "admin@admin.com"})
         assert response.status_code == 422

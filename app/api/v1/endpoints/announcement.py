@@ -1,51 +1,59 @@
-from fastapi import APIRouter
+from typing import Any, Dict, List
 
-# from app.crud.announcement import AnnouncementCRUD
-# from app.schemas.announcement import AnnouncementCreate, AnnouncementPublic, AnnouncementUpdate
+from fastapi import APIRouter, HTTPException
+
+from app.services.mock_data import (
+    MOCK_ANNOUNCEMENTS,
+    get_active_announcements,
+    get_announcement_by_id,
+    get_announcements_by_priority,
+    get_announcements_for_room,
+)
 
 router = APIRouter()
 
-#
-# @router.get("/", response_model=list[AnnouncementPublic])
-# @handle_crud_errors
-# def fetch_announcements(db: Session = Depends(get_db)):
-#     """
-#     Retrieve all announcements.
-#     """
-#     return AnnouncementCRUD.get_all(db)
-#
-#
-# @router.get("/{announcement_id}", response_model=AnnouncementPublic)
-# @handle_crud_errors
-# def fetch_announcement(announcement_id: int, db: Session = Depends(get_db)):
-#     """
-#     Retrieve a specific announcement by ID.
-#     """
-#     return AnnouncementCRUD.get_by_id(db, announcement_id)
-#
-#
-# @router.post("/", response_model=AnnouncementPublic)
-# @handle_crud_errors
-# def create_announcement(announcement_in: AnnouncementCreate, db: Session = Depends(get_db)):
-#     """
-#     Create a new announcement.
-#     """
-#     return AnnouncementCRUD.create(db, announcement_in)
-#
-#
-# @router.patch("/{announcement_id}", response_model=AnnouncementPublic)
-# @handle_crud_errors
-# def update_announcement(announcement_id: int, announcement_in: AnnouncementUpdate, db: Session = Depends(get_db)):
-#     """
-#     Update an existing announcement.
-#     """
-#     return AnnouncementCRUD.update(db, announcement_id, announcement_in)
-#
-#
-# @router.delete("/{announcement_id}")
-# @handle_crud_errors
-# def delete_announcement(announcement_id: int, db: Session = Depends(get_db)):
-#     """
-#     Delete an announcement.
-#     """
-#     return AnnouncementCRUD.delete(db, announcement_id)
+
+@router.get("/", response_model=List[Dict[str, Any]])
+def fetch_announcements():
+    """
+    Retrieve all announcements.
+    """
+    return MOCK_ANNOUNCEMENTS
+
+
+@router.get("/active", response_model=List[Dict[str, Any]])
+def fetch_active_announcements():
+    """
+    Retrieve only active announcements.
+    """
+    return get_active_announcements()
+
+
+@router.get("/room/{room_number}", response_model=List[Dict[str, Any]])
+def fetch_announcements_for_room(room_number: str):
+    """
+    Retrieve announcements that target a specific room or all rooms.
+    """
+    return get_announcements_for_room(room_number)
+
+
+@router.get("/priority/{priority}", response_model=List[Dict[str, Any]])
+def fetch_announcements_by_priority(priority: str):
+    """
+    Retrieve active announcements by priority level (low, medium, high).
+    """
+    valid_priorities = ["low", "medium", "high"]
+    if priority not in valid_priorities:
+        raise HTTPException(status_code=400, detail=f"Invalid priority. Must be one of: {', '.join(valid_priorities)}")
+    return get_announcements_by_priority(priority)
+
+
+@router.get("/{announcement_id}", response_model=Dict[str, Any])
+def fetch_announcement(announcement_id: int):
+    """
+    Retrieve a single announcement by its ID.
+    """
+    announcement = get_announcement_by_id(announcement_id)
+    if not announcement:
+        raise HTTPException(status_code=404, detail="Announcement not found")
+    return announcement
