@@ -4,7 +4,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.security import hash_password
-from app.schemas import UserInDB
+from app.schemas import UserCreate, UserList
 
 MOCK_USERS: List[Dict[str, Any]] = [
     {
@@ -30,6 +30,7 @@ MOCK_USERS: List[Dict[str, Any]] = [
         "university": None,
     },
 ]
+
 
 MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
@@ -93,39 +94,30 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
 ]
 
 
-MOCK_USERS_AUTH: dict[str, UserInDB] = {}
+MOCK_USERS_AUTH: dict[str, UserList] = {}
 
 
 def seed_mock_users(default_password: str = "password123") -> None:
     for u in MOCK_USERS:
-        email = u["email"]
-        if email not in MOCK_USERS_AUTH:
-            MOCK_USERS_AUTH[email] = UserInDB(
-                id=str(u["id"]),
-                email=email,
-                name=u["name"],
-                provider="local",
-                role="Basic",
-                hashed_password=hash_password(default_password),
-            )
+        u.password = hash_password(default_password)
 
 
-def get_user_by_id(user_id: uuid.UUID) -> Dict[str, Any] | None:
+def get_user_by_id(user_id: uuid.UUID) -> UserCreate | None:
     """Get a user by ID from mock data."""
     for user in MOCK_USERS:
-        if user["id"] == user_id:
+        if user['id'] == user_id:
             return user
     return None
 
 
-def get_users_by_room(room_number: str) -> List[Dict[str, Any]]:
+def get_users_by_room(room_number: str) -> List[UserCreate]:
     """Get users by room number from mock data."""
-    return [user for user in MOCK_USERS if user["room_number"] == room_number]
+    return [user for user in MOCK_USERS if user.room_number == room_number]
 
 
-def get_active_users() -> List[Dict[str, Any]]:
+def get_active_users() -> List[UserCreate]:
     """Get all active users from mock data."""
-    return [user for user in MOCK_USERS if user["is_active"]]
+    return [user for user in MOCK_USERS if user.is_active]
 
 
 def get_announcement_by_id(announcement_id: int) -> Dict[str, Any] | None:

@@ -107,31 +107,31 @@ def remove_member(channel_id: uuid.UUID, member_id: uuid.UUID, db: Session = Dep
     return ChannelCRUD.remove_member(db, channel_id, member_id)
 
 
-@router.post("/{channel_id}/ban/{member_id}", response_model=bool)
-@handle_crud_errors
-def ban(channel_id: uuid.UUID, member_id: uuid.UUID, db: Session = Depends(get_db)):
-    """
-    Bans a member from a channel.
-    Args:
-        channel_id (uuid.UUID): Channel id.
-        member_id (uuid.UUID): Member id.
-        db (Session): Database session.
-    Returns:
-        bool: True if the member was banned, False otherwise.
-    """
-    return ChannelCRUD.ban_member(db, channel_id, member_id)
-
-
-@router.post("/{channel_id}/unban/{member_id}", response_model=bool)
-@handle_crud_errors
-def unban(channel_id: uuid.UUID, member_id: uuid.UUID, db: Session = Depends(get_db)):
-    """
-    Unbans a member from a channel.
-    Args:
-        channel_id (uuid.UUID): Channel id.
-        member_id (uuid.UUID): Member id.
-        db (Session): Database session.
-    Returns:
-        bool: True if the member was unbanned, False otherwise.
-    """
-    return ChannelCRUD.unban_member(db, channel_id, member_id)
+# @router.post("/{channel_id}/ban/{member_id}", response_model=bool)
+# @handle_crud_errors
+# def ban(channel_id: uuid.UUID, member_id: uuid.UUID, db: Session = Depends(get_db)):
+#     """
+#     Bans a member from a channel.
+#     Args:
+#         channel_id (uuid.UUID): Channel id.
+#         member_id (uuid.UUID): Member id.
+#         db (Session): Database session.
+#     Returns:
+#         bool: True if the member was banned, False otherwise.
+#     """
+#     return ChannelCRUD.ban_member(db, channel_id, member_id, )
+#
+#
+# @router.post("/{channel_id}/unban/{member_id}", response_model=bool)
+# @handle_crud_errors
+# def unban(channel_id: uuid.UUID, member_id: uuid.UUID, db: Session = Depends(get_db)):
+#     """
+#     Unbans a member from a channel.
+#     Args:
+#         channel_id (uuid.UUID): Channel id.
+#         member_id (uuid.UUID): Member id.
+#         db (Session): Database session.
+#     Returns:
+#         bool: True if the member was unbanned, False otherwise.
+#     """
+#     return ChannelCRUD.unban_member(db, channel_id, member_id)

@@ -1,34 +1,33 @@
+import uuid
+from typing import TYPE_CHECKING, List
+from uuid import UUID
+
 import sqlalchemy as sa
-from pydantic import BaseModel, Field
-from sqlalchemy import Column
-from sqlalchemy.orm import relationship
+from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
 
-
-class HousingCategory(BaseModel):
-    """
-    Pydantic model representing a housing category.
-    Used for data validation and serialization in API requests/responses.
-    """
-    id: int | None = None
-    name: str = Field(min_length=1, max_length=50)
-
-    class Config:
-        # Allows Pydantic model to be created from ORM objects
-        from_attributes = True
+if TYPE_CHECKING:
+    from app.models.housing_offer import HousingOfferTableModel
 
 
 class HousingCategoryTableModel(Base):
     """
-    SQLAlchemy model representing a housing category in the database.
-    Maps to the 'housing_category' table.
-    Establishes a relationship to housing offers.
-    """
+        Represents a housing category (e.g. apartment, room, house).
+        """
+
     __tablename__ = "housing_category"
 
-    id = Column(sa.Integer, primary_key=True, autoincrement=True)
-    name = Column(sa.String(50), nullable=False, unique=True)
+    # ----- PRIMARY KEY -----
+    id: Mapped[UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
-    # One-to-many relationship: a category can have multiple housing offers
-    housing_offers = relationship("HousingOfferTableModel", back_populates="category")
+    # ----- REQUIRED FIELDS -----
+    name: Mapped[str] = mapped_column(sa.String(50), nullable=False, unique=True)
+
+    # ----- RELATIONSHIPS -----
+    housing_offers: Mapped[List["HousingOfferTableModel"]] = relationship(
+        back_populates="category"
+    )
+
+    def __repr__(self) -> str:
+        return f"<HousingCategory(id={self.id}, name={self.name})>"
