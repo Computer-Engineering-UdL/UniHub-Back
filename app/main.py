@@ -4,7 +4,7 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.models
-from app.api.v1.endpoints import auth, channel, housing_category, housing_offer, message, user, housing_photo
+from app.api.v1.endpoints import auth, channel, housing_category, housing_offer, housing_photo, message, user
 from app.core.config import settings
 from app.core.database import Base, engine
 
