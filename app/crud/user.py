@@ -7,6 +7,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.api.utils import handle_crud_errors
+from app.api.utils.db_utils import extract_constraint_info
 from app.core.security import hash_password
 from app.models.user import User
 from app.schemas import UserList, UserRead
@@ -19,28 +20,15 @@ class UserCRUD:
         """
         Crea un nuevo usuario. La contraseña debe venir ya hasheada.
         """
-        print(user_in.model_dump())
         try:
-            db_user = User(
-                username=user_in.username,
-                email=user_in.email,
-                hashed_password=user_in.password,
-                first_name=user_in.first_name,
-                last_name=user_in.last_name,
-                provider=user_in.provider,
-                role=user_in.role,
-                avatar_url=user_in.avatar_url,
-                phone=user_in.phone,
-                university=user_in.university,
-            )
+            db_user = User(**user_in.model_dump())
             db.add(db_user)
             db.commit()
             db.refresh(db_user)
             return db_user
         except IntegrityError as e:
-            print(e)
             db.rollback()
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal Server Error")
+            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=extract_constraint_info(e))
 
     @staticmethod
     @handle_crud_errors

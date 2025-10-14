@@ -29,12 +29,13 @@ app.add_middleware(
     allow_headers=["*"],
 )
 
-app.include_router(message.router, prefix=f"{settings.API_VERSION}/message", tags=["message"])
-app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
+app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
 app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["user"])
+app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
+app.include_router(message.router, prefix=f"{settings.API_VERSION}/message", tags=["message"])
 app.include_router(housing_offer.router, prefix=f"{settings.API_VERSION}/offers", tags=["housing offers"])
 
-app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
+# app.include_router(announcement.router, prefix=f"{settings.API_VERSION}/announcements", tags=["announcements"])
 
 
 @app.get("/")
