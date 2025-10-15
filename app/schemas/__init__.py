@@ -21,7 +21,7 @@ from app.schemas.housing_photo import (
     HousingPhotoRead,
     HousingPhotoUpdate,
 )
-from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
+from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserRead
 
 from app.schemas.auth import AuthResponse, LoginRequest, Token, TokenData  # isort: skip
 from app.schemas.housing_offer import HousingOfferList  # isort: skip
@@ -53,7 +53,6 @@ ChannelRead.model_rebuild()
 ChannelCreate.model_rebuild()
 ChannelUpdate.model_rebuild()
 MembershipRead.model_rebuild()
-UserPublic.model_rebuild()
 UserRead.model_rebuild()
 UserList.model_rebuild()
 UserCreate.model_rebuild()
@@ -89,7 +88,6 @@ __all__ = [
     "ChannelCreate",
     "ChannelUpdate",
     "MembershipRead",
-    "UserPublic",
     "AuthResponse",
     "UserList",
     "UserCreate",

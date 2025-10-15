@@ -33,7 +33,7 @@ class UserCRUD:
     @staticmethod
     @handle_crud_errors
     def get_by_id(db: Session, user_id: uuid.UUID) -> Optional[User]:
-        return db.query(User).get(user_id)
+        return db.get(User, user_id)
 
     @staticmethod
     @handle_crud_errors
