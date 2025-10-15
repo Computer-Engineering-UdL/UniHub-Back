@@ -5,6 +5,7 @@ from app.models.channel_member import ChannelMember
 from app.models.housing_category import HousingCategoryTableModel
 from app.models.housing_offer import HousingOfferTableModel, OfferStatus
 from app.models.housing_photo import HousingPhotoTableModel
+from app.models.interest import Interest, InterestCategory, UserInterest
 from app.models.message import Message
 from app.models.user import User
 
@@ -20,4 +21,7 @@ __all__ = [
     "ChannelUnban",
     "OfferStatus",
     "Channel",
+    "InterestCategory",
+    "Interest",
+    "UserInterest",
 ]
