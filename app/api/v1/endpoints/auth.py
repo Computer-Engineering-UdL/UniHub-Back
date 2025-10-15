@@ -1,20 +1,27 @@
-from fastapi import APIRouter, HTTPException, status
+from fastapi import APIRouter, Depends
+from fastapi.security import OAuth2PasswordRequestForm
+from sqlalchemy.orm import Session
 
-from app.core.security import create_access_token
-from app.schemas import AuthResponse, LoginRequest, UserPublic
-from app.services.mock_data import MOCK_USERS
+from app.core.database import get_db
+from app.core.dependencies import get_current_user
+from app.schemas import LoginRequest, Token, TokenData
+from app.services import authenticate_user
 
 router = APIRouter()
 
-# This will be removed, but for now this is the default password for all mock users
-DEFAULT_PASSWORD = "unirromsuperadminsecretpassword"
+
+@router.post("/login", response_model=Token)
+def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = Depends(get_db)):
+    """
+    OAuth2 compatible token endpoint.
+    Form data expects 'username' and 'password' fields.
+    """
+    login_request = LoginRequest(username=form_data.username, password=form_data.password)
+
+    return authenticate_user(db, login_request)
 
 
-@router.post("/login", response_model=AuthResponse)
-def login(payload: LoginRequest) -> AuthResponse:
-    user = next((u for u in MOCK_USERS if u['email'] == payload.email), None)
-    if user is None or payload.password != DEFAULT_PASSWORD:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    token = create_access_token(sub=str(user["id"]))
-    user_public = UserPublic(**user)
-    return AuthResponse(token=token, user=user_public)
+@router.get("/me", response_model=TokenData)
+def get_me(current_user: TokenData = Depends(get_current_user)):
+    """Get current user info"""
+    return current_user

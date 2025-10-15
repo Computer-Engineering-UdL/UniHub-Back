@@ -23,7 +23,7 @@ from app.schemas.housing_photo import (
 )
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
 
-from app.schemas.auth import AuthResponse, LoginRequest  # isort: skip
+from app.schemas.auth import AuthResponse, LoginRequest, Token, TokenData  # isort: skip
 from app.schemas.housing_offer import HousingOfferList  # isort: skip
 from app.schemas.housing_photo import HousingPhotoList  # isort: skip
 
@@ -70,7 +70,6 @@ __all__ = [
     "HousingOfferRead",
     "HousingOfferList",
     "HousingOfferDetail",
-
     # Housing Category Schemas
     "HousingCategoryBase",
     "HousingCategoryCreate",
@@ -78,7 +77,6 @@ __all__ = [
     "HousingCategoryRead",
     "HousingCategoryList",
     "HousingCategoryDetail",
-
     # Housing Photo Schemas
     "HousingPhotoBase",
     "HousingPhotoCreate",
@@ -98,4 +96,6 @@ __all__ = [
     "UserRead",
     "UserPasswordChange",
     "LoginRequest",
+    "TokenData",
+    "Token",
 ]
