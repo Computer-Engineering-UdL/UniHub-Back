@@ -4,7 +4,7 @@ from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.core.security import hash_password
+from app.core import hash_password
 from app.literals.users import Role
 
 Provider = Literal["local", "google", "github"]

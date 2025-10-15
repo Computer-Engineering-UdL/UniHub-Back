@@ -41,7 +41,6 @@ class UserCRUD:
         return db.query(User).filter_by(email=email).first()
 
     @staticmethod
-    @handle_crud_errors
     def get_by_username(db: Session, username: str) -> Optional[User]:
         return db.query(User).filter_by(username=username).first()
 
