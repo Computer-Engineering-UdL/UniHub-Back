@@ -39,3 +39,8 @@ class User(Base):
     )
     messages = relationship("Message", back_populates="user")
     housing_offers = relationship("HousingOfferTableModel", back_populates="user")
+
+    @property
+    def is_admin(self) -> bool:
+        """Returns True if the user has admin role."""
+        return self.role.lower() == "admin"
