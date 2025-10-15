@@ -21,6 +21,7 @@ from app.schemas.housing_photo import (
     HousingPhotoRead,
     HousingPhotoUpdate,
 )
+from app.schemas.interest import InterestCategoryRead, InterestRead, UserInterestCreate
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserPublic, UserRead
 
 from app.schemas.auth import AuthResponse, LoginRequest, Token, TokenData  # isort: skip
@@ -48,6 +49,9 @@ HousingPhotoCreate.model_rebuild()
 HousingPhotoUpdate.model_rebuild()
 HousingPhotoRead.model_rebuild()
 HousingPhotoList.model_rebuild()
+
+InterestCategoryRead.model_rebuild()
+InterestRead.model_rebuild()
 
 ChannelRead.model_rebuild()
 ChannelCreate.model_rebuild()
@@ -98,4 +102,7 @@ __all__ = [
     "LoginRequest",
     "TokenData",
     "Token",
+    "InterestCategoryRead",
+    "InterestRead",
+    "UserInterestCreate",
 ]
