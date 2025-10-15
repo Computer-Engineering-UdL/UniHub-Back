@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "UniRoom"
     PROJECT_NAME: str = "UniRoom API"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 1
     API_VERSION: str = "/api/v1"
 
     POSTGRES_USER: str = "uniroom"
