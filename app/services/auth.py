@@ -1,3 +1,5 @@
+import re
+
 from fastapi import HTTPException
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -12,7 +14,11 @@ from app.schemas import LoginRequest, Token
 
 
 def authenticate_user(db: Session, login_req: LoginRequest) -> Token:
-    db_user = UserCRUD.get_by_username(db, login_req.username)
+    email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+    if re.match(email_pattern, login_req.username):
+        db_user = UserCRUD.get_by_email(db, login_req.username)
+    else:
+        db_user = UserCRUD.get_by_username(db, login_req.username)
     if db_user is None or not verify_password(login_req.password, db_user.password):
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
     data = create_payload_from_user(db_user)
