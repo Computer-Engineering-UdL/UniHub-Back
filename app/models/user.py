@@ -1,5 +1,6 @@
+import datetime
 import uuid
-from typing import TYPE_CHECKING, List
+from typing import TYPE_CHECKING, Any, Dict, List
 
 import sqlalchemy as sa
 from sqlalchemy import Column
@@ -9,22 +10,27 @@ from app.core.database import Base
 from app.literals.users import Role
 
 if TYPE_CHECKING:
-    from app.models import Channel, ChannelMember
+    from app.models import Channel, ChannelMember, Interest, UserInterest
 
 
 class User(Base):
     __tablename__ = "user"
 
     id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
-    username = Column(sa.String(20), unique=True, nullable=False, index=True)
+    username = Column(sa.String(50), unique=True, nullable=False, index=True)
     email = Column(sa.String(255), unique=True, nullable=False, index=True)
-    hashed_password = Column(sa.String(255), nullable=False)
-    first_name = Column(sa.String(30), nullable=False)
-    last_name = Column(sa.String(30), nullable=False)
+    password = Column(sa.String(255), nullable=False)
+    first_name = Column(sa.String(100), nullable=False)
+    last_name = Column(sa.String(100), nullable=False)
+    phone = Column(sa.String(20), nullable=True)
+    university = Column(sa.String(100), nullable=True)
+    avatar_url = Column(sa.String(500), nullable=True)
+    room_number = Column(sa.String(20), nullable=True)
     provider = Column(sa.String(50), nullable=False, default="local")
-    role: Role = Column(sa.String(50), nullable=False, default="Basic")
-    phone = Column(sa.String(50), nullable=True)
-    university = Column(sa.String(255), nullable=True)
+    role = Column(sa.String(50), nullable=False, default=Role.BASIC)
+    is_active = Column(sa.Boolean, nullable=False, default=True)
+    is_verified = Column(sa.Boolean, nullable=False, default=False)
+    created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
 
     channel_memberships: Mapped[List["ChannelMember"]] = relationship(
         back_populates="user", cascade="all, delete-orphan"
@@ -34,3 +40,16 @@ class User(Base):
     )
     messages = relationship("Message", back_populates="user")
     housing_offers = relationship("HousingOfferTableModel", back_populates="user")
+    user_interest_links: Mapped[List["UserInterest"]] = relationship(viewonly=True)
+    interests: Mapped[List["Interest"]] = relationship(
+        secondary="user_interest", back_populates="users", order_by="Interest.name"
+    )
+
+    @property
+    def is_admin(self) -> bool:
+        """Returns True if the user has admin role."""
+        return self.role.lower() == "admin"
+
+
+def create_payload_from_user(db_user: User) -> Dict[str, Any]:
+    return {"sub": str(db_user.id), "username": db_user.username, "email": db_user.email, "role": db_user.role}

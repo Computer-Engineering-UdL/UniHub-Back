@@ -8,6 +8,7 @@ class Settings(BaseSettings):
     APP_NAME: str = "UniRoom"
     PROJECT_NAME: str = "UniRoom API"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
+    REFRESH_TOKEN_EXPIRE_DAYS: int = 1
     API_VERSION: str = "/api/v1"
 
     POSTGRES_USER: str = "uniroom"
@@ -19,6 +20,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "secret"
     ALGORITHM: str = "HS256"
     ENVIRONMENT: str = "dev"
+    TEMPORARY_DB: bool = False
 
     model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
 

@@ -1,10 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
-from pydantic import BaseModel, ConfigDict, EmailStr, Field
+from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.literals.users import Role
+
+if TYPE_CHECKING:
+    from app.core import hash_password
 
 Provider = Literal["local", "google", "github"]
 
@@ -15,7 +20,6 @@ Provider = Literal["local", "google", "github"]
 class UserBase(BaseModel):
     """Base schema with common user fields."""
 
-    id: uuid.UUID = Field(default_factory=uuid.uuid4)
     username: str = Field(min_length=1, max_length=50)
     email: EmailStr
     first_name: str = Field(min_length=1, max_length=100)
@@ -37,7 +41,15 @@ class UserCreate(UserBase):
 
     password: str = Field(min_length=8, max_length=255)
     provider: Provider = Field(default="local")
-    role: Role = Field(default="Basic")
+    role: Role = Field(default=Role.BASIC)
+
+    @field_validator("password")
+    @classmethod
+    def hash_password(cls, value: str) -> str:
+        """Hash password."""
+        return hash_password(value)
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -62,6 +74,7 @@ class UserUpdate(BaseModel):
 class UserRead(UserBase):
     """Basic user info for GET responses."""
 
+    id: uuid.UUID = Field(default_factory=uuid.uuid4)
     provider: Provider
     role: Role
     is_active: bool
@@ -90,18 +103,19 @@ class UserList(BaseModel):
 # ==========================================
 # Public Schema (for external APIs)
 # ==========================================
-class UserPublic(BaseModel):
-    id: uuid.UUID
-    username: str
-    email: EmailStr
-    first_name: str
-    last_name: str
-    provider: Provider
-    role: Role
-    phone: Optional[str] = None
-    university: Optional[str] = None
+# class UserPublic(BaseModel):
+#     id: uuid.UUID
+#     username: str
+#     email: EmailStr
+#     first_name: str
+#     last_name: str
+#     provider: Provider
+#     role: Role
+#     phone: Optional[str] = None
+#     university: Optional[str] = None
+#
+#     model_config = ConfigDict(from_attributes=True)
 
-    model_config = ConfigDict(from_attributes=True)
 
 # ==========================================
 # Sensitive Operations Schemas
