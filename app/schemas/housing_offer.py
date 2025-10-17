@@ -24,6 +24,9 @@ class HousingOfferBase(BaseModel):
     area: Decimal = Field(gt=0)
     offer_valid_until: date
 
+    city: str = Field(min_length=1, max_length=100)
+    address: str = Field(min_length=1, max_length=255)
+
     start_date: date
     end_date: date | None = None
 
@@ -70,6 +73,8 @@ class HousingOfferUpdate(BaseModel):
     gender_preference: GenderPreferences | None = None
     status: OfferStatus | None = None
     category_id: UUID | None = None
+    city: str | None = Field(None, min_length=1, max_length=100)
+    address: str | None = Field(None, min_length=1, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -94,6 +99,8 @@ class HousingOfferList(BaseModel):
     area: Decimal
     status: OfferStatus
     posted_date: datetime
+
+    city: str
 
     model_config = ConfigDict(from_attributes=True)
 

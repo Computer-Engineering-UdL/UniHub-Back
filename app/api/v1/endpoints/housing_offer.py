@@ -31,7 +31,7 @@ router = APIRouter(
 def create_offer(
     offer_in: HousingOfferCreate,
     db: Session = Depends(get_db),
-    # current_user: User = Depends(get_current_user),
+    # current_user: TokenData = Depends(get_current_user),
 ):
     """
     Create a new housing offer.
@@ -44,6 +44,7 @@ def create_offer(
         raise HTTPException(status_code=404, detail="No test user found.")
 
     offer_in.user_id = current_user.id
+    # offer_in.user_id = current_user.id
     try:
         offer = HousingOfferCRUD.create(db, offer_in)
         return offer

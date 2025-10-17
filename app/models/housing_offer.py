@@ -49,6 +49,8 @@ class HousingOfferTableModel(Base):
     price: Mapped[float] = mapped_column(sa.Numeric, nullable=False)
     area: Mapped[float] = mapped_column(sa.Numeric, nullable=False)
     offer_valid_until: Mapped[date] = mapped_column(nullable=False)
+    city: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    address: Mapped[str] = mapped_column(sa.String(255), nullable=False)
 
     # ----- OPTIONAL FIELDS -----
     deposit: Mapped[float | None] = mapped_column(sa.Numeric)
