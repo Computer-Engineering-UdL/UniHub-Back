@@ -1,4 +1,3 @@
-
 from fastapi import HTTPException
 from jose import JWTError, jwt
 from sqlalchemy.orm import Session
@@ -6,8 +5,9 @@ from starlette import status
 
 from app.core import create_access_token, verify_password
 from app.core.config import settings
-from app.core.security import create_payload_from_user, create_refresh_token
+from app.core.security import create_refresh_token
 from app.crud.user import UserCRUD
+from app.models.user import create_payload_from_user
 from app.schemas import LoginRequest, Token
 
 
@@ -39,5 +39,6 @@ def verify_token(token: str, expected_type: str = None) -> dict:
         return payload
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+
 
 __all__ = ["authenticate_user", "verify_token"]
