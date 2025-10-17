@@ -27,7 +27,7 @@ class TokenData(BaseModel):
     id: uuid.UUID
     username: str
     email: str
-    role: Role = "Basic"
+    role: Role = Role.BASIC
 
 
 class AuthResponse(BaseModel):

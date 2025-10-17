@@ -1,3 +1,12 @@
-from typing import Literal
+from enum import Enum
 
-Role = Literal["Basic", "Admin"]
+
+class Role(str, Enum):
+    ADMIN = "admin"
+    BASIC = "basic"
+
+
+ROLE_HIERARCHY = {
+    Role.ADMIN: 1,
+    Role.BASIC: 2,
+}

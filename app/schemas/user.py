@@ -1,11 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from datetime import datetime
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
-from app.core import hash_password
 from app.literals.users import Role
+
+if TYPE_CHECKING:
+    from app.core import hash_password
 
 Provider = Literal["local", "google", "github"]
 
@@ -37,7 +41,7 @@ class UserCreate(UserBase):
 
     password: str = Field(min_length=8, max_length=255)
     provider: Provider = Field(default="local")
-    role: Role = Field(default="Basic")
+    role: Role = Field(default=Role.BASIC)
 
     @field_validator("password")
     @classmethod

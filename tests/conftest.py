@@ -12,6 +12,7 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.interest import router as interest_router
 from app.core.database import Base, get_db
 from app.core.seed import DEFAULT_PASSWORD, seed_interests
+from app.literals.users import Role
 
 
 @pytest.fixture(scope="function")
@@ -73,7 +74,7 @@ def seed_database_test(db):
         first_name="Admin",
         last_name="User",
         provider="local",
-        role="Admin",
+        role=Role.ADMIN,
         is_active=True,
         is_verified=True,
         created_at=datetime.datetime.now(datetime.UTC),
@@ -87,7 +88,7 @@ def seed_database_test(db):
         first_name="Test",
         last_name="User",
         provider="local",
-        role="Basic",
+        role=Role.BASIC,
         is_active=True,
         is_verified=True,
         created_at=datetime.datetime.now(datetime.UTC),

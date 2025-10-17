@@ -5,6 +5,7 @@ from sqlalchemy.orm import Session
 
 from app.core import hash_password
 from app.core.database import Base, engine
+from app.literals.users import Role
 from app.models import Interest, InterestCategory, User
 
 DEFAULT_PASSWORD = "unirromsuperadminsecretpassword"
@@ -210,7 +211,7 @@ def seed_database():
             avatar_url="https://api.example.com/avatars/admin.jpg",
             room_number="101",
             provider="local",
-            role="Admin",
+            role=Role.ADMIN,
             is_active=True,
             is_verified=True,
             created_at=datetime.utcnow(),
@@ -227,7 +228,7 @@ def seed_database():
             avatar_url=None,
             room_number="202",
             provider="local",
-            role="Basic",
+            role=Role.BASIC,
             is_active=True,
             is_verified=True,
             created_at=datetime.utcnow(),
@@ -245,7 +246,7 @@ def seed_database():
             avatar_url=None,
             room_number="303",
             provider="local",
-            role="Basic",
+            role=Role.ADMIN,
             is_active=True,
             is_verified=False,
             created_at=datetime.utcnow(),

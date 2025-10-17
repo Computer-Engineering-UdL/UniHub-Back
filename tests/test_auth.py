@@ -1,5 +1,5 @@
-
 from app.core.seed import DEFAULT_PASSWORD
+from app.literals.users import Role
 
 
 class TestAuthEndpoints:
@@ -40,7 +40,7 @@ class TestAuthEndpoints:
         data = response.json()
         assert data["email"] == "admin@admin.com"
         assert data["username"] == "admin"
-        assert data["role"] == "Admin"
+        assert data["role"] == Role.ADMIN
 
     def test_get_me_without_token(self, client):
         """Test getting current user without token."""

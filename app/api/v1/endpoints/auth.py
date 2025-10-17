@@ -8,8 +8,9 @@ from starlette import status
 from app.core import create_access_token
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
-from app.core.security import create_payload_from_user, create_refresh_token
+from app.core.security import create_refresh_token
 from app.crud.user import UserCRUD
+from app.models import create_payload_from_user
 from app.schemas import LoginRequest, Token, TokenData
 from app.services import authenticate_user
 from app.services.auth import verify_token
@@ -26,6 +27,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     login_request = LoginRequest(username=form_data.username, password=form_data.password)
 
     return authenticate_user(db, login_request)
+
 
 @router.post("/refresh", response_model=Token)
 async def refresh(refresh_token: str = Body(..., embed=True), db: Session = Depends(get_db)):

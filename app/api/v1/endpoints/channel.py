@@ -6,15 +6,17 @@ from sqlalchemy.orm import Session
 
 from app.api.utils.decorators import handle_crud_errors
 from app.core.database import get_db
+from app.core.dependencies import require_role
 from app.crud.channel import ChannelCRUD
-from app.schemas import ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead
+from app.literals.users import Role
+from app.schemas import ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead, TokenData
 
 router = APIRouter()
 
 
 @router.get("/", response_model=List[ChannelRead])
 @handle_crud_errors
-def fetch_channels(db: Session = Depends(get_db)):
+def fetch_channels(db: Session = Depends(get_db), _: TokenData = Depends(require_role([Role.ADMIN]))):
     """
     Retrieve all public channels.
     Args:
