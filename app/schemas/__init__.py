@@ -21,7 +21,6 @@ from app.schemas.housing_photo import (
     HousingPhotoRead,
     HousingPhotoUpdate,
 )
-
 from app.schemas.interest import InterestCategoryRead, InterestRead, UserInterestCreate
 from app.schemas.user import UserCreate, UserList, UserPasswordChange, UserRead
 

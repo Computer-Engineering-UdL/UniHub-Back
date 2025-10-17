@@ -39,9 +39,7 @@ class User(Base):
     )
     messages = relationship("Message", back_populates="user")
     housing_offers = relationship("HousingOfferTableModel", back_populates="user")
-    user_interest_links: Mapped[List["UserInterest"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
-    )
+    user_interest_links: Mapped[List["UserInterest"]] = relationship(viewonly=True)
     interests: Mapped[List["Interest"]] = relationship(
         secondary="user_interest", back_populates="users", order_by="Interest.name"
     )

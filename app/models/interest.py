@@ -34,9 +34,7 @@ class Interest(Base):
     )
 
     category: Mapped[InterestCategory] = relationship(back_populates="interests")
-    users: Mapped[List["User"]] = relationship(
-        secondary="user_interest", back_populates="interests"
-    )
+    users: Mapped[List["User"]] = relationship(secondary="user_interest", back_populates="interests")
 
 
 class UserInterest(Base):
@@ -44,12 +42,10 @@ class UserInterest(Base):
     __table_args__ = (sa.UniqueConstraint("user_id", "interest_id", name="uq_user_interest"),)
 
     id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
-    )
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
     interest_id: Mapped[uuid.UUID] = mapped_column(
         ForeignKey("interest.id", ondelete="CASCADE"), nullable=False, index=True
     )
 
-    user: Mapped["User"] = relationship(back_populates="user_interest_links")
-    interest: Mapped[Interest] = relationship()
+    user: Mapped["User"] = relationship(viewonly=True)
+    interest: Mapped[Interest] = relationship(viewonly=True)
