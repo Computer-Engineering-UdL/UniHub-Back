@@ -1,3 +1,4 @@
+
 from app.core.seed import DEFAULT_PASSWORD
 
 
@@ -45,3 +46,16 @@ class TestAuthEndpoints:
         """Test getting current user without token."""
         response = client.get("/auth/me")
         assert response.status_code == 401
+
+    def test_refresh_token(self, client):
+        """Test refresh token."""
+        response = client.post("/auth/login", data={"username": "admin", "password": DEFAULT_PASSWORD})
+        assert response.status_code == 200
+        token: str = response.json()["access_token"]
+        refresh_token: str = response.json()["refresh_token"]
+        refresh_resp = client.post("/auth/refresh", json={"refresh_token": refresh_token})
+        assert refresh_resp.status_code == 200
+        new_tokens = refresh_resp.json()
+        assert "access_token" in new_tokens
+        assert "refresh_token" in new_tokens
+        assert new_tokens["access_token"] != token

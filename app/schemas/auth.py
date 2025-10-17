@@ -1,12 +1,15 @@
+from __future__ import annotations
+
 import uuid
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel
 
+from app.literals.auth import TokenType
 from app.literals.users import Role
 
 if TYPE_CHECKING:
-    from app.schemas import UserPublic
+    from app.schemas import UserRead
 
 
 class LoginRequest(BaseModel):
@@ -16,7 +19,8 @@ class LoginRequest(BaseModel):
 
 class Token(BaseModel):
     access_token: str
-    token_type: str = "bearer"
+    refresh_token: str
+    token_type: TokenType = "bearer"
 
 
 class TokenData(BaseModel):
@@ -28,4 +32,4 @@ class TokenData(BaseModel):
 
 class AuthResponse(BaseModel):
     token: str
-    user: "UserPublic"
+    user: UserRead

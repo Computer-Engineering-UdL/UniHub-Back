@@ -7,12 +7,12 @@ from sqlalchemy.orm import Session
 from app.api.utils import handle_crud_errors
 from app.core.database import get_db
 from app.crud.user import UserCRUD
-from app.schemas.user import UserCreate, UserPublic, UserUpdate
+from app.schemas.user import UserCreate, UserRead, UserUpdate
 
 router = APIRouter()
 
 
-@router.post("/", response_model=UserPublic, status_code=status.HTTP_201_CREATED)
+@router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @handle_crud_errors
 def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     """
@@ -21,7 +21,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db)):
     return UserCRUD.create(db, user_in)
 
 
-@router.get("/{user_id}", response_model=UserPublic)
+@router.get("/{user_id}", response_model=UserRead)
 @handle_crud_errors
 def get_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
     """
@@ -30,7 +30,7 @@ def get_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
     return UserCRUD.get_by_id(db, user_id)
 
 
-@router.get("/", response_model=List[UserPublic])
+@router.get("/", response_model=List[UserRead])
 @handle_crud_errors
 def list_users(
     db: Session = Depends(get_db),
@@ -44,7 +44,7 @@ def list_users(
     return UserCRUD.get_all(db, skip=skip, limit=limit, search=search)
 
 
-@router.patch("/{user_id}", response_model=UserPublic)
+@router.patch("/{user_id}", response_model=UserRead)
 @handle_crud_errors
 def update_user(user_id: uuid.UUID, user_in: UserUpdate, db: Session = Depends(get_db)):
     """

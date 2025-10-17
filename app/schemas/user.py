@@ -99,18 +99,18 @@ class UserList(BaseModel):
 # ==========================================
 # Public Schema (for external APIs)
 # ==========================================
-class UserPublic(BaseModel):
-    id: uuid.UUID
-    username: str
-    email: EmailStr
-    first_name: str
-    last_name: str
-    provider: Provider
-    role: Role
-    phone: Optional[str] = None
-    university: Optional[str] = None
-
-    model_config = ConfigDict(from_attributes=True)
+# class UserPublic(BaseModel):
+#     id: uuid.UUID
+#     username: str
+#     email: EmailStr
+#     first_name: str
+#     last_name: str
+#     provider: Provider
+#     role: Role
+#     phone: Optional[str] = None
+#     university: Optional[str] = None
+#
+#     model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
