@@ -4,7 +4,16 @@ from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 
 import app.models
-from app.api.v1.endpoints import auth, channel, housing_category, housing_offer, housing_photo, message, user
+from app.api.v1.endpoints import (
+    auth,
+    channel,
+    housing_category,
+    housing_offer,
+    housing_photo,
+    interest,
+    message,
+    user,
+)
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.seed import seed_database
@@ -40,6 +49,7 @@ app.include_router(message.router, prefix=f"{settings.API_VERSION}/message", tag
 app.include_router(housing_offer.router, prefix=f"{settings.API_VERSION}/offers", tags=["housing offers"])
 app.include_router(housing_category.router, prefix=f"{settings.API_VERSION}/categories", tags=["housing categories"])
 app.include_router(housing_photo.router, prefix=f"{settings.API_VERSION}/photos", tags=["housing photos"])
+app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 # app.include_router(announcement.router, prefix=f"{settings.API_VERSION}/announcements", tags=["announcements"])
 
 

@@ -9,7 +9,7 @@ from sqlalchemy.orm import Mapped, relationship
 from app.core.database import Base
 
 if TYPE_CHECKING:
-    from app.models import Channel, ChannelMember
+    from app.models import Channel, ChannelMember, Interest, UserInterest
 
 
 class User(Base):
@@ -39,6 +39,10 @@ class User(Base):
     )
     messages = relationship("Message", back_populates="user")
     housing_offers = relationship("HousingOfferTableModel", back_populates="user")
+    user_interest_links: Mapped[List["UserInterest"]] = relationship(viewonly=True)
+    interests: Mapped[List["Interest"]] = relationship(
+        secondary="user_interest", back_populates="users", order_by="Interest.name"
+    )
 
     @property
     def is_admin(self) -> bool:

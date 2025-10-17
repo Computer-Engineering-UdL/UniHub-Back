@@ -9,8 +9,9 @@ from sqlalchemy import create_engine, event
 from sqlalchemy.orm import sessionmaker
 
 from app.api.v1.endpoints.auth import router as auth_router
+from app.api.v1.endpoints.interest import router as interest_router
 from app.core.database import Base, get_db
-from app.core.seed import DEFAULT_PASSWORD
+from app.core.seed import DEFAULT_PASSWORD, seed_interests
 
 
 @pytest.fixture(scope="function")
@@ -92,6 +93,8 @@ def seed_database_test(db):
         created_at=datetime.datetime.now(datetime.UTC),
     )
 
+    seed_interests(db)
+
     db.add_all([admin_user, test_user])
     db.commit()
 
@@ -101,6 +104,7 @@ def app(db):
     """Create FastAPI app with test database."""
     app = FastAPI()
     app.include_router(auth_router, prefix="/auth")
+    app.include_router(interest_router, prefix="/interest")
 
     def override_get_db():
         yield db
