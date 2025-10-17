@@ -3,7 +3,7 @@ from __future__ import annotations
 import uuid
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel
+from pydantic import BaseModel, field_validator
 
 from app.literals.auth import TokenType
 from app.literals.users import Role
@@ -15,6 +15,13 @@ if TYPE_CHECKING:
 class LoginRequest(BaseModel):
     username: str
     password: str
+
+    @field_validator("username")
+    @classmethod
+    def validate_username(cls, v):
+        if not v or not v.strip():
+            raise ValueError("Username/email cannot be empty")
+        return v.strip()
 
 
 class Token(BaseModel):
