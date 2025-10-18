@@ -21,6 +21,7 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ENVIRONMENT: str = "dev"
     TEMPORARY_DB: bool = False
+    DEFAULT_PASSWORD: str = "unirromsuperadminsecretpassword"
 
     model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
 

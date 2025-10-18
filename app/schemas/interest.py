@@ -21,3 +21,10 @@ class InterestCategoryRead(BaseModel):
 
 class UserInterestCreate(BaseModel):
     interest_id: uuid.UUID
+
+
+__all__ = [
+    "InterestRead",
+    "InterestCategoryRead",
+    "UserInterestCreate",
+]

@@ -4,7 +4,7 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas.user import User
+from app.schemas import UserRead
 
 
 class Message(BaseModel):
@@ -17,6 +17,9 @@ class Message(BaseModel):
     is_edited: bool = Field(default=False)
     parent_message_id: Optional[str] = None
 
-    user: Optional["User"] = None
+    user: Optional[UserRead] = None
 
     model_config = ConfigDict(from_attributes=True)
+
+
+__all__ = ["Message"]

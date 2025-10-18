@@ -9,21 +9,25 @@ from pydantic import BaseModel, ConfigDict, Field
 if TYPE_CHECKING:
     from app.schemas import HousingOfferList
 
+
 # Base Schema (Shared Fields)
 class HousingPhotoBase(BaseModel):
     """Base schema with shared fields for create/update."""
+
     url: str = Field(min_length=1, description="Full URL of the photo stored on CDN")
 
 
 # Create Schema (For POST)
 class HousingPhotoCreate(HousingPhotoBase):
     """Schema for creating a new housing photo."""
+
     offer_id: UUID
 
 
 # Update Schema (For PATCH)
 class HousingPhotoUpdate(BaseModel):
     """Schema for updating a housing photo. All fields optional."""
+
     url: str | None = Field(None, min_length=1)
     offer_id: UUID | None = None
 
@@ -33,6 +37,7 @@ class HousingPhotoUpdate(BaseModel):
 # Read Schema (For GET single)
 class HousingPhotoRead(HousingPhotoBase):
     """Schema for reading housing photo data."""
+
     id: UUID
     offer_id: UUID
     uploaded_at: datetime = Field(default_factory=datetime.now)
@@ -43,6 +48,7 @@ class HousingPhotoRead(HousingPhotoBase):
 # List Schema (For LIST/Pagination)
 class HousingPhotoList(BaseModel):
     """Lightweight schema for list endpoints."""
+
     id: UUID
     url: str
     uploaded_at: datetime
@@ -57,3 +63,13 @@ class HousingPhotoDetail(HousingPhotoRead):
     offer: HousingOfferList
 
     model_config = ConfigDict(from_attributes=True)
+
+
+__all__ = [
+    "HousingPhotoBase",
+    "HousingPhotoCreate",
+    "HousingPhotoUpdate",
+    "HousingPhotoRead",
+    "HousingPhotoList",
+    "HousingPhotoDetail",
+]

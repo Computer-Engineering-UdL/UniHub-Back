@@ -17,14 +17,12 @@ from app.api.v1.endpoints import (
 from app.core.config import settings
 from app.core.database import Base, engine
 from app.core.seed import seed_database
-from app.core.seed_offers import seed_housing_data
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     # Startup logic
     seed_database()
-    seed_housing_data()
     Base.metadata.create_all(bind=engine)
     print("Tables created, app starting...")
     yield

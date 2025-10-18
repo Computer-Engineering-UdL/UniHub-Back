@@ -1,14 +1,18 @@
 import uuid
-from typing import List
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from sqlalchemy.orm import Session
 
-from app.literals.users import Role
+from app.literals.users import ROLE_HIERARCHY, Role
 from app.schemas import TokenData
 
+from ..crud.channel import ChannelCRUD
+from ..literals.channels import CHANNEL_ROLE_HIERARCHY, ChannelRole
+from ..models import ChannelMember
 from .config import settings
+from .database import get_db
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
 
@@ -38,12 +42,59 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     return token_data
 
 
-def require_role(allowed_roles: List[str]):
-    """Verify that the user has the required roles"""
+def require_role(min_role: Role):
+    """Verify that the user has the required roles
+
+    Args:
+        min_role: Minimum role required to access
+    Raises:
+        HTTPException: If user does not have required roles
+    """
 
     def role_checker(user: TokenData = Depends(get_current_user)) -> TokenData:
-        if any(role > user.role for role in allowed_roles):
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Unauthorized")
+        if ROLE_HIERARCHY[user.role] > ROLE_HIERARCHY[min_role]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Requires elevated access")
         return user
 
     return role_checker
+
+
+def get_channel_permission(min_role: ChannelRole = ChannelRole.USER):
+    """Factory to create channel permission checker.
+    Args:
+        min_role: Minimum channel role required to access
+    Raises:
+        HTTPException: If user does not have required channel roles
+    """
+
+    def permission_checker(
+        channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
+    ) -> ChannelMember:
+        if user.role == Role.ADMIN:
+            membership = ChannelCRUD.get_member(db, channel_id, user.id)
+            return membership
+
+        membership = ChannelCRUD.get_member(db, channel_id, user.id)
+        if not membership:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
+        if CHANNEL_ROLE_HIERARCHY[membership.role] > CHANNEL_ROLE_HIERARCHY[min_role]:
+            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Requires elevated access")
+
+        return membership
+
+    return permission_checker
+
+
+def is_channel_member(
+    channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
+) -> ChannelMember:
+    """Check if user is a channel member"""
+    if user.role == Role.ADMIN:
+        membership = ChannelCRUD.get_member(db, channel_id, user.id)
+        return membership
+
+    membership = ChannelCRUD.get_member(db, channel_id, user.id)
+    if not membership:
+        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
+
+    return membership
