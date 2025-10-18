@@ -3,6 +3,7 @@ import uuid
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
+from pydantic import ValidationError
 from sqlalchemy.orm import Session
 
 from app.literals.users import ROLE_HIERARCHY, Role
@@ -17,7 +18,7 @@ from .database import get_db
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
 
 
-async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
+def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     """Validate JWT token and return current user"""
     credentials_exception = HTTPException(
         status_code=status.HTTP_401_UNAUTHORIZED,
@@ -27,16 +28,13 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: uuid.UUID = payload.get("sub")
+        user_id: uuid.UUID = uuid.UUID(payload.get("sub"))
         username: str = payload.get("username")
         email: str = payload.get("email")
         role: Role = payload.get("role")
 
-        if user_id is None:
-            raise credentials_exception
-
         token_data = TokenData(id=user_id, username=username, email=email, role=role)
-    except JWTError:
+    except (JWTError, ValidationError, ValueError):
         raise credentials_exception
 
     return token_data
