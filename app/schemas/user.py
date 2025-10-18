@@ -65,6 +65,9 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
     avatar_url: Optional[str] = Field(None, max_length=500)
+    is_verified: Optional[bool] = None
+    role: Optional[Role] = None
+
     model_config = ConfigDict(from_attributes=True)
 
 
