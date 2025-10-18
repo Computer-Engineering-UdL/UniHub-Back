@@ -1,8 +1,6 @@
-from __future__ import annotations
-
 import datetime
 import uuid
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
@@ -65,6 +63,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
     avatar_url: Optional[str] = Field(None, max_length=500)
+    password: Optional[str] = Field(None, min_length=8)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -115,6 +114,7 @@ class UserList(BaseModel):
 #     university: Optional[str] = None
 #
 #     model_config = ConfigDict(from_attributes=True)
+
 
 
 # ==========================================
