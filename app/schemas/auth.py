@@ -32,8 +32,8 @@ class Token(BaseModel):
 
 class TokenData(BaseModel):
     id: uuid.UUID
-    username: str | None
-    email: str | None
+    username: str
+    email: str
     role: Role = Role.BASIC
 
 
