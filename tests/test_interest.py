@@ -1,5 +1,5 @@
-from app.core.seed import INTEREST_CATALOG
 from app.models import Interest, User
+from app.seeds.interests import INTEREST_CATALOG
 
 
 class TestInterestEndpoints:

@@ -1,7 +1,7 @@
 from __future__ import annotations
 
+import datetime
 import uuid
-from datetime import datetime
 from typing import TYPE_CHECKING, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
@@ -30,7 +30,7 @@ class UserBase(BaseModel):
     room_number: Optional[str] = Field(None, max_length=20)
     is_active: bool = Field(default=True)
     is_verified: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
 
 # ==========================================
@@ -79,7 +79,7 @@ class UserRead(UserBase):
     role: Role
     is_active: bool
     is_verified: bool
-    created_at: datetime
+    created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -96,7 +96,7 @@ class UserList(BaseModel):
     last_name: str
     role: Role
     is_active: bool
-    created_at: datetime
+    created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -151,3 +151,16 @@ class UserDetail(UserRead):
     housing_offer_count: int = 0
     housing_search_count: int = 0
     listings_active: int = 0
+
+
+__all__ = [
+    "UserBase",
+    "UserCreate",
+    "UserUpdate",
+    "UserRead",
+    "UserList",
+    "UserPasswordChange",
+    "RoleUpdate",
+    "UserVerify",
+    "UserDetail",
+]

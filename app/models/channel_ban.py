@@ -18,15 +18,22 @@ class ChannelBan(Base):
 
     __tablename__ = "channel_bans"
 
-    channel_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("channel.id"), primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    channel_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("channel.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"))
 
     motive: Mapped[str] = mapped_column(sa.String(255), nullable=False)
-    banned_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
+    duration: Mapped[datetime.timedelta] = mapped_column(sa.Interval, nullable=False)
+    active: Mapped[bool] = mapped_column(sa.Boolean, nullable=False)
+
+    banned_at: Mapped[datetime.datetime] = mapped_column(
+        sa.DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
+    )
     banned_by: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
 
     channel: Mapped["Channel"] = relationship(back_populates="bans")
-    user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    banned_user: Mapped["User"] = relationship(foreign_keys=[user_id])
     banner: Mapped["User"] = relationship(foreign_keys=[banned_by])
 
 
@@ -35,13 +42,17 @@ class ChannelUnban(Base):
 
     __tablename__ = "channel_unbans"
 
-    channel_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("channel.id"), primary_key=True)
-    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+
+    channel_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("channel.id"))
+    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"))
 
     motive: Mapped[str] = mapped_column(sa.String(255), nullable=False)
-    unbanned_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
+    unbanned_at: Mapped[datetime.datetime] = mapped_column(
+        sa.DateTime(timezone=True), default=datetime.datetime.now(datetime.UTC)
+    )
     unbanned_by: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
 
     channel: Mapped["Channel"] = relationship(back_populates="unbans")
-    user: Mapped["User"] = relationship(foreign_keys=[user_id])
-    unban_user: Mapped["User"] = relationship(foreign_keys=[unbanned_by])
+    unbanned_user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    unbanner: Mapped["User"] = relationship(foreign_keys=[unbanned_by])
