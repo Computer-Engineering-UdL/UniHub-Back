@@ -1,7 +1,7 @@
 from __future__ import annotations
 
 from datetime import date, datetime
-from decimal import Decimal
+from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, List, Literal
 from uuid import UUID
 
@@ -38,6 +38,11 @@ class HousingOfferBase(BaseModel):
     internet_included: bool = Field(default=False)
     gender_preference: GenderPreferences | None = None
     status: OfferStatus = Field(default="active")
+
+    @field_validator("price")
+    def round_price(cls, v: Decimal) -> Decimal:
+        """Round price to 2 decimal places."""
+        return v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
 
     @field_validator("end_date")
     @classmethod

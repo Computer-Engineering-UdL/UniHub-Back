@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import HousingOfferTableModel
+from app.models import HousingCategoryTableModel, HousingOfferTableModel
 from app.models.user import User
 from app.schemas import (
     HousingOfferCreate,
@@ -167,3 +167,51 @@ class HousingOfferCRUD:
         db.delete(db_offer)
         db.commit()
         return True
+
+
+    @staticmethod
+    def get_filtered(
+        db: Session,
+        city: Optional[str] = None,
+        category_name: Optional[str] = None,
+        min_price: Optional[float] = None,
+        max_price: Optional[float] = None,
+        status: Optional[str] = None,
+        skip: int = 0,
+        limit: int = 50,
+    ) -> List[HousingOfferList]:
+        """
+        Retrieve housing offers with optional filters.
+
+        Args:
+            db (Session): SQLAlchemy session.
+            city (Optional[str]): Filter by city (case-insensitive).
+            category_name (Optional[str]): Filter by category.
+            min_price (Optional[float]): Minimum price.
+            max_price (Optional[float]): Maximum price.
+            status (Optional[str]): Filter by offer status (e.g. 'active').
+            skip (int): Pagination offset.
+            limit (int): Pagination limit.
+        """
+        query = db.query(HousingOfferTableModel).options(joinedload(HousingOfferTableModel.category))
+
+
+        # filters
+        if city:
+            query = query.filter(HousingOfferTableModel.city.ilike(f"%{city}%"))
+        if category_name:
+            query = query.filter(
+                HousingOfferTableModel.category.has(
+                    HousingCategoryTableModel.name.ilike(f"%{category_name}%")
+                )
+            )
+        if min_price is not None:
+            query = query.filter(HousingOfferTableModel.price >= min_price)
+        if max_price is not None:
+            query = query.filter(HousingOfferTableModel.price <= max_price)
+        if status:
+            query = query.filter(HousingOfferTableModel.status == status)
+
+        offers = query.offset(skip).limit(limit).all()
+        return [HousingOfferList.model_validate(o) for o in offers]
+

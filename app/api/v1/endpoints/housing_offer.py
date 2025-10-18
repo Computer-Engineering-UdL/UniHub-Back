@@ -81,20 +81,42 @@ def get_offer(
     summary="List all housing offers",
     response_description="Returns a list of all available housing offers (paginated)."
 )
+@router.get(
+    "/",
+    response_model=List[HousingOfferList],
+    status_code=status.HTTP_200_OK,
+    summary="List housing offers (with filters)",
+    response_description="Returns a list of filtered housing offers.",
+)
 def list_offers(
+    db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 20,
-    db: Session = Depends(get_db),
+    city: str | None = None,
+    category_name: str | None = None,
+    min_price: float | None = None,
+    max_price: float | None = None,
+    status: str | None = "active",
 ):
     """
-    Retrieve a paginated list of all available housing offers.
-
-    Args:
-        skip (int): Number of offers to skip.
-        limit (int): Maximum number of offers to return (default: 20).
+    Retrieve housing offers with optional filters:
+    - `city`: case-insensitive substring match
+    - `category_name`: filter by category name
+    - `min_price`, `max_price`: price range
+    - `status`: offer status (e.g. active, expired)
     """
-    offers = HousingOfferCRUD.get_all(db, skip=skip, limit=limit)
+    offers = HousingOfferCRUD.get_filtered(
+        db=db,
+        city=city,
+        category_name=category_name,
+        min_price=min_price,
+        max_price=max_price,
+        status=status,
+        skip=skip,
+        limit=limit,
+    )
     return offers
+
 
 
 @router.patch(
