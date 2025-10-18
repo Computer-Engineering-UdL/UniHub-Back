@@ -1,34 +1,31 @@
-import pytest
-from fastapi import FastAPI
-from fastapi.testclient import TestClient
-
-from app.api.v1.endpoints.auth import DEFAULT_PASSWORD
-from app.api.v1.endpoints.auth import router as auth_router
-
-
-@pytest.fixture
-def app():
-    app = FastAPI()
-    app.include_router(auth_router, prefix="/auth")
-    return app
-
-
-@pytest.fixture
-def client(app):
-    return TestClient(app)
+from app.core.config import settings
+from app.literals.users import Role
 
 
 class TestAuthEndpoints:
-    def test_login_success(self, client):
-        response = client.post("/auth/login", json={"email": "admin@admin.com", "password": DEFAULT_PASSWORD})
+    """Test authentication endpoints."""
+
+    def test_login_success_username(self, client):
+        """Test successful login with username."""
+        response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
         assert response.status_code == 200
         data = response.json()
-        assert "token" in data
-        assert "user" in data
-        assert data["user"]["email"] == "admin@admin.com"
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
+
+    def test_login_success_email(self, client):
+        """Test successful login with email."""
+        response = client.post(
+            "/auth/login", data={"username": "admin@admin.com", "password": settings.DEFAULT_PASSWORD}
+        )
+        assert response.status_code == 200
+        data = response.json()
+        assert "access_token" in data
+        assert data["token_type"] == "bearer"
 
     def test_login_wrong_email(self, client):
-        response = client.post("/auth/login", json={"email": "noexiste@correo.com", "password": DEFAULT_PASSWORD})
+        """Test login with non-existent email."""
+        response = client.post("/auth/login", data={"username": "nonexistent", "password": settings.DEFAULT_PASSWORD})
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
@@ -40,3 +37,33 @@ class TestAuthEndpoints:
     def test_login_invalid_payload(self, client):
         response = client.post("/auth/login", json={"email": "admin@admin.com"})
         assert response.status_code == 422
+
+    def test_get_me_success(self, client):
+        """Test getting current user info."""
+        login_response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
+        token = login_response.json()["access_token"]
+
+        response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+        data = response.json()
+        assert data["email"] == "admin@admin.com"
+        assert data["username"] == "admin"
+        assert data["role"] == Role.ADMIN
+
+    def test_get_me_without_token(self, client):
+        """Test getting current user without token."""
+        response = client.get("/auth/me")
+        assert response.status_code == 401
+
+    def test_refresh_token(self, client):
+        """Test refresh token."""
+        response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
+        assert response.status_code == 200
+        token: str = response.json()["access_token"]
+        refresh_token: str = response.json()["refresh_token"]
+        refresh_resp = client.post("/auth/refresh", json={"refresh_token": refresh_token})
+        assert refresh_resp.status_code == 200
+        new_tokens = refresh_resp.json()
+        assert "access_token" in new_tokens
+        assert "refresh_token" in new_tokens
+        assert new_tokens["access_token"] != token

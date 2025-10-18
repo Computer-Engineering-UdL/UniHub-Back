@@ -1,11 +1,14 @@
+import datetime
 import uuid
 from typing import Optional
 
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.models import Channel, ChannelBan, ChannelMember
-from app.schemas import ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead
+from app.crud.user import UserCRUD
+from app.literals.channels import ChannelRole
+from app.models import Channel, ChannelBan, ChannelMember, ChannelUnban
+from app.schemas import ChannelCreate, ChannelUpdate
 
 
 class ChannelCRUD:
@@ -16,7 +19,7 @@ class ChannelCRUD:
     # ==========================================
 
     @staticmethod
-    def create(db: Session, channel_in: ChannelCreate) -> ChannelRead:
+    def create(db: Session, channel_in: ChannelCreate) -> Channel:
         """Create a new channel.
 
         Args:
@@ -35,7 +38,7 @@ class ChannelCRUD:
             db.add(db_channel)
             db.commit()
             db.refresh(db_channel)
-            return ChannelRead.model_validate(db_channel)
+            return db_channel
         except IntegrityError as e:
             db.rollback()
             raise e
@@ -45,7 +48,7 @@ class ChannelCRUD:
     # ==========================================
 
     @staticmethod
-    def get_by_id(db: Session, channel_id: uuid.UUID) -> Optional[ChannelRead]:
+    def get_by_id(db: Session, channel_id: uuid.UUID) -> Optional[Channel]:
         """Get channel by ID.
 
         Args:
@@ -55,10 +58,7 @@ class ChannelCRUD:
         Returns:
             ChannelRead schema or None if not found
         """
-        db_channel = db.query(Channel).filter(Channel.id == channel_id).first()
-        if db_channel is None:
-            return None
-        return ChannelRead.model_validate(db_channel) if db_channel else None
+        return db.query(Channel).filter(Channel.id == channel_id).one_or_none()
 
     @staticmethod
     def get_all(
@@ -66,7 +66,7 @@ class ChannelCRUD:
         skip: int = 0,
         limit: int = 100,
         channel_type: Optional[str] = None,
-    ) -> list[ChannelRead]:
+    ) -> list[type[Channel]]:
         """Get all channels with optional filtering.
 
         Args:
@@ -84,14 +84,14 @@ class ChannelCRUD:
             query = query.filter(Channel.channel_type == channel_type)
 
         channels = query.offset(skip).limit(limit).all()
-        return [ChannelRead.model_validate(ch) for ch in channels]
+        return channels
 
     # ==========================================
     # UPDATE
     # ==========================================
 
     @staticmethod
-    def update(db: Session, channel_id: uuid.UUID, channel_update: ChannelUpdate) -> Optional[ChannelRead]:
+    def update(db: Session, channel_id: uuid.UUID, channel_update: ChannelUpdate) -> type[Channel] | None:
         """Update a channel.
 
         Args:
@@ -113,14 +113,14 @@ class ChannelCRUD:
         db.add(db_channel)
         db.commit()
         db.refresh(db_channel)
-        return ChannelRead.model_validate(db_channel)
+        return db_channel
 
     # ==========================================
     # DELETE
     # ==========================================
 
     @staticmethod
-    def delete(db: Session, channel_id: uuid.UUID) -> bool:
+    def delete(db: Session, channel_id: uuid.UUID) -> type[Channel] | None:
         """Delete a channel.
 
         Args:
@@ -132,11 +132,11 @@ class ChannelCRUD:
         """
         db_channel = db.query(Channel).filter(Channel.id == channel_id).first()
         if not db_channel:
-            return False
+            return None
 
         db.delete(db_channel)
         db.commit()
-        return True
+        return db_channel
 
     # ==========================================
     # MEMBER MANAGEMENT
@@ -144,8 +144,8 @@ class ChannelCRUD:
 
     @staticmethod
     def add_member(
-        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, role: str = "user"
-    ) -> Optional[MembershipRead]:
+        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, role: str = ChannelRole.USER
+    ) -> type[ChannelMember] | None:
         """Add a user to a channel.
 
         Args:
@@ -167,16 +167,16 @@ class ChannelCRUD:
             .first()
         )
         if existing:
-            return MembershipRead.model_validate(db_channel)
+            return existing
 
         membership = ChannelMember(channel_id=channel_id, user_id=user_id, role=role)
         db.add(membership)
         db.commit()
         db.refresh(db_channel)
-        return MembershipRead.model_validate(db_channel)
+        return membership
 
     @staticmethod
-    def remove_member(db: Session, channel_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    def remove_member(db: Session, channel_id: uuid.UUID, user_id: uuid.UUID) -> type[ChannelMember] | None:
         """Remove a user from a channel.
 
         Args:
@@ -185,21 +185,21 @@ class ChannelCRUD:
             user_id: User UUID
 
         Returns:
-            True if user removed else False if it was not removed nor found
+            ChannelMember: The removed membership, or None if not found
         """
-        db_channel = db.query(Channel).filter(Channel.id == channel_id).first()
-        if not db_channel:
-            return False
-
-        delete_count = (
+        membership = (
             db.query(ChannelMember)
             .filter(ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id)
-            .delete()
+            .first()
         )
 
+        if not membership:
+            return None
+
+        db.delete(membership)
         db.commit()
-        db.refresh(db_channel)
-        return delete_count != 0
+
+        return membership
 
     # ==========================================
     # BAN MANAGEMENT
@@ -207,8 +207,13 @@ class ChannelCRUD:
 
     @staticmethod
     def ban_member(
-        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, banned_by: Optional[uuid.UUID] = None
-    ) -> bool:
+        db: Session,
+        channel_id: uuid.UUID,
+        user_id: uuid.UUID,
+        motive: str,
+        duration: datetime.timedelta,
+        banned_by: Optional[uuid.UUID] = None,
+    ) -> ChannelBan | None:
         """Ban a user from a channel.
 
         Args:
@@ -216,45 +221,113 @@ class ChannelCRUD:
             channel_id: Channel UUID
             user_id: User UUID to ban
             motive: Reason for ban
+            duration: How long the ban lasts
             banned_by: UUID of user who initiated ban
 
         Returns:
-            True if user banned else False
+            ChannelBan: The created ban record, or None if channel/member not found
         """
         db_channel = db.query(Channel).filter(Channel.id == channel_id).first()
         if not db_channel:
-            return False
+            return None
 
-        # Remove from members if present
-        db.query(ChannelMember).filter(
-            ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id
-        ).delete()
+        membership = (
+            db.query(ChannelMember)
+            .filter(ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id)
+            .first()
+        )
 
-        # Add to banned
-        ban = ChannelBan(channel_id=channel_id, user_id=user_id, motive=motive, banned_by=banned_by)
+        if membership:
+            membership.is_banned = True
+
+        db.query(ChannelBan).filter(
+            ChannelBan.channel_id == channel_id, ChannelBan.user_id == user_id, ChannelBan.active
+        ).update({"active": False})
+
+        ban = ChannelBan(
+            channel_id=channel_id, user_id=user_id, motive=motive, duration=duration, active=True, banned_by=banned_by
+        )
         db.add(ban)
         db.commit()
-        db.refresh(db_channel)
-        return True
+        db.refresh(ban)
+
+        return ban
 
     @staticmethod
-    def unban_member(db: Session, channel_id: uuid.UUID, user_id: uuid.UUID) -> bool:
+    def unban_member(
+        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, unbanned_by: Optional[uuid.UUID] = None
+    ) -> ChannelUnban | None:
         """Unban a member from a channel.
 
         Args:
             db: Database session
             channel_id: Channel UUID
             user_id: User UUID to unban
+            motive: Reason for unban
+            unbanned_by: UUID of user who initiated unban
 
         Returns:
-            True if user unbanned else False
+            ChannelUnban: The created unban record, or None if channel not found
         """
         db_channel = db.query(Channel).filter(Channel.id == channel_id).first()
         if not db_channel:
-            return False
+            return None
 
-        db.query(ChannelBan).filter(ChannelBan.channel_id == channel_id, ChannelBan.user_id == user_id).delete()
+        membership = (
+            db.query(ChannelMember)
+            .filter(ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id)
+            .first()
+        )
 
+        if membership:
+            membership.is_banned = False
+
+        db.query(ChannelBan).filter(
+            ChannelBan.channel_id == channel_id, ChannelBan.user_id == user_id, ChannelBan.active
+        ).update({"active": False})
+
+        unban = ChannelUnban(channel_id=channel_id, user_id=user_id, motive=motive, unbanned_by=unbanned_by)
+        db.add(unban)
         db.commit()
-        db.refresh(db_channel)
-        return True
+        db.refresh(unban)
+
+        return unban
+
+    @staticmethod
+    def get_members(db: Session, channel_id: uuid.UUID) -> list[type[ChannelMember]] | None:
+        """
+        Get all users in a channel.
+        Args:
+            db: Database session
+            channel_id: Channel UUID to get users from
+        Returns:
+            A list of ChannelMember objects or None if channel not found
+        """
+        channel_exists = db.query(Channel).filter(Channel.id == channel_id).first()
+        if channel_exists is None:
+            return None
+
+        return db.query(ChannelMember).filter(ChannelMember.channel_id == channel_id).all()
+
+    @staticmethod
+    def get_member(db: Session, channel_id: uuid.UUID, user_id: uuid.UUID) -> Optional[ChannelMember]:
+        """
+        Get all users in a channel.
+        Args:
+            db: Database session
+            channel_id: Channel UUID to get the user from
+            user_id: User UUID to get
+        Returns:
+            A list of ChannelMember objects or None if channel not found
+        """
+        channel_exists = db.query(Channel).filter(Channel.id == channel_id).first()
+        if channel_exists is None:
+            return None
+        user_channel = UserCRUD.get_by_id(db, user_id)
+        if user_channel is None:
+            return None
+        return (
+            db.query(ChannelMember)
+            .filter(ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id)
+            .one_or_none()
+        )

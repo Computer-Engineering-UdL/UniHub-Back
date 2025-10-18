@@ -4,6 +4,7 @@ import uuid
 from typing import Any, Dict, List
 
 from app.core.security import hash_password
+from app.literals.users import Role
 from app.schemas import UserCreate, UserList
 
 MOCK_USERS: List[Dict[str, Any]] = [
@@ -14,7 +15,7 @@ MOCK_USERS: List[Dict[str, Any]] = [
         "first_name": "Aniol",
         "last_name": "Serrano",
         "provider": "local",
-        "role": "Basic",
+        "role": Role.BASIC,
         "phone": "+34612345678",
         "university": "Universitat Politècnica de Catalunya",
     },
@@ -22,10 +23,10 @@ MOCK_USERS: List[Dict[str, Any]] = [
         "id": uuid.UUID("0bfeba8c-8e01-49fa-a50a-854ebcd19d41"),
         "username": "admin",
         "email": "admin@admin.com",
-        "first_name": "Admin",
+        "first_name": Role.ADMIN,
         "last_name": "User",
         "provider": "local",
-        "role": "Admin",
+        "role": Role.ADMIN,
         "phone": None,
         "university": None,
     },
@@ -105,7 +106,7 @@ def seed_mock_users(default_password: str = "password123") -> None:
 def get_user_by_id(user_id: uuid.UUID) -> UserCreate | None:
     """Get a user by ID from mock data."""
     for user in MOCK_USERS:
-        if user['id'] == user_id:
+        if user["id"] == user_id:
             return user
     return None
 

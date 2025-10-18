@@ -1,5 +1,5 @@
+import datetime
 import uuid
-from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
@@ -39,7 +39,16 @@ class ChannelRead(ChannelBase):
     """Basic channel info without relationships."""
 
     id: uuid.UUID
-    created_at: datetime
+    created_at: datetime.datetime
+
+    model_config = ConfigDict(from_attributes=True)
+
+
+class ChannelDeleteRead(ChannelBase):
+    """Schema containing info when deleting a channel"""
+
+    id: uuid.UUID
+    deleted_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -55,7 +64,8 @@ class MembershipRead(BaseModel):
     user_id: uuid.UUID
     channel_id: uuid.UUID
     role: ChannelRole
-    joined_at: datetime
+    joined_at: datetime.datetime
+    is_banned: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -65,14 +75,31 @@ class MembershipRead(BaseModel):
 # ==========================================
 
 
+class BanCreate(BaseModel):
+    """Schema for creating a new ban."""
+
+    user_id: uuid.UUID
+    motive: str = Field(..., max_length=255)
+    duration_days: int = Field(..., gt=0, description="Ban duration in days")
+
+
+class UnbanCreate(BaseModel):
+    """Schema for creating a new unban."""
+
+    user_id: uuid.UUID
+    motive: str = Field(..., max_length=255)
+
+
 class BanRead(BaseModel):
     """Ban information."""
 
     user_id: uuid.UUID
     channel_id: uuid.UUID
     motive: str
-    banned_at: datetime
+    duration: datetime.timedelta
+    banned_at: datetime.datetime
     banned_by: uuid.UUID
+    active: bool
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -83,7 +110,21 @@ class UnbanRead(BaseModel):
     user_id: uuid.UUID
     channel_id: uuid.UUID
     motive: str
-    unbanned_at: datetime
+    unbanned_at: datetime.datetime
     unbanned_by: uuid.UUID
 
     model_config = ConfigDict(from_attributes=True)
+
+
+__all__ = [
+    "ChannelBase",
+    "ChannelCreate",
+    "ChannelUpdate",
+    "ChannelRead",
+    "ChannelDeleteRead",
+    "MembershipRead",
+    "BanCreate",
+    "UnbanCreate",
+    "BanRead",
+    "UnbanRead",
+]

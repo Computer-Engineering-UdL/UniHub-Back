@@ -14,15 +14,20 @@ if TYPE_CHECKING:
 GenderPreferences = Literal["any", "male", "female"]
 OfferStatus = Literal["active", "expired", "rented", "inactive"]
 
+
 # Base Schema (Shared Fields)
 class HousingOfferBase(BaseModel):
     """Base schema with shared fields for create/update."""
+
     category_id: UUID
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=5000)
     price: Decimal = Field(gt=0)
     area: Decimal = Field(gt=0)
     offer_valid_until: date
+
+    city: str = Field(min_length=1, max_length=100)
+    address: str = Field(min_length=1, max_length=255)
 
     start_date: date
     end_date: date | None = None
@@ -48,12 +53,14 @@ class HousingOfferBase(BaseModel):
 # Create Schema (For POST)
 class HousingOfferCreate(HousingOfferBase):
     """Schema for creating a new housing offer."""
+
     user_id: UUID
 
 
 # Update Schema (For PATCH)
 class HousingOfferUpdate(BaseModel):
     """Schema for updating a housing offer (all fields optional)."""
+
     title: str | None = Field(None, min_length=1, max_length=100)
     description: str | None = Field(None, min_length=1, max_length=5000)
     start_date: date | None = None
@@ -70,6 +77,8 @@ class HousingOfferUpdate(BaseModel):
     gender_preference: GenderPreferences | None = None
     status: OfferStatus | None = None
     category_id: UUID | None = None
+    city: str | None = Field(None, min_length=1, max_length=100)
+    address: str | None = Field(None, min_length=1, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -77,6 +86,7 @@ class HousingOfferUpdate(BaseModel):
 # Read Schema (For GET single)
 class HousingOfferRead(HousingOfferBase):
     """Schema for reading housing offer data."""
+
     id: UUID
     user_id: UUID
     posted_date: datetime
@@ -88,12 +98,15 @@ class HousingOfferRead(HousingOfferBase):
 # List Schema (For paginated list)
 class HousingOfferList(BaseModel):
     """Lightweight schema for list endpoints."""
+
     id: UUID
     title: str
     price: Decimal
     area: Decimal
     status: OfferStatus
     posted_date: datetime
+
+    city: str
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -102,9 +115,18 @@ class HousingOfferList(BaseModel):
 class HousingOfferDetail(HousingOfferRead):
     """Detailed schema with related objects."""
 
-
     category: "HousingCategoryRead"
     photos: List["HousingPhotoRead"] = []
     photo_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
+
+
+__all__ = [
+    "HousingOfferBase",
+    "HousingOfferCreate",
+    "HousingOfferUpdate",
+    "HousingOfferRead",
+    "HousingOfferList",
+    "HousingOfferDetail",
+]
