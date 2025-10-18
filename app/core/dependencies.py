@@ -1,5 +1,5 @@
 import uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -23,15 +23,30 @@ async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
-        user_id: uuid.UUID = payload.get("sub")
-        username: str = payload.get("username")
-        email: str = payload.get("email")
-        role: Role = payload.get("role")
+        user_id_raw = payload.get("sub")
+        username: Optional[str] = payload.get("username")
+        email: Optional[str] = payload.get("email")
+        role_raw = payload.get("role")
 
-        if user_id is None:
+        if user_id_raw is None:
             raise credentials_exception
 
-        token_data = TokenData(id=user_id, username=username, email=email, role=Role(role.lower()))
+        try:
+            user_id = uuid.UUID(str(user_id_raw))
+        except Exception:
+            raise credentials_exception
+
+        # Parse role, if it fails default to BASIC
+        role_enum: Role = Role.BASIC
+        if isinstance(role_raw, Role):
+            role_enum = role_raw
+        elif isinstance(role_raw, str):
+            for member in Role:
+                if member.value.lower() == role_raw.lower() or member.name.lower() == role_raw.lower():
+                    role_enum = member
+                    break
+
+        token_data = TokenData(id=user_id, username=username, email=email, role=role_enum)
     except JWTError:
         raise credentials_exception
 
