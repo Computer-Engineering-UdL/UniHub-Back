@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
 from app.api.utils import handle_crud_errors
@@ -63,4 +63,7 @@ def delete_user(user_id: uuid.UUID, db: Session = Depends(get_db)):
     """
     Delete a user.
     """
+    ok = UserCRUD.delete(db, user_id)
+    if not ok:
+        raise HTTPException(status_code=404, detail="User not found")
     return UserCRUD.delete(db, user_id)

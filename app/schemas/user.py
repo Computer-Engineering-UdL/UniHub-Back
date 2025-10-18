@@ -1,5 +1,5 @@
+import datetime
 import uuid
-from datetime import datetime
 from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field
@@ -26,7 +26,7 @@ class UserBase(BaseModel):
     room_number: Optional[str] = Field(None, max_length=20)
     is_active: bool = Field(default=True)
     is_verified: bool = Field(default=False)
-    created_at: datetime = Field(default_factory=datetime.utcnow)
+    created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
 
 
 # ==========================================
@@ -53,6 +53,7 @@ class UserUpdate(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
     avatar_url: Optional[str] = Field(None, max_length=500)
+    password: Optional[str] = Field(None, min_length=8)
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -66,7 +67,7 @@ class UserRead(UserBase):
     role: Role
     is_active: bool
     is_verified: bool
-    created_at: datetime
+    created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -83,7 +84,7 @@ class UserList(BaseModel):
     last_name: str
     role: Role
     is_active: bool
-    created_at: datetime
+    created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
 
@@ -102,6 +103,7 @@ class UserPublic(BaseModel):
     university: Optional[str] = None
 
     model_config = ConfigDict(from_attributes=True)
+
 
 # ==========================================
 # Sensitive Operations Schemas
