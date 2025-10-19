@@ -1,9 +1,10 @@
-from typing import List
+from typing import TYPE_CHECKING, List
 from uuid import UUID
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from .housing_offer import HousingOfferList
+if TYPE_CHECKING:
+    from app.schemas import HousingOfferList
 
 
 # Base Schema (Shared Fields)

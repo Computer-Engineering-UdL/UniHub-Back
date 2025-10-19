@@ -7,15 +7,13 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.api.utils.decorators import handle_crud_errors
-from app.api.utils.permissions import get_channel_permission, is_channel_member
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_role
-from app.core.types import TokenData
+from app.core.dependencies import get_channel_permission, get_current_user, is_channel_member, require_role
 from app.crud.channel import ChannelCRUD
 from app.literals.channels import ChannelRole
 from app.literals.users import Role
 from app.models import ChannelMember
-from app.schemas import BanCreate, BanRead, ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead
+from app.schemas import BanCreate, BanRead, ChannelCreate, ChannelRead, ChannelUpdate, MembershipRead, TokenData
 from app.schemas.channel import UnbanCreate, UnbanRead
 
 router = APIRouter()
@@ -28,7 +26,7 @@ def fetch_channels(db: Session = Depends(get_db), _: TokenData = Depends(require
 
 
 @router.get("/{channel_id}", response_model=ChannelRead)
-@handle_crud_errors()
+@handle_crud_errors
 def fetch_channel(channel_id: uuid.UUID, db: Session = Depends(get_db), _: ChannelMember = Depends(is_channel_member)):
     """Retrieve a specific channel. Must be a member."""
     channel_db = ChannelCRUD.get_by_id(db, channel_id)
@@ -38,7 +36,7 @@ def fetch_channel(channel_id: uuid.UUID, db: Session = Depends(get_db), _: Chann
 
 
 @router.post("/", response_model=ChannelRead)
-@handle_crud_errors()
+@handle_crud_errors
 def create_channel(channel: ChannelCreate, db: Session = Depends(get_db), user: TokenData = Depends(get_current_user)):
     """Create a new channel. Creator becomes channel admin."""
     new_channel = ChannelCRUD.create(db, channel)
@@ -49,7 +47,7 @@ def create_channel(channel: ChannelCreate, db: Session = Depends(get_db), user: 
 
 
 @router.patch("/{channel_id}", response_model=ChannelRead)
-@handle_crud_errors()
+@handle_crud_errors
 def update_channel(
     channel_id: uuid.UUID,
     channel: ChannelUpdate,
@@ -61,7 +59,7 @@ def update_channel(
 
 
 @router.delete("/{channel_id}", response_model=bool)
-@handle_crud_errors()
+@handle_crud_errors
 def delete_channel(
     channel_id: uuid.UUID,
     db: Session = Depends(get_db),
@@ -73,7 +71,7 @@ def delete_channel(
 
 
 @router.post("/{channel_id}/add_member/{member_id}", response_model=MembershipRead)
-@handle_crud_errors()
+@handle_crud_errors
 def add_member(
     channel_id: uuid.UUID,
     member_id: uuid.UUID,
@@ -85,7 +83,7 @@ def add_member(
 
 
 @router.post("/{channel_id}/remove_member/{member_id}", response_model=MembershipRead)
-@handle_crud_errors()
+@handle_crud_errors
 def remove_member(
     channel_id: uuid.UUID,
     member_id: uuid.UUID,
@@ -100,7 +98,7 @@ def remove_member(
 
 
 @router.post("/{channel_id}/ban", response_model=BanRead)
-@handle_crud_errors()
+@handle_crud_errors
 def ban_member(
     channel_id: uuid.UUID,
     ban_req: BanCreate,
@@ -127,7 +125,7 @@ def ban_member(
 
 
 @router.post("/{channel_id}/unban", response_model=UnbanRead)
-@handle_crud_errors()
+@handle_crud_errors
 def unban_member(
     channel_id: uuid.UUID,
     unban_req: UnbanCreate,

@@ -1,10 +1,12 @@
 from __future__ import annotations
 
+import uuid
 from typing import TYPE_CHECKING
 
 from pydantic import BaseModel, field_validator
 
 from app.literals.auth import TokenType
+from app.literals.users import Role
 
 if TYPE_CHECKING:
     from app.schemas import UserRead
@@ -28,6 +30,13 @@ class Token(BaseModel):
     token_type: TokenType = "bearer"
 
 
+class TokenData(BaseModel):
+    id: uuid.UUID
+    username: str
+    email: str
+    role: Role = Role.BASIC
+
+
 class AuthResponse(BaseModel):
     token: str
     user: UserRead
@@ -36,5 +45,6 @@ class AuthResponse(BaseModel):
 __all__ = [
     "LoginRequest",
     "Token",
+    "TokenData",
     "AuthResponse",
 ]

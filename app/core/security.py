@@ -11,6 +11,7 @@ from jose import JWTError, jwt
 from starlette import status
 
 from app.core.config import settings
+from app.schemas import TokenData
 
 
 def hash_password(password: str) -> str:
@@ -37,9 +38,9 @@ def create_refresh_token(data: dict):
     return jwt.encode(to_encode, settings.SECRET_KEY, algorithm=settings.ALGORITHM)
 
 
-def get_payload(token: str) -> dict:
+def get_payload(token: str) -> TokenData:
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
     except JWTError:
         raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
-    return payload
+    return TokenData(**payload)

@@ -13,7 +13,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[InterestCategoryRead])
-@handle_crud_errors()
+@handle_crud_errors
 def list_interest_categories(db: Session = Depends(get_db)):
     """Return all interest categories with their interests."""
 
@@ -21,7 +21,7 @@ def list_interest_categories(db: Session = Depends(get_db)):
 
 
 @router.get("/user/{user_id}", response_model=List[InterestRead])
-@handle_crud_errors()
+@handle_crud_errors
 def list_user_interests(user_id: uuid.UUID, db: Session = Depends(get_db)):
     """Return the interests linked to a specific user."""
 
@@ -33,8 +33,10 @@ def list_user_interests(user_id: uuid.UUID, db: Session = Depends(get_db)):
     response_model=List[InterestRead],
     status_code=status.HTTP_201_CREATED,
 )
-@handle_crud_errors()
-def add_interest_to_user(user_id: uuid.UUID, payload: UserInterestCreate, db: Session = Depends(get_db)):
+@handle_crud_errors
+def add_interest_to_user(
+    user_id: uuid.UUID, payload: UserInterestCreate, db: Session = Depends(get_db)
+):
     """Attach an interest to a user and return the updated list."""
 
     return InterestCRUD.add_interest_to_user(db, user_id, payload.interest_id)
@@ -44,8 +46,10 @@ def add_interest_to_user(user_id: uuid.UUID, payload: UserInterestCreate, db: Se
     "/user/{user_id}/{interest_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@handle_crud_errors()
-def remove_interest_from_user(user_id: uuid.UUID, interest_id: uuid.UUID, db: Session = Depends(get_db)):
+@handle_crud_errors
+def remove_interest_from_user(
+    user_id: uuid.UUID, interest_id: uuid.UUID, db: Session = Depends(get_db)
+):
     """Remove an interest from a user."""
 
     InterestCRUD.remove_interest_from_user(db, user_id, interest_id)
