@@ -1077,6 +1077,7 @@ dependencies = [
     { name = "alembic" },
     { name = "authlib" },
     { name = "fastapi" },
+    { name = "httpx" },
     { name = "itsdangerous" },
     { name = "jose" },
     { name = "passlib", extra = ["bcrypt"] },
@@ -1094,7 +1095,6 @@ dependencies = [
 dev = [
     { name = "bcrypt" },
     { name = "graphviz" },
-    { name = "httpx" },
     { name = "import-linter" },
     { name = "pre-commit" },
     { name = "pydeps" },
@@ -1108,6 +1108,7 @@ requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "authlib", specifier = ">=1.6.5" },
     { name = "fastapi", specifier = ">=0.118.0" },
+    { name = "httpx", specifier = ">=0.27.0" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
     { name = "jose", specifier = ">=1.0.0" },
     { name = "passlib", extras = ["bcrypt"], specifier = ">=1.7.4" },
@@ -1125,7 +1126,6 @@ requires-dist = [
 dev = [
     { name = "bcrypt", specifier = ">=5.0.0" },
     { name = "graphviz", specifier = ">=0.21" },
-    { name = "httpx", specifier = ">=0.27.0" },
     { name = "import-linter", specifier = ">=2.5.2" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydeps", specifier = ">=3.0.1" },
