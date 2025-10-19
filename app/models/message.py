@@ -5,7 +5,7 @@ import sqlalchemy as sa
 from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import relationship
 
-from app.core.database import Base
+from app.core import Base
 
 
 class Message(Base):

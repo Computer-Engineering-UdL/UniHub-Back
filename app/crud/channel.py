@@ -5,7 +5,6 @@ from typing import Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
-from app.crud.user import UserCRUD
 from app.literals.channels import ChannelRole
 from app.models import Channel, ChannelBan, ChannelMember, ChannelUnban
 from app.schemas import ChannelCreate, ChannelUpdate
@@ -322,9 +321,6 @@ class ChannelCRUD:
         """
         channel_exists = db.query(Channel).filter(Channel.id == channel_id).first()
         if channel_exists is None:
-            return None
-        user_channel = UserCRUD.get_by_id(db, user_id)
-        if user_channel is None:
             return None
         return (
             db.query(ChannelMember)
