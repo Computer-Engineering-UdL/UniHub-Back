@@ -1,21 +1,43 @@
+from __future__ import annotations
+
 import uuid
 
+from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
-from sqlalchemy.orm import Session
 
+from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
-from app.schemas import TokenData
 
-from ..crud.channel import ChannelCRUD
-from ..literals.channels import CHANNEL_ROLE_HIERARCHY, ChannelRole
-from ..models import ChannelMember
 from .config import settings
-from .database import get_db
+from .types import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
+oauth = OAuth()
+
+oauth.register(
+    name=OAuthProvider.GOOGLE.value,
+    client_id=settings.GOOGLE_CLIENT_ID,
+    client_secret=settings.GOOGLE_CLIENT_SECRET,
+    server_metadata_url="https://accounts.google.com/.well-known/openid-configuration",
+    client_kwargs={"scope": "openid email profile"},
+)
+
+oauth.register(
+    name=OAuthProvider.GITHUB.value,
+    client_id=settings.GITHUB_CLIENT_ID,
+    client_secret=settings.GITHUB_CLIENT_SECRET,
+    access_token_url="https://github.com/login/oauth/access_token",
+    authorize_url="https://github.com/login/oauth/authorize",
+    api_base_url="https://api.github.com/",
+    client_kwargs={"scope": "user:email"},
+)
+
+
+def get_oauth() -> OAuth:
+    return oauth
 
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
@@ -55,44 +77,3 @@ def require_role(min_role: Role):
         return user
 
     return role_checker
-
-
-def get_channel_permission(min_role: ChannelRole = ChannelRole.USER):
-    """Factory to create channel permission checker.
-    Args:
-        min_role: Minimum channel role required to access
-    Raises:
-        HTTPException: If user does not have required channel roles
-    """
-
-    def permission_checker(
-        channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
-    ) -> ChannelMember:
-        if user.role == Role.ADMIN:
-            membership = ChannelCRUD.get_member(db, channel_id, user.id)
-            return membership
-
-        membership = ChannelCRUD.get_member(db, channel_id, user.id)
-        if not membership:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
-        if CHANNEL_ROLE_HIERARCHY[membership.role] > CHANNEL_ROLE_HIERARCHY[min_role]:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Requires elevated access")
-
-        return membership
-
-    return permission_checker
-
-
-def is_channel_member(
-    channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
-) -> ChannelMember:
-    """Check if user is a channel member"""
-    if user.role == Role.ADMIN:
-        membership = ChannelCRUD.get_member(db, channel_id, user.id)
-        return membership
-
-    membership = ChannelCRUD.get_member(db, channel_id, user.id)
-    if not membership:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
-
-    return membership

@@ -1,17 +1,14 @@
 import datetime
 import uuid
-from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
 from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
-from app.core.database import Base
+from app.core import Base
 from app.literals.channels import ChannelRole
-
-if TYPE_CHECKING:
-    from app.models.channel import Channel
-    from app.models.user import User
+from app.models.channel import Channel
+from app.models.user import User
 
 
 class ChannelMember(Base):
