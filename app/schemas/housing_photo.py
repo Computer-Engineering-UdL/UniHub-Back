@@ -7,7 +7,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field
 
 if TYPE_CHECKING:
-    from app.schemas import HousingOfferList
+    from .housing_offer import HousingOfferList
 
 
 # Base Schema (Shared Fields)

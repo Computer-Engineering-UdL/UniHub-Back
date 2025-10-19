@@ -11,8 +11,8 @@ from sqlalchemy.orm import sessionmaker
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.interest import router as interest_router
+from app.core import Base, get_db
 from app.core.config import settings
-from app.core.database import Base, get_db
 from app.literals.users import Role
 from app.seeds import seed_interests
 
