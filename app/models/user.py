@@ -1,3 +1,5 @@
+from __future__ import annotations
+
 import datetime
 import uuid
 from typing import TYPE_CHECKING, Any, Dict, List
@@ -10,7 +12,11 @@ from app.core.database import Base
 from app.literals.users import Role
 
 if TYPE_CHECKING:
-    from app.models import Channel, ChannelMember, Interest, UserInterest
+    from app.models.channel import Channel
+    from app.models.channel_member import ChannelMember
+    from app.models.housing_offer import HousingOfferTableModel
+    from app.models.interest import Interest, UserInterest
+    from app.models.message import Message
 
 
 class User(Base):
@@ -32,17 +38,23 @@ class User(Base):
     is_verified = Column(sa.Boolean, nullable=False, default=False)
     created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
 
-    channel_memberships: Mapped[List["ChannelMember"]] = relationship(
-        back_populates="user", cascade="all, delete-orphan"
+    # Use string references for relationships
+    channel_memberships: Mapped[List[ChannelMember]] = relationship(
+        "ChannelMember", back_populates="user", cascade="all, delete-orphan"
     )
-    channels: Mapped[List["Channel"]] = relationship(
-        secondary="channel_members", back_populates="members", viewonly=True
+
+    channels: Mapped[List[Channel]] = relationship(
+        "Channel", secondary="channel_members", back_populates="members", viewonly=True
     )
-    messages = relationship("Message", back_populates="user")
-    housing_offers = relationship("HousingOfferTableModel", back_populates="user")
-    user_interest_links: Mapped[List["UserInterest"]] = relationship(viewonly=True)
-    interests: Mapped[List["Interest"]] = relationship(
-        secondary="user_interest", back_populates="users", order_by="Interest.name"
+
+    messages: Mapped[List[Message]] = relationship("Message", back_populates="user")
+
+    housing_offers: Mapped[List[HousingOfferTableModel]] = relationship("HousingOfferTableModel", back_populates="user")
+
+    user_interest_links: Mapped[List[UserInterest]] = relationship("UserInterest", viewonly=True)
+
+    interests: Mapped[List[Interest]] = relationship(
+        "Interest", secondary="user_interest", back_populates="users", order_by="Interest.name"
     )
 
     @property

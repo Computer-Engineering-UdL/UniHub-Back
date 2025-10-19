@@ -2,6 +2,7 @@ import re
 
 from fastapi import HTTPException
 from jose import JWTError, jwt
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -14,17 +15,20 @@ from app.schemas import LoginRequest, Token
 
 
 def authenticate_user(db: Session, login_req: LoginRequest) -> Token:
-    email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
-    if re.match(email_pattern, login_req.username):
-        db_user = UserCRUD.get_by_email(db, login_req.username)
-    else:
-        db_user = UserCRUD.get_by_username(db, login_req.username)
-    if db_user is None or not verify_password(login_req.password, db_user.password):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
-    data = create_payload_from_user(db_user)
-    token = create_access_token(data=data)
-    refresh_token = create_refresh_token(data=data)
-    return Token(access_token=token, refresh_token=refresh_token, token_type="bearer")
+    try:
+        email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
+        if re.match(email_pattern, login_req.username):
+            db_user = UserCRUD.get_by_email(db, login_req.username)
+        else:
+            db_user = UserCRUD.get_by_username(db, login_req.username)
+        if not verify_password(login_req.password, db_user.password):
+            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
+        data = create_payload_from_user(db_user)
+        token = create_access_token(data=data)
+        refresh_token = create_refresh_token(data=data)
+        return Token(access_token=token, refresh_token=refresh_token, token_type="bearer")
+    except NoResultFound:
+        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid credentials")
 
 
 def verify_token(token: str, expected_type: str = None) -> dict:

@@ -8,6 +8,12 @@ on:
     branches:
       - devel
 
+env:
+  GOOGLE_CLIENT_ID: "dummy"
+  GOOGLE_CLIENT_SECRET: "dummy"
+  GITHUB_CLIENT_ID: "dummy"
+  GITHUB_CLIENT_SECRET: "dummy"
+
 jobs:
   lint:
     runs-on: ubuntu-latest
