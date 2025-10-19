@@ -8,8 +8,7 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
-    from .housing_category import HousingCategoryRead
-    from .housing_photo import HousingPhotoRead
+    from app.schemas import HousingCategoryRead, HousingPhotoRead
 
 # Type aliases
 GenderPreferences = Literal["any", "male", "female"]

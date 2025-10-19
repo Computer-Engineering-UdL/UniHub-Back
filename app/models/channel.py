@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import uuid
 from typing import TYPE_CHECKING, List
@@ -11,10 +9,7 @@ from app.core.database import Base
 from app.literals.channels import ChannelType
 
 if TYPE_CHECKING:
-    from app.models.channel_ban import ChannelBan, ChannelUnban
-    from app.models.channel_member import ChannelMember
-    from app.models.message import Message
-    from app.models.user import User
+    from app.models import ChannelBan, ChannelMember, ChannelUnban, Message, User
 
 
 class Channel(Base):
@@ -29,18 +24,12 @@ class Channel(Base):
     created_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
     channel_logo: Mapped[str | None] = mapped_column(sa.String(2048))
 
-    memberships: Mapped[List[ChannelMember]] = relationship(
-        "ChannelMember", back_populates="channel", cascade="all, delete-orphan"
-    )
+    memberships: Mapped[List["ChannelMember"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
 
-    members: Mapped[List[User]] = relationship(
-        "User", secondary="channel_members", back_populates="channels", viewonly=True
-    )
+    members: Mapped[List["User"]] = relationship(secondary="channel_members", back_populates="channels", viewonly=True)
 
-    bans: Mapped[List[ChannelBan]] = relationship("ChannelBan", back_populates="channel", cascade="all, delete-orphan")
+    bans: Mapped[List["ChannelBan"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
 
-    unbans: Mapped[List[ChannelUnban]] = relationship(
-        "ChannelUnban", back_populates="channel", cascade="all, delete-orphan"
-    )
+    unbans: Mapped[List["ChannelUnban"]] = relationship(back_populates="channel", cascade="all, delete-orphan")
 
-    messages: Mapped[List[Message]] = relationship("Message", back_populates="channel", cascade="all, delete-orphan")
+    messages: Mapped[List["Message"]] = relationship(back_populates="channel", cascade="all, delete-orphan")

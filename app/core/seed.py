@@ -2,7 +2,7 @@
 
 from sqlalchemy.orm import Session
 
-from app.core import Base, engine
+from app.core.database import Base, engine
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
 
 

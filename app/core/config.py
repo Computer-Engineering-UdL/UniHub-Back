@@ -23,11 +23,6 @@ class Settings(BaseSettings):
     TEMPORARY_DB: bool = False
     DEFAULT_PASSWORD: str = "unirromsuperadminsecretpassword"
 
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GITHUB_CLIENT_ID: str
-    GITHUB_CLIENT_SECRET: str
-
     model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
 
     @computed_field

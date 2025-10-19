@@ -26,7 +26,7 @@ class TestAuthEndpoints:
     def test_login_wrong_email(self, client):
         """Test login with non-existent email."""
         response = client.post("/auth/login", data={"username": "nonexistent", "password": settings.DEFAULT_PASSWORD})
-        assert response.status_code == 404
+        assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_wrong_password(self, client):

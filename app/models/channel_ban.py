@@ -1,5 +1,3 @@
-from __future__ import annotations
-
 import datetime
 import uuid
 from typing import TYPE_CHECKING
@@ -34,9 +32,9 @@ class ChannelBan(Base):
     )
     banned_by: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
 
-    channel: Mapped[Channel] = relationship("Channel", back_populates="bans")
-    banned_user: Mapped[User] = relationship("User", foreign_keys=[user_id])
-    banner: Mapped[User] = relationship("User", foreign_keys=[banned_by])
+    channel: Mapped["Channel"] = relationship(back_populates="bans")
+    banned_user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    banner: Mapped["User"] = relationship(foreign_keys=[banned_by])
 
 
 class ChannelUnban(Base):
@@ -55,6 +53,6 @@ class ChannelUnban(Base):
     )
     unbanned_by: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=True)
 
-    channel: Mapped[Channel] = relationship("Channel", back_populates="unbans")
-    unbanned_user: Mapped[User] = relationship("User", foreign_keys=[user_id])
-    unbanner: Mapped[User] = relationship("User", foreign_keys=[unbanned_by])
+    channel: Mapped["Channel"] = relationship(back_populates="unbans")
+    unbanned_user: Mapped["User"] = relationship(foreign_keys=[user_id])
+    unbanner: Mapped["User"] = relationship(foreign_keys=[unbanned_by])
