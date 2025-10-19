@@ -14,7 +14,7 @@ repos:
     rev: v0.13.2
     hooks:
       - id: ruff-check
-        args: [--fix]
+        args: [ --fix ]
       - id: ruff-format
 
   # Conventional commit message validation
@@ -23,4 +23,12 @@ repos:
     hooks:
       - id: commitlint
         stages: [ commit-msg ]
-        additional_dependencies: ['@commitlint/config-conventional']
+        additional_dependencies: [ '@commitlint/config-conventional' ]
+
+  - repo: local
+    hooks:
+      - id: lint_imports
+        name: "Lint imports"
+        entry: "lint-imports"
+        language: system
+        pass_filenames: false

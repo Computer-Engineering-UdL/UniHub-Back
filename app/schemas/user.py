@@ -2,14 +2,14 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from typing import TYPE_CHECKING, Literal, Optional
+from typing import Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
+from app.core.security import hash_password
 from app.literals.users import Role
 
-if TYPE_CHECKING:
-    from app.core import hash_password
+# if TYPE_CHECKING:
 
 Provider = Literal["local", "google", "github"]
 

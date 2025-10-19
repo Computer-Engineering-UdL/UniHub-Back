@@ -2,6 +2,7 @@ import uuid
 from typing import List
 
 from fastapi import HTTPException
+from sqlalchemy.exc import NoResultFound
 from sqlalchemy.orm import Session, selectinload
 from starlette import status
 
@@ -11,37 +12,30 @@ from app.models import Interest, InterestCategory, User
 class InterestCRUD:
     @staticmethod
     def list_categories(db: Session) -> List[InterestCategory]:
-        return (
-            db.query(InterestCategory)
-            .options(selectinload(InterestCategory.interests))
-            .order_by(InterestCategory.name)
-            .all()
-        )
+        try:
+            return (
+                db.query(InterestCategory)
+                .options(selectinload(InterestCategory.interests))
+                .order_by(InterestCategory.name)
+                .all()
+            )
+        except NoResultFound:
+            raise NoResultFound("User not found")
 
     @staticmethod
     def get_user_interests(db: Session, user_id: uuid.UUID) -> List[Interest]:
-        user = (
-            db.query(User)
-            .options(selectinload(User.interests))
-            .filter(User.id == user_id)
-            .first()
-        )
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+        try:
+            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+        except NoResultFound:
+            raise NoResultFound("User not found")
         return list(user.interests)
 
     @staticmethod
-    def add_interest_to_user(
-        db: Session, user_id: uuid.UUID, interest_id: uuid.UUID
-    ) -> List[Interest]:
-        user = (
-            db.query(User)
-            .options(selectinload(User.interests))
-            .filter(User.id == user_id)
-            .first()
-        )
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
+    def add_interest_to_user(db: Session, user_id: uuid.UUID, interest_id: uuid.UUID) -> List[Interest]:
+        try:
+            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+        except NoResultFound:
+            raise NoResultFound("User not found")
 
         interest = db.query(Interest).filter(Interest.id == interest_id).first()
         if not interest:
@@ -59,18 +53,11 @@ class InterestCRUD:
         return list(user.interests)
 
     @staticmethod
-    def remove_interest_from_user(
-        db: Session, user_id: uuid.UUID, interest_id: uuid.UUID
-    ) -> bool:
-        user = (
-            db.query(User)
-            .options(selectinload(User.interests))
-            .filter(User.id == user_id)
-            .first()
-        )
-        if not user:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found")
-
+    def remove_interest_from_user(db: Session, user_id: uuid.UUID, interest_id: uuid.UUID) -> bool:
+        try:
+            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+        except NoResultFound:
+            raise NoResultFound("User not found")
         interest = next((item for item in user.interests if item.id == interest_id), None)
         if not interest:
             raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interest not linked to user")
