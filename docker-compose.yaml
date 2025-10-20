@@ -1,6 +1,6 @@
 services:
-  uniroom:
-    container_name: uniroom
+  unihub:
+    container_name: unihub
     build: ./
     env_file:
       - .env
@@ -9,13 +9,13 @@ services:
     ports:
       - "8080:8080"
     networks:
-      - uniroom
+      - unihub
     depends_on:
       - postgres
     restart: unless-stopped
 
   postgres:
-    container_name: uniroom-postgres
+    container_name: unihub-postgres
     image: postgres:18-alpine
     environment:
       - POSTGRES_USER=${POSTGRES_USER}
@@ -26,12 +26,12 @@ services:
     ports:
        - "5432:5432"
     networks:
-      - uniroom
+      - unihub
     restart: unless-stopped
 
 volumes:
   db-data:
 
 networks:
-  uniroom:
+  unihub:
     driver: bridge

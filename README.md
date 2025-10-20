@@ -1,4 +1,4 @@
-# UniRoom - Backend
+# UniHub - Backend
 
 [![Python](https://img.shields.io/badge/Python-3.13-blue?logo=python&logoColor=white)](https://www.python.org/)
 [![FastAPI](https://img.shields.io/badge/FastAPI-0.118.0-009688?logo=fastapi&logoColor=white)](https://fastapi.tiangolo.com/)
@@ -11,7 +11,7 @@
 
 This project is part of the first semester project course at
 the [University of Lleida (UdL)](https://www.udl.cat/ca/en/). It serves as the backend
-for the UniRoom application. This API includes the following main features:
+for the UniHub application. This API includes the following main features:
 
 - Configurable user profiles, matching their preferences with listings and communities
 - Housing search (rooms/apartments) with filters
@@ -62,8 +62,8 @@ pip install uv
 ### 2. Clone and Install
 
 ```bash
-git clone https://github.com/Computer-Engineering-UdL/UniRoom-Back
-cd UniRoom-Back
+git clone https://github.com/Computer-Engineering-UdL/UniHub-Back
+cd UniHub-Back
 uv sync --group dev
 ```
 
@@ -75,9 +75,9 @@ Create a `.env` file:
 API_VERSION=/api/v1
 POSTGRES_HOST=localhost
 POSTGRES_PORT=5432
-POSTGRES_USER=uniroom
+POSTGRES_USER=unihub
 POSTGRES_PASSWORD="test"
-POSTGRES_DB=uniroom
+POSTGRES_DB=unihub
 ```
 
 ### 4. Run the Server
@@ -123,10 +123,10 @@ uv add --dev package-name
 
 ```bash
 # Build image
-docker build -t uniroom-backend .
+docker build -t unihub-backend .
 
 # Run container
-docker run -p 8080:8080 uniroom-backend
+docker run -p 8080:8080 unihub-backend
 ```
 
 ## Project Structure

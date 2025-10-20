@@ -75,7 +75,7 @@ jobs:
           context: .
           file: ./Dockerfile
           push: true
-          tags: ${{ secrets.DOCKERHUB_USERNAME }}/uniroom-back:latest
+          tags: ${{ secrets.DOCKERHUB_USERNAME }}/unihub-back:latest
 
   deploy:
     needs: build-and-push
