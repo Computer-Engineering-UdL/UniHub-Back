@@ -49,7 +49,7 @@ MOCK_ANNOUNCEMENTS: List[Dict[str, Any]] = [
     {
         "id": uuid.uuid4(),
         "title": "New WiFi Network Available",
-        "content": "A new high-speed WiFi network 'UniRoom-5G' is now available in all dormitories. Contact IT for "
+        "content": "A new high-speed WiFi network 'UniHub-5G' is now available in all dormitories. Contact IT for "
         "access credentials.",
         "priority": "medium",
         "created_by": 2,

@@ -1,7 +1,7 @@
 [project]
-name = "uniroom-back"
+name = "unihub-back"
 version = "0.1.0"
-description = "UniRoom FastAPI backend"
+description = "UniHub FastAPI backend"
 authors = [
     { name = "Matias Medina", email = "therealsmuks@gmail.com" },
     { name = "Aniol Serrano", email = "aniol0012@gmail.com" },
