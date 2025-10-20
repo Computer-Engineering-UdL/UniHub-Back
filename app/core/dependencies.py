@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import uuid
 
+import redis
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
+from starlette.requests import Request
 
 from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
@@ -42,11 +44,6 @@ def get_oauth() -> OAuth:
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     """Validate JWT token and return current user"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -57,7 +54,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
 
         token_data = TokenData(id=user_id, username=username, email=email, role=role)
     except (JWTError, ValidationError, ValueError):
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
     return token_data
 
@@ -77,3 +74,7 @@ def require_role(min_role: Role):
         return user
 
     return role_checker
+
+
+async def get_redis(request: Request) -> redis.Redis:
+    return request.app.state.redis

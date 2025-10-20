@@ -1,11 +1,14 @@
 from contextlib import asynccontextmanager
 
+import fakeredis
+import redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 import app.models
 from app.api.v1.endpoints import (
+    admin,
     auth,
     channel,
     housing_category,
@@ -22,13 +25,26 @@ from app.seeds.seed import seed_database
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
-    # Startup logic
-    seed_database()
-    Base.metadata.create_all(bind=engine)
-    print("Tables created, app starting...")
-    yield
-    # Shutdown logic
-    print("App shutting down...")
+    try:
+        # Startup logic
+        if settings.USE_FAKE_REDIS:
+            app.state.redis = fakeredis.FakeRedis(decode_responses=True)
+        else:
+            app.state.redis = redis.Redis(
+                host=settings.REDIS_HOST,
+                port=settings.REDIS_PORT_NUMBER,
+                password=settings.REDIS_PASSWORD,
+                decode_responses=True,
+            )
+        seed_database()
+        Base.metadata.create_all(bind=engine)
+        print("Tables created, app starting...")
+        yield
+    finally:
+        if not settings.USE_FAKE_REDIS:
+            await app.state.redis.close()
+        # Shutdown logic
+        print("App shutting down...")
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
@@ -63,6 +79,9 @@ app.include_router(housing_offer.router, prefix=f"{settings.API_VERSION}/offers"
 app.include_router(housing_category.router, prefix=f"{settings.API_VERSION}/categories", tags=["housing categories"])
 app.include_router(housing_photo.router, prefix=f"{settings.API_VERSION}/photos", tags=["housing photos"])
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
+app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
+
+
 # app.include_router(announcement.router, prefix=f"{settings.API_VERSION}/announcements", tags=["announcements"])
 
 
