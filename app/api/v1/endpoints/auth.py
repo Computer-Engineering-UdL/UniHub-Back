@@ -38,11 +38,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
 @router.get("/login/{provider}", response_class=RedirectResponse, include_in_schema=True)
 async def login_oauth(provider: OAuthProvider, request: Request, oauth: OAuth = Depends(get_oauth)):
     provider_str = provider.value
-    print(f"Provider: {provider_str}")
-    print(f"Session before redirect: {request.session}")
     redirect_uri = request.url_for("auth_callback", provider=provider_str)
-    print(f"Redirect URI: {redirect_uri}")
-    print(f"Session after redirect: {request.session}")
     return await oauth.create_client(provider_str).authorize_redirect(request, redirect_uri)
 
 
@@ -50,17 +46,13 @@ async def login_oauth(provider: OAuthProvider, request: Request, oauth: OAuth = 
 async def auth_callback(
     provider: OAuthProvider, request: Request, db: Session = Depends(get_db), oauth: OAuth = Depends(get_oauth)
 ):
-    print(f"Callback session: {request.session}")
-    print(f"Callback query params: {request.query_params}")
     provider_str = provider.value
     oauth_client = oauth.create_client(provider_str)
     token = await oauth_client.authorize_access_token(request)
-    print(token)
     if provider == OAuthProvider.GOOGLE:
         user_info = token.get("userinfo")
         if not user_info:
-            resp = await oauth_client.get("https://www.googleapis.com/oauth2/v3/userinfo", token=token)
-            user_info = resp.json()
+            raise HTTPException(status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
         email = user_info["email"]
     elif provider == OAuthProvider.GITHUB:
         email_resp = await oauth_client.get("user/emails", token=token)

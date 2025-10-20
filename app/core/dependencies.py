@@ -2,11 +2,13 @@ from __future__ import annotations
 
 import uuid
 
+import redis
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
+from starlette.requests import Request
 
 from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
@@ -77,3 +79,7 @@ def require_role(min_role: Role):
         return user
 
     return role_checker
+
+
+async def get_redis(request: Request) -> redis.Redis:
+    return request.app.state.redis
