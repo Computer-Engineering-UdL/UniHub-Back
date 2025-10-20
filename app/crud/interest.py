@@ -12,15 +12,12 @@ from app.models import Interest, InterestCategory, User
 class InterestCRUD:
     @staticmethod
     def list_categories(db: Session) -> List[InterestCategory]:
-        try:
-            return (
-                db.query(InterestCategory)
-                .options(selectinload(InterestCategory.interests))
-                .order_by(InterestCategory.name)
-                .all()
-            )
-        except NoResultFound:
-            raise NoResultFound("User not found")
+        return (
+            db.query(InterestCategory)
+            .options(selectinload(InterestCategory.interests))
+            .order_by(InterestCategory.name)
+            .all()
+        )
 
     @staticmethod
     def get_user_interests(db: Session, user_id: uuid.UUID) -> List[Interest]:
@@ -37,9 +34,10 @@ class InterestCRUD:
         except NoResultFound:
             raise NoResultFound("User not found")
 
-        interest = db.query(Interest).filter(Interest.id == interest_id).first()
-        if not interest:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interest not found")
+        try:
+            interest = db.query(Interest).filter(Interest.id == interest_id).first()
+        except NoResultFound:
+            raise NoResultFound("Interest not found")
 
         if any(existing.id == interest_id for existing in user.interests):
             raise HTTPException(
@@ -58,9 +56,10 @@ class InterestCRUD:
             user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
         except NoResultFound:
             raise NoResultFound("User not found")
+
         interest = next((item for item in user.interests if item.id == interest_id), None)
         if not interest:
-            raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Interest not linked to user")
+            raise NoResultFound("Interest not linked to the user")
 
         user.interests.remove(interest)
         db.commit()

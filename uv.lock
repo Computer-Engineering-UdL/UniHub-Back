@@ -1222,12 +1222,14 @@ dev = [
     { name = "fakeredis" },
     { name = "graphviz" },
     { name = "import-linter" },
-    { name = "paracelsus" },
     { name = "pre-commit" },
     { name = "pydeps" },
     { name = "pytest" },
     { name = "pytest-cov" },
     { name = "ruff" },
+]
+extra = [
+    { name = "paracelsus" },
 ]
 
 [package.metadata]
@@ -1256,13 +1258,13 @@ dev = [
     { name = "fakeredis", specifier = ">=2.32.0" },
     { name = "graphviz", specifier = ">=0.21" },
     { name = "import-linter", specifier = ">=2.5.2" },
-    { name = "paracelsus", specifier = ">=0.12.0" },
     { name = "pre-commit", specifier = ">=4.3.0" },
     { name = "pydeps", specifier = ">=3.0.1" },
     { name = "pytest", specifier = ">=8.0.0" },
     { name = "pytest-cov", specifier = ">=6.0.0" },
     { name = "ruff", specifier = ">=0.13.2" },
 ]
+extra = [{ name = "paracelsus", specifier = ">=0.12.0" }]
 
 [[package]]
 name = "uvicorn"

@@ -44,11 +44,6 @@ def get_oauth() -> OAuth:
 
 def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     """Validate JWT token and return current user"""
-    credentials_exception = HTTPException(
-        status_code=status.HTTP_401_UNAUTHORIZED,
-        detail="Could not validate credentials",
-        headers={"WWW-Authenticate": "Bearer"},
-    )
 
     try:
         payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -59,7 +54,7 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
 
         token_data = TokenData(id=user_id, username=username, email=email, role=role)
     except (JWTError, ValidationError, ValueError):
-        raise credentials_exception
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
     return token_data
 
