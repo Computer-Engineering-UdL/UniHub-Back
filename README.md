@@ -146,183 +146,142 @@ tests/                   # Tests
 
 ```mermaid
 erDiagram
-    USER {
-      int id PK
-      string username
-      string email
-      string password_hash
-      string profile_pic_url
-      int faculty_id FK
-      datetime created_at
-    }
+  channel {
+    UUID id PK
+    VARCHAR(2048) channel_logo "nullable"
+    VARCHAR(50) channel_type
+    DATETIME created_at
+    VARCHAR(120) description "nullable"
+    VARCHAR(60) name "indexed"
+  }
 
-    FACULTY {
-      int id PK
-      string name
-    }
+  channel_bans {
+    UUID id PK
+    UUID banned_by FK "nullable"
+    UUID channel_id FK
+    UUID user_id FK
+    BOOLEAN active
+    DATETIME banned_at
+    DATETIME duration
+    VARCHAR(255) motive
+  }
 
-    INTEREST {
-      int id PK
-      string name
-    }
+  channel_unbans {
+    UUID id PK
+    UUID channel_id FK
+    UUID unbanned_by FK "nullable"
+    UUID user_id FK
+    VARCHAR(255) motive
+    DATETIME unbanned_at
+  }
 
-    USER_INTEREST {
-      int user_id PK, FK
-      int interest_id PK, FK
-      datetime created_at
-    }
+  user {
+    UUID id PK
+    VARCHAR(500) avatar_url "nullable"
+    DATETIME created_at
+    VARCHAR(255) email UK "indexed"
+    VARCHAR(100) first_name
+    BOOLEAN is_active
+    BOOLEAN is_verified
+    VARCHAR(100) last_name
+    VARCHAR(255) password
+    VARCHAR(20) phone "nullable"
+    VARCHAR(50) provider
+    VARCHAR(50) role
+    VARCHAR(20) room_number "nullable"
+    VARCHAR(100) university "nullable"
+    VARCHAR(50) username UK "indexed"
+  }
 
-    ROLE {
-      int id PK
-      string name
-      string description
-    }
+  channel_members {
+    UUID channel_id PK,FK
+    UUID user_id PK,FK
+    BOOLEAN is_banned
+    DATETIME joined_at
+    VARCHAR(20) role
+  }
 
-    USER_ROLE {
-      int user_id PK, FK
-      int role_id PK, FK
-      datetime granted_at
-    }
+  housing_offer {
+    UUID id PK
+    UUID category_id FK
+    UUID user_id FK
+    VARCHAR(255) address
+    NUMERIC area
+    VARCHAR(100) city
+    NUMERIC deposit "nullable"
+    TEXT description
+    DATE end_date "nullable"
+    BOOLEAN furnished
+    VARCHAR(10) gender_preference "nullable"
+    BOOLEAN internet_included
+    INTEGER num_bathrooms "nullable"
+    INTEGER num_rooms "nullable"
+    DATE offer_valid_until
+    DATETIME posted_date
+    NUMERIC price
+    DATE start_date
+    VARCHAR(20) status
+    VARCHAR(255) title
+    BOOLEAN utilities_included
+  }
 
-    CHANNEL {
-      int id PK
-      string name
-      string description
-      boolean is_private
-      datetime created_at
-    }
+  housing_category {
+    UUID id PK
+    VARCHAR(50) name UK
+  }
 
-    PRIVATE_CHAT {
-      int id PK
-      datetime created_at
-    }
+  housing_photo {
+    UUID id PK
+    UUID offer_id FK
+    DATETIME uploaded_at
+    VARCHAR(255) url
+  }
 
-    MESSAGE {
-      int id PK
-      int sender_user_id FK
-      int channel_id FK  "nullable"
-      int private_chat_id FK  "nullable"
-      int reply_to_message_id FK "nullable"
-      string content
-      datetime created_at
-    }
+  interest_category {
+    CHAR(32) id PK
+    VARCHAR(120) name UK
+  }
 
-    HOUSING_OFFER {
-      int id PK
-      int user_id FK
-      int category_id FK
-      string title
-      string description
-      date posted_date
-      date start_date
-      date end_date                "nullable"
-      date offer_valid_until
-      string city
-      string district             "nullable"
-      string street
-      string address_details
-      decimal price
-      decimal deposit             "nullable"
-      decimal area
-      int num_rooms               "nullable"
-      int num_bathrooms           "nullable"
-      boolean furnished
-      boolean utilities_included
-      boolean internet_included
-      string gender_preference    "any | male | female | nullable"
-      string photo_url            "nullable"
-      string status               "active | expired | rented | inactive"
-    }
+  interest {
+    CHAR(32) id PK
+    CHAR(32) category_id FK
+    VARCHAR(120) name UK
+  }
 
-    HOUSING_CATEGORY {
-        int id PK
-        string name    "room | flat | house"
-    }
+  user_interest {
+    CHAR(32) id PK
+    CHAR(32) interest_id FK "indexed"
+    UUID user_id FK "indexed"
+  }
 
-    
-    HOUSING_PHOTO {
-          int id PK
-          int listing_id FK "references HOUSING_OFFER.id"
-          string url                "full URL on CDN"
-          datetime uploaded_at
-    }
-    
-    MARKET_OFFER {
-        int id PK
-        int user_id FK
-        int category_id FK
-        string title
-        string description
-        decimal price
-        boolean is_new
-        string location             "nullable"
-        string photo_url            "nullable"
-        date posted_date
-        date offer_valid_until
-        string status               "active | sold | expired"
-    }
+  message {
+    UUID id PK
+    UUID channel_id FK
+    UUID parent_message_id FK "nullable"
+    UUID user_id FK
+    VARCHAR(500) content
+    DATETIME created_at
+    BOOLEAN is_edited
+    DATETIME updated_at "nullable"
+  }
 
-    MARKET_CATEGORY {
-        int id PK
-        string name    "sport & hobby | music |books | electronics"
-    }
-
-    JOB_OFFER {
-        int id PK
-        int user_id FK
-        int category_id FK
-        string title
-        string description
-        string location
-        decimal salary              "nullable"
-        string contract_type        "part-time | full-time | internship | freelance"
-        date posted_date
-        date offer_valid_until
-        string status               "active | expired | closed"
-    }
-
-    JOB_CATEGORY {
-        int id PK
-        string name   "IT | construction | architecture | marketing | education"
-    }
-
-
-    REPORT {
-      int id PK
-      int reporter_user_id FK
-      string target_type  "user|message|item|channel"
-      int target_id
-      string status       "open|in_review|closed"
-      string title
-      string description
-      string image_url
-      datetime created_at
-    }
-
-    %% Relations
-    FACULTY ||--o{ USER : has
-    USER ||--o{ USER_INTEREST : has
-    INTEREST ||--o{ USER_INTEREST : has
-
-    USER ||--o{ USER_ROLE : has
-    ROLE ||--o{ USER_ROLE : in
-
-    CHANNEL ||--o{ MESSAGE : contains
-    PRIVATE_CHAT ||--o{ MESSAGE : contains
-    USER ||--o{ MESSAGE : sends
-    MESSAGE ||--o{ MESSAGE : replies_to
-
-    USER ||--o{ HOUSING_OFFER : creates
-    USER ||--o{ MARKET_OFFER : creates
-    USER ||--o{ JOB_OFFER : creates
-
-    HOUSING_CATEGORY ||--o{ HOUSING_OFFER : classifies
-    MARKET_CATEGORY ||--o{ MARKET_OFFER : classifies
-    JOB_CATEGORY ||--o{ JOB_OFFER : classifies
-
-    HOUSING_OFFER ||--o{ HOUSING_PHOTO : has
-
-    USER ||--o{ REPORT : files
+  channel ||--o{ channel_bans : channel_id
+  user ||--o{ channel_bans : user_id
+  user ||--o{ channel_bans : banned_by
+  channel ||--o{ channel_unbans : channel_id
+  user ||--o{ channel_unbans : user_id
+  user ||--o{ channel_unbans : unbanned_by
+  channel ||--o{ channel_members : channel_id
+  user ||--o{ channel_members : user_id
+  user ||--o{ housing_offer : user_id
+  housing_category ||--o{ housing_offer : category_id
+  housing_offer ||--o{ housing_photo : offer_id
+  interest_category ||--o{ interest : category_id
+  user ||--o{ user_interest : user_id
+  interest ||--o{ user_interest : interest_id
+  channel ||--o{ message : channel_id
+  user ||--o{ message : user_id
+  message ||--o{ message : parent_message_id
 ```
 
 ## Authors
