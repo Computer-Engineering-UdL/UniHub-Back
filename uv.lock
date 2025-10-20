@@ -1200,6 +1200,7 @@ source = { virtual = "." }
 dependencies = [
     { name = "alembic" },
     { name = "authlib" },
+    { name = "fakeredis" },
     { name = "fastapi" },
     { name = "httpx" },
     { name = "itsdangerous" },
@@ -1219,7 +1220,6 @@ dependencies = [
 [package.dev-dependencies]
 dev = [
     { name = "bcrypt" },
-    { name = "fakeredis" },
     { name = "graphviz" },
     { name = "import-linter" },
     { name = "pre-commit" },
@@ -1236,6 +1236,7 @@ extra = [
 requires-dist = [
     { name = "alembic", specifier = ">=1.16.5" },
     { name = "authlib", specifier = ">=1.6.5" },
+    { name = "fakeredis", specifier = ">=2.32.0" },
     { name = "fastapi", specifier = ">=0.118.0" },
     { name = "httpx", specifier = ">=0.27.0" },
     { name = "itsdangerous", specifier = ">=2.2.0" },
@@ -1255,7 +1256,6 @@ requires-dist = [
 [package.metadata.requires-dev]
 dev = [
     { name = "bcrypt", specifier = ">=5.0.0" },
-    { name = "fakeredis", specifier = ">=2.32.0" },
     { name = "graphviz", specifier = ">=0.21" },
     { name = "import-linter", specifier = ">=2.5.2" },
     { name = "pre-commit", specifier = ">=4.3.0" },
