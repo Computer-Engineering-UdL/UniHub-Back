@@ -21,12 +21,19 @@ class Settings(BaseSettings):
     ALGORITHM: str = "HS256"
     ENVIRONMENT: str = "dev"
     TEMPORARY_DB: bool = False
-    DEFAULT_PASSWORD: str = "unirromsuperadminsecretpassword"
+    DEFAULT_PASSWORD: str = "supersecret"
 
-    GOOGLE_CLIENT_ID: str
-    GOOGLE_CLIENT_SECRET: str
-    GITHUB_CLIENT_ID: str
-    GITHUB_CLIENT_SECRET: str
+    GOOGLE_CLIENT_ID: str = "dummy"
+    GOOGLE_CLIENT_SECRET: str = "dummy"
+    GITHUB_CLIENT_ID: str = "dummy"
+    GITHUB_CLIENT_SECRET: str = "dummy"
+
+    REDIS_PORT_NUMBER: str = "6379"
+    REDIS_HOST: str = "localhost"
+    REDIS_PASSWORD: str = "supersecret"
+    USE_FAKE_REDIS: bool = False
+
+    NUKE_COOLDOWN_SECONDS: int = 30
 
     model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
 
@@ -40,6 +47,11 @@ class Settings(BaseSettings):
             f"{self.POSTGRES_PORT}/"
             f"{self.POSTGRES_DB}"
         )
+
+    @computed_field
+    @property
+    def REDIS_URL(self) -> str:
+        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT_NUMBER}"
 
 
 settings = Settings()
