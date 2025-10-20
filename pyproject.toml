@@ -42,8 +42,10 @@ dev = [
     "pydeps>=3.0.1",
     "graphviz>=0.21",
     "import-linter>=2.5.2",
-    "paracelsus>=0.12.0",
     "fakeredis>=2.32.0",
+]
+extra = [
+    "paracelsus>=0.12.0",
 ]
 
 [tool.ruff]

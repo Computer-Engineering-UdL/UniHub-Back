@@ -19,7 +19,7 @@ class TestInterestEndpoints:
             received = {interest["name"] for interest in category["interests"]}
             assert received == expected
 
-    def test_user_interest_crud_flow(self, client, db):
+    def test_user_interest_crud_flow(self, client, db, auth_headers):
         user: User = db.query(User).filter_by(username="testuser").first()
         assert user is not None
 
@@ -29,6 +29,7 @@ class TestInterestEndpoints:
         response = client.post(
             f"/interest/user/{user.id}",
             json={"interest_id": str(interest.id)},
+            headers=auth_headers,
         )
         assert response.status_code == 201
         payload = response.json()
@@ -37,6 +38,7 @@ class TestInterestEndpoints:
         conflict_response = client.post(
             f"/interest/user/{user.id}",
             json={"interest_id": str(interest.id)},
+            headers=auth_headers,
         )
         assert conflict_response.status_code == 409
 
@@ -45,7 +47,10 @@ class TestInterestEndpoints:
         listed = list_response.json()
         assert [item["id"] for item in listed] == [str(interest.id)]
 
-        delete_response = client.delete(f"/interest/user/{user.id}/{interest.id}")
+        delete_response = client.delete(
+            f"/interest/user/{user.id}/{interest.id}",
+            headers=auth_headers,
+        )
         assert delete_response.status_code == 204
 
         after_delete = client.get(f"/interest/user/{user.id}")
