@@ -38,7 +38,7 @@ services:
       - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER}
       - REDIS_PASSWORD=${REDIS_PASSWORD}
     networks:
-      - app-tier
+      - unihub
 
 volumes:
   db-data:
