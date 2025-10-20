@@ -5,15 +5,15 @@ from pydantic_settings import BaseSettings, SettingsConfigDict
 
 
 class Settings(BaseSettings):
-    APP_NAME: str = "UniRoom"
-    PROJECT_NAME: str = "UniRoom API"
+    APP_NAME: str = "UniHub"
+    PROJECT_NAME: str = "UniHub API"
     ACCESS_TOKEN_EXPIRE_MINUTES: int = 60
     REFRESH_TOKEN_EXPIRE_DAYS: int = 1
     API_VERSION: str = "/api/v1"
 
-    POSTGRES_USER: str = "uniroom"
+    POSTGRES_USER: str = "unihub"
     POSTGRES_PASSWORD: str = "test"
-    POSTGRES_DB: str = "uniroom"
+    POSTGRES_DB: str = "unihub"
     POSTGRES_HOST: str = "localhost"
     POSTGRES_PORT: str = "5432"
     DEBUG: bool = False

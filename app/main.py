@@ -71,4 +71,4 @@ def read_root():
     """
     Root endpoint for the application.
     """
-    return {"message": "Welcome to the UniRoom API!"}
+    return {"message": "Welcome to the UniHub API!"}
