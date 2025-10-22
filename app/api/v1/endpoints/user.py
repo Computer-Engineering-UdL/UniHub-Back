@@ -10,7 +10,7 @@ from app.core.dependencies import get_current_user, require_role
 from app.core.types import TokenData
 from app.crud.user import UserCRUD
 from app.literals.users import Role
-from app.schemas.user import UserCreate, UserPasswordChange, UserRead, UserUpdate
+from app.schemas.user import UserCreate, UserDetail, UserPasswordChange, UserRead, UserUpdate
 
 router = APIRouter()
 
@@ -24,7 +24,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db), _: TokenData
     return UserCRUD.create(db, user_in)
 
 
-@router.get("/me", response_model=UserRead)
+@router.get("/me", response_model=UserDetail)
 @handle_crud_errors()
 def get_current_user_profile(db: Session = Depends(get_db), current_user: TokenData = Depends(get_current_user)):
     """
@@ -33,27 +33,7 @@ def get_current_user_profile(db: Session = Depends(get_db), current_user: TokenD
     return UserCRUD.get_by_id(db, current_user.id)
 
 
-@router.get("/email/{email}", response_model=UserRead)
-@handle_crud_errors()
-def get_user_by_email(email: str, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))):
-    """
-    Retrieve a user by email. Requires ADMIN role.
-    """
-    return UserCRUD.get_by_email(db, email)
-
-
-@router.get("/username/{username}", response_model=UserRead)
-@handle_crud_errors()
-def get_user_by_username(
-    username: str, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))
-):
-    """
-    Retrieve a user by username. Requires ADMIN role.
-    """
-    return UserCRUD.get_by_username(db, username)
-
-
-@router.get("/{user_id}", response_model=UserRead)
+@router.get("/{user_id}", response_model=UserDetail)
 @handle_crud_errors()
 def get_user(user_id: uuid.UUID, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))):
     """

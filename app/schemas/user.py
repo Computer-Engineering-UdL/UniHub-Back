@@ -2,14 +2,15 @@ from __future__ import annotations
 
 import datetime
 import uuid
-from typing import Literal, Optional
+from typing import TYPE_CHECKING, List, Literal, Optional
 
 from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.core.security import hash_password
 from app.literals.users import Role
 
-# if TYPE_CHECKING:
+if TYPE_CHECKING:
+    from .interest import InterestRead
 
 Provider = Literal["local", "google", "github"]
 
@@ -151,6 +152,7 @@ class UserDetail(UserRead):
     Full user profile.
     """
 
+    interests: List[InterestRead]
     housing_offer_count: int = 0
     housing_search_count: int = 0
     listings_active: int = 0

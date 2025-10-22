@@ -1,4 +1,5 @@
 import datetime
+import random
 import uuid
 from typing import List
 
@@ -7,7 +8,7 @@ from sqlalchemy.orm import Session
 from app.core import hash_password
 from app.core.config import settings
 from app.literals.users import Role
-from app.models import User
+from app.models import Interest, User
 
 
 def seed_users(db: Session) -> List[User]:
@@ -185,6 +186,17 @@ def seed_users(db: Session) -> List[User]:
 
     db.add_all(users)
     db.flush()
+
+    all_interests = db.query(Interest).all()
+
+    if all_interests:
+        for user in users:
+            num_interests = random.randint(3, 7)
+            user_interests = random.sample(all_interests, min(num_interests, len(all_interests)))
+            user.interests.extend(user_interests)
+
+        db.flush()
+        print(f"* Assigned interests to {len(users)} users")
 
     print("* Users created:")
     print(f"- Admin: {users[0].email} / {settings.DEFAULT_PASSWORD}")
