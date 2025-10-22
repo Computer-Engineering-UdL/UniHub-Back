@@ -34,6 +34,7 @@ class UserCRUD:
         user_db = db.scalar(stmt)
         if user_db is None:
             raise NoResultFound("User not found")
+        print(user_db)
         return user_db
 
     @staticmethod

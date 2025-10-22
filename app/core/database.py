@@ -10,6 +10,7 @@ from app.core.config import settings
 db_fd, db_path = None, None
 if settings.ENVIRONMENT == "dev":
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
+    print("Created database at {}".format(db_path))
     engine = create_engine(f"sqlite:///{db_path}", pool_pre_ping=True)
 else:
     engine = create_engine(settings.DATABASE_URL, pool_pre_ping=True, echo=settings.DEBUG, pool_size=4, max_overflow=6)
