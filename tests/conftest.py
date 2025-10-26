@@ -11,6 +11,7 @@ from sqlalchemy.orm import sessionmaker
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.interest import router as interest_router
+from app.api.v1.endpoints.user import router as user_router
 from app.core import Base, get_db
 from app.core.config import settings
 from app.literals.users import Role
@@ -129,6 +130,7 @@ def seed_database_test(db):
 def app(db):
     """Create FastAPI app with test database."""
     app = FastAPI()
+    app.include_router(user_router, prefix="/users")
     app.include_router(auth_router, prefix="/auth")
     app.include_router(interest_router, prefix="/interest")
     app.include_router(channel_router, prefix="/channels")
