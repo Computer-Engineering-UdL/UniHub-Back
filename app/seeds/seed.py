@@ -6,8 +6,11 @@ from app.core import Base, engine
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
 
 
-def seed_database():
+def seed_database(nuke: bool=False):
     """Populate database with initial data on first run."""
+    if nuke:
+        Base.metadata.drop_all(bind=engine)
+
     Base.metadata.create_all(bind=engine)
 
     db = Session(engine)

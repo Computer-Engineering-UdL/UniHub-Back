@@ -29,6 +29,17 @@ services:
       - unihub
     restart: unless-stopped
 
+  redis:
+    image: bitnami/redis:latest
+    env_file:
+      - .env
+    environment:
+      - ALLOW_EMPTY_PASSWORD=no
+      - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER}
+      - REDIS_PASSWORD=${REDIS_PASSWORD}
+    networks:
+      - unihub
+
 volumes:
   db-data:
 

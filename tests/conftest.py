@@ -14,7 +14,18 @@ from app.api.v1.endpoints.interest import router as interest_router
 from app.core import Base, get_db
 from app.core.config import settings
 from app.literals.users import Role
+from app.models import User
+from app.schemas import LoginRequest
 from app.seeds import seed_interests
+from app.services import authenticate_user
+
+
+@pytest.fixture
+def auth_headers(client, db):
+    """Generate authentication headers for testuser."""
+    user = db.query(User).filter_by(username="testuser").first()
+    token = authenticate_user(db, LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
+    return {"Authorization": f"Bearer {token.access_token}"}
 
 
 @pytest.fixture(scope="function")

@@ -29,6 +29,8 @@ dependencies = [
     "sqlalchemy>=2.0.43",
     "uvicorn[standard]",
     "httpx>=0.27.0",
+    "redis[asyncio]>=6.4.0",
+    "fakeredis>=2.32.0",
 ]
 
 [dependency-groups]
@@ -41,6 +43,9 @@ dev = [
     "pydeps>=3.0.1",
     "graphviz>=0.21",
     "import-linter>=2.5.2",
+    "paracelsus>=0.12.0",
+]
+extra = [
     "paracelsus>=0.12.0",
 ]
 
