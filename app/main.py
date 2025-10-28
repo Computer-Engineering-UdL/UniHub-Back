@@ -15,7 +15,6 @@ from app.api.v1.endpoints import (
     housing_offer,
     housing_photo,
     interest,
-    message,
     user,
 )
 from app.core import Base, engine
@@ -74,10 +73,21 @@ app.add_middleware(
 app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
 app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["user"])
 app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
-app.include_router(message.router, prefix=f"{settings.API_VERSION}/message", tags=["message"])
-app.include_router(housing_offer.router, prefix=f"{settings.API_VERSION}/offers", tags=["housing offers"])
-app.include_router(housing_category.router, prefix=f"{settings.API_VERSION}/categories", tags=["housing categories"])
-app.include_router(housing_photo.router, prefix=f"{settings.API_VERSION}/photos", tags=["housing photos"])
+app.include_router(
+    housing_offer.router,
+    prefix=f"{settings.API_VERSION}/offers",
+    tags=["housing offers"],
+)
+app.include_router(
+    housing_category.router,
+    prefix=f"{settings.API_VERSION}/categories",
+    tags=["housing categories"],
+)
+app.include_router(
+    housing_photo.router,
+    prefix=f"{settings.API_VERSION}/photos",
+    tags=["housing photos"],
+)
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
 

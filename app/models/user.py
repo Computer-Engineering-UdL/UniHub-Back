@@ -54,7 +54,10 @@ class User(Base):
     user_interest_links: Mapped[List[UserInterest]] = relationship("UserInterest", viewonly=True)
 
     interests: Mapped[List[Interest]] = relationship(
-        "Interest", secondary="user_interest", back_populates="users", order_by="Interest.name"
+        "Interest",
+        secondary="user_interest",
+        back_populates="users",
+        order_by="Interest.name",
     )
 
     @property
@@ -64,4 +67,9 @@ class User(Base):
 
 
 def create_payload_from_user(db_user: User) -> Dict[str, Any]:
-    return {"sub": str(db_user.id), "username": db_user.username, "email": db_user.email, "role": db_user.role}
+    return {
+        "sub": str(db_user.id),
+        "username": db_user.username,
+        "email": db_user.email,
+        "role": db_user.role,
+    }

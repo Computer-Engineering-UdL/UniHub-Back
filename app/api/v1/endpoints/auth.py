@@ -44,7 +44,10 @@ async def login_oauth(provider: OAuthProvider, request: Request, oauth: OAuth = 
 
 @router.get("/{provider}/callback", response_model=Token)
 async def auth_callback(
-    provider: OAuthProvider, request: Request, db: Session = Depends(get_db), oauth: OAuth = Depends(get_oauth)
+    provider: OAuthProvider,
+    request: Request,
+    db: Session = Depends(get_db),
+    oauth: OAuth = Depends(get_oauth),
 ):
     provider_str = provider.value
     oauth_client = oauth.create_client(provider_str)
@@ -66,7 +69,10 @@ async def auth_callback(
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=str(e))
 
     if not db_user:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="User not found. Please register first.")
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found. Please register first.",
+        )
 
     data = create_payload_from_user(db_user)
     access_token = create_access_token(data=data)

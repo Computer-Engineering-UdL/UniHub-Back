@@ -35,7 +35,10 @@ class Settings(BaseSettings):
 
     NUKE_COOLDOWN_SECONDS: int = 30
 
-    model_config = SettingsConfigDict(env_file=f"{Path(__file__).parent.parent.parent}/.env", env_file_encoding="utf-8")
+    model_config = SettingsConfigDict(
+        env_file=f"{Path(__file__).parent.parent.parent}/.env",
+        env_file_encoding="utf-8",
+    )
 
     @computed_field
     @property

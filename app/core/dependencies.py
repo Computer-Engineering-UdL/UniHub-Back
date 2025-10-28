@@ -54,7 +54,10 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
 
         token_data = TokenData(id=user_id, username=username, email=email, role=role)
     except (JWTError, ValidationError, ValueError):
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Could not validate credentials",
+        )
 
     return token_data
 

@@ -140,10 +140,7 @@ def get_announcements_for_room(room_number: str) -> List[Dict[str, Any]]:
         announcement
         for announcement in MOCK_ANNOUNCEMENTS
         if announcement["is_active"]
-        and (
-            not announcement["target_rooms"]  # Targets all rooms
-            or room_number in announcement["target_rooms"]
-        )
+        and (not announcement["target_rooms"] or room_number in announcement["target_rooms"])  # Targets all rooms
     ]
 
 

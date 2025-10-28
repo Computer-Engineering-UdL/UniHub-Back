@@ -7,7 +7,10 @@ class TestAuthEndpoints:
 
     def test_login_success_username(self, client):
         """Test successful login with username."""
-        response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
+        response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
         assert response.status_code == 200
         data = response.json()
         assert "access_token" in data
@@ -16,7 +19,8 @@ class TestAuthEndpoints:
     def test_login_success_email(self, client):
         """Test successful login with email."""
         response = client.post(
-            "/auth/login", data={"username": "admin@admin.com", "password": settings.DEFAULT_PASSWORD}
+            "/auth/login",
+            data={"username": "admin@admin.com", "password": settings.DEFAULT_PASSWORD},
         )
         assert response.status_code == 200
         data = response.json()
@@ -25,13 +29,19 @@ class TestAuthEndpoints:
 
     def test_login_wrong_email(self, client):
         """Test login with non-existent email."""
-        response = client.post("/auth/login", data={"username": "nonexistent", "password": settings.DEFAULT_PASSWORD})
-        assert response.status_code == 404
+        response = client.post(
+            "/auth/login",
+            data={"username": "nonexistent", "password": settings.DEFAULT_PASSWORD},
+        )
+        assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
     def test_login_wrong_password(self, client):
         """Test login with wrong password."""
-        response = client.post("/auth/login", data={"username": "testuser", "password": "invalidpassword"})
+        response = client.post(
+            "/auth/login",
+            data={"username": "basic_user", "password": "invalidpassword"},
+        )
         assert response.status_code == 401
         assert response.json()["detail"] == "Invalid credentials"
 
@@ -42,7 +52,10 @@ class TestAuthEndpoints:
 
     def test_get_me_success(self, client):
         """Test getting current user info."""
-        login_response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
+        login_response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
         token = login_response.json()["access_token"]
 
         response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
@@ -59,7 +72,10 @@ class TestAuthEndpoints:
 
     def test_refresh_token(self, client):
         """Test refresh token."""
-        response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
+        response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
         assert response.status_code == 200
         token: str = response.json()["access_token"]
         refresh_token: str = response.json()["refresh_token"]

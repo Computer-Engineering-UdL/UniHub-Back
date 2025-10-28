@@ -45,7 +45,11 @@ class TestChannelEndpoints:
         """Test only members can view a channel."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Private Channel", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Private Channel",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -53,14 +57,21 @@ class TestChannelEndpoints:
         response = client.get(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user_token}"})
         assert response.status_code == 200
 
-        response = client.get(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user2_token}"})
+        response = client.get(
+            f"/channels/{channel_id}",
+            headers={"Authorization": f"Bearer {user2_token}"},
+        )
         assert response.status_code == 403
 
     def test_update_channel_admin_only(self, client, user_token, user2_token):
         """Test only channel admin can update channel."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Update Test", "description": "Original", "channel_type": "public"},
+            json={
+                "name": "Update Test",
+                "description": "Original",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -89,7 +100,11 @@ class TestChannelEndpoints:
         """Test only channel admin can delete channel."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Delete Test", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Delete Test",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -99,7 +114,10 @@ class TestChannelEndpoints:
             headers={"Authorization": f"Bearer {user_token}"},
         )
 
-        response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user2_token}"})
+        response = client.delete(
+            f"/channels/{channel_id}",
+            headers={"Authorization": f"Bearer {user2_token}"},
+        )
         assert response.status_code == 403
 
         response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user_token}"})
@@ -109,7 +127,11 @@ class TestChannelEndpoints:
         """Test only channel admin can add members."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Member Test", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Member Test",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -132,7 +154,11 @@ class TestChannelEndpoints:
         """Test moderators can remove members."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Remove Test", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Remove Test",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -178,7 +204,11 @@ class TestChannelEndpoints:
         """Test only moderators and above can unban members."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Unban Test", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Unban Test",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -208,7 +238,11 @@ class TestChannelEndpoints:
         """Test site admins can perform any channel action."""
         create_response = client.post(
             "/channels/",
-            json={"name": "Admin Bypass Test", "description": "Test", "channel_type": "public"},
+            json={
+                "name": "Admin Bypass Test",
+                "description": "Test",
+                "channel_type": "public",
+            },
             headers={"Authorization": f"Bearer {user_token}"},
         )
         channel_id = create_response.json()["id"]
@@ -220,7 +254,10 @@ class TestChannelEndpoints:
         )
         assert response.status_code == 200
 
-        response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {admin_token}"})
+        response = client.delete(
+            f"/channels/{channel_id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
         assert response.status_code == 200
 
     def _get_user_id(self, client, token):

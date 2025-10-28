@@ -4,20 +4,30 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.utils import handle_crud_errors
+from app.api.utils import handle_api_errors
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.core.types import TokenData
 from app.crud.user import UserCRUD
 from app.literals.users import Role
-from app.schemas.user import UserCreate, UserDetail, UserPasswordChange, UserRead, UserUpdate
+from app.schemas.user import (
+    UserCreate,
+    UserDetail,
+    UserPasswordChange,
+    UserRead,
+    UserUpdate,
+)
 
 router = APIRouter()
 
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
-@handle_crud_errors()
-def create_user(user_in: UserCreate, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))):
+@handle_api_errors()
+def create_user(
+    user_in: UserCreate,
+    db: Session = Depends(get_db),
+    _: TokenData = Depends(require_role(Role.ADMIN)),
+):
     """
     Create a new user. Requires ADMIN role.
     """
@@ -25,7 +35,7 @@ def create_user(user_in: UserCreate, db: Session = Depends(get_db), _: TokenData
 
 
 @router.get("/me", response_model=UserDetail)
-@handle_crud_errors()
+@handle_api_errors()
 def get_current_user_profile(db: Session = Depends(get_db), current_user: TokenData = Depends(get_current_user)):
     """
     Get current authenticated user's profile.
@@ -34,8 +44,12 @@ def get_current_user_profile(db: Session = Depends(get_db), current_user: TokenD
 
 
 @router.get("/{user_id}", response_model=UserDetail)
-@handle_crud_errors()
-def get_user(user_id: uuid.UUID, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))):
+@handle_api_errors()
+def get_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: TokenData = Depends(require_role(Role.ADMIN)),
+):
     """
     Retrieve a user by ID. Requires ADMIN role.
     """
@@ -57,9 +71,11 @@ def list_users(
 
 
 @router.patch("/me", response_model=UserRead)
-@handle_crud_errors()
+@handle_api_errors()
 def update_current_user(
-    user_in: UserUpdate, db: Session = Depends(get_db), current_user: TokenData = Depends(get_current_user)
+    user_in: UserUpdate,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Update current authenticated user's profile.
@@ -68,7 +84,7 @@ def update_current_user(
 
 
 @router.patch("/{user_id}", response_model=UserRead)
-@handle_crud_errors()
+@handle_api_errors()
 def update_user(
     user_id: uuid.UUID,
     user_in: UserUpdate,
@@ -82,7 +98,7 @@ def update_user(
 
 
 @router.put("/me/password", response_model=UserRead)
-@handle_crud_errors()
+@handle_api_errors()
 def change_current_user_password(
     password_change: UserPasswordChange,
     db: Session = Depends(get_db),
@@ -95,7 +111,7 @@ def change_current_user_password(
 
 
 @router.put("/{user_id}/password", response_model=UserRead)
-@handle_crud_errors()
+@handle_api_errors()
 def change_user_password(
     user_id: uuid.UUID,
     password_change: UserPasswordChange,
@@ -109,8 +125,12 @@ def change_user_password(
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
-@handle_crud_errors()
-def delete_user(user_id: uuid.UUID, db: Session = Depends(get_db), _: TokenData = Depends(require_role(Role.ADMIN))):
+@handle_api_errors()
+def delete_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    _: TokenData = Depends(require_role(Role.ADMIN)),
+):
     """
     Delete a user. Requires ADMIN role.
     """

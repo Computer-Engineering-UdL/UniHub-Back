@@ -49,9 +49,7 @@ class HousingCategoryCRUD:
         Returns:
             Optional[HousingCategoryRead]: The found category, or None if not found.
         """
-        db_category = db.query(HousingCategoryTableModel).filter(
-            HousingCategoryTableModel.id == category_id
-        ).first()
+        db_category = db.query(HousingCategoryTableModel).filter(HousingCategoryTableModel.id == category_id).first()
         return HousingCategoryRead.model_validate(db_category) if db_category else None
 
     @staticmethod
@@ -72,9 +70,7 @@ class HousingCategoryCRUD:
 
     @staticmethod
     def update(
-        db: Session,
-        category_id: uuid.UUID,
-        category_update: HousingCategoryUpdate
+        db: Session, category_id: uuid.UUID, category_update: HousingCategoryUpdate
     ) -> Optional[HousingCategoryRead]:
         """
         Update an existing housing category.
@@ -87,9 +83,7 @@ class HousingCategoryCRUD:
         Returns:
             Optional[HousingCategoryRead]: Updated category object, or None if not found.
         """
-        db_category = db.query(HousingCategoryTableModel).filter(
-            HousingCategoryTableModel.id == category_id
-        ).first()
+        db_category = db.query(HousingCategoryTableModel).filter(HousingCategoryTableModel.id == category_id).first()
 
         if not db_category:
             return None
@@ -115,9 +109,7 @@ class HousingCategoryCRUD:
         Returns:
             bool: True if deletion was successful, False if category not found.
         """
-        db_category = db.query(HousingCategoryTableModel).filter(
-            HousingCategoryTableModel.id == category_id
-        ).first()
+        db_category = db.query(HousingCategoryTableModel).filter(HousingCategoryTableModel.id == category_id).first()
 
         if not db_category:
             return False

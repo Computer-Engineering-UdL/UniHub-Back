@@ -1,3 +1,3 @@
-from .decorators import handle_crud_errors
+from .decorators import handle_api_errors
 
-__all__ = ["handle_crud_errors"]
+__all__ = ["handle_api_errors"]
