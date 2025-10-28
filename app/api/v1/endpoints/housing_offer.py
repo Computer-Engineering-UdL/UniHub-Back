@@ -18,10 +18,7 @@ from app.schemas import (
     HousingOfferUpdate,
 )
 
-router = APIRouter(
-    prefix="/offers",
-    tags=["housing offers"],
-)
+router = APIRouter()
 
 
 @router.post(
@@ -170,3 +167,4 @@ def delete_offer(
     if not success:
         raise HTTPException(status_code=400, detail="Failed to delete offer.")
     return None
+

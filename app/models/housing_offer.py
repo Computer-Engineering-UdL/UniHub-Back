@@ -1,7 +1,8 @@
 from __future__ import annotations
 
+import datetime
 import uuid
-from datetime import date, datetime
+from datetime import date
 from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
@@ -57,7 +58,8 @@ class HousingOfferTableModel(Base):
     status: Mapped[OfferStatus] = mapped_column(sa.String(20), default="active", nullable=False)
 
     # ----- DATES -----
-    posted_date: Mapped[datetime] = mapped_column(sa.DateTime, default=datetime.utcnow, nullable=False)
+    posted_date: Mapped[datetime.datetime] = (
+        mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False))
     start_date: Mapped[date] = mapped_column(nullable=False)
     end_date: Mapped[date | None] = mapped_column()
 
