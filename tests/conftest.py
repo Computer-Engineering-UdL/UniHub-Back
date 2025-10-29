@@ -1,5 +1,6 @@
 import os
 import tempfile
+import uuid
 
 import pytest
 from fastapi import FastAPI
@@ -9,6 +10,7 @@ from sqlalchemy.orm import sessionmaker
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
+from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.user import router as user_router
 from app.core import Base, get_db
@@ -26,6 +28,11 @@ def auth_headers(client, db):
     user = db.query(User).filter_by(username="basic_user").first()
     token = authenticate_user(db, LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
     return {"Authorization": f"Bearer {token.access_token}"}
+
+@pytest.fixture
+def admin_auth_headers(admin_token):
+    """Return authorization headers for admin user."""
+    return {"Authorization": f"Bearer {admin_token}"}
 
 
 @pytest.fixture(scope="function")
@@ -86,11 +93,13 @@ def seed_database_test(db):
 @pytest.fixture
 def app(db):
     """Create FastAPI app with test database."""
+
     app = FastAPI()
     app.include_router(user_router, prefix="/users")
     app.include_router(auth_router, prefix="/auth")
     app.include_router(interest_router, prefix="/interest")
     app.include_router(channel_router, prefix="/channels")
+    app.include_router(housing_offer_router, prefix="/offers")
 
     def override_get_db():
         yield db
