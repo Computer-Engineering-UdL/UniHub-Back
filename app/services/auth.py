@@ -28,7 +28,7 @@ def authenticate_user(db: Session, login_req: LoginRequest) -> Token:
         refresh_token = create_refresh_token(data=data)
         return Token(access_token=token, refresh_token=refresh_token, token_type="bearer")
     except NoResultFound:
-        raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Invalid credentials")
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid credentials")
 
 
 def verify_token(token: str, expected_type: str = None) -> dict:
@@ -41,10 +41,16 @@ def verify_token(token: str, expected_type: str = None) -> dict:
         token_type = payload.get("type")
 
         if user_id is None or username is None or email is None or role is None:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid or expired token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Invalid or expired token",
+            )
 
         if expected_type and token_type != expected_type:
-            raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail=f"Expected {expected_type} token")
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail=f"Expected {expected_type} token",
+            )
 
         return payload
     except JWTError:

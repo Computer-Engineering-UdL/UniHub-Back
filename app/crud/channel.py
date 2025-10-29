@@ -143,7 +143,10 @@ class ChannelCRUD:
 
     @staticmethod
     def add_member(
-        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, role: str = ChannelRole.USER
+        db: Session,
+        channel_id: uuid.UUID,
+        user_id: uuid.UUID,
+        role: str = ChannelRole.USER,
     ) -> type[ChannelMember] | None:
         """Add a user to a channel.
 
@@ -240,11 +243,18 @@ class ChannelCRUD:
             membership.is_banned = True
 
         db.query(ChannelBan).filter(
-            ChannelBan.channel_id == channel_id, ChannelBan.user_id == user_id, ChannelBan.active
+            ChannelBan.channel_id == channel_id,
+            ChannelBan.user_id == user_id,
+            ChannelBan.active,
         ).update({"active": False})
 
         ban = ChannelBan(
-            channel_id=channel_id, user_id=user_id, motive=motive, duration=duration, active=True, banned_by=banned_by
+            channel_id=channel_id,
+            user_id=user_id,
+            motive=motive,
+            duration=duration,
+            active=True,
+            banned_by=banned_by,
         )
         db.add(ban)
         db.commit()
@@ -254,7 +264,11 @@ class ChannelCRUD:
 
     @staticmethod
     def unban_member(
-        db: Session, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, unbanned_by: Optional[uuid.UUID] = None
+        db: Session,
+        channel_id: uuid.UUID,
+        user_id: uuid.UUID,
+        motive: str,
+        unbanned_by: Optional[uuid.UUID] = None,
     ) -> ChannelUnban | None:
         """Unban a member from a channel.
 
@@ -282,10 +296,17 @@ class ChannelCRUD:
             membership.is_banned = False
 
         db.query(ChannelBan).filter(
-            ChannelBan.channel_id == channel_id, ChannelBan.user_id == user_id, ChannelBan.active
+            ChannelBan.channel_id == channel_id,
+            ChannelBan.user_id == user_id,
+            ChannelBan.active,
         ).update({"active": False})
 
-        unban = ChannelUnban(channel_id=channel_id, user_id=user_id, motive=motive, unbanned_by=unbanned_by)
+        unban = ChannelUnban(
+            channel_id=channel_id,
+            user_id=user_id,
+            motive=motive,
+            unbanned_by=unbanned_by,
+        )
         db.add(unban)
         db.commit()
         db.refresh(unban)

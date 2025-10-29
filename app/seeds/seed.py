@@ -4,9 +4,10 @@ from sqlalchemy.orm import Session
 
 from app.core import Base, engine
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds.messages import seed_messages
 
 
-def seed_database(nuke: bool=False):
+def seed_database(nuke: bool = False):
     """Populate database with initial data on first run."""
     if nuke:
         Base.metadata.drop_all(bind=engine)
@@ -22,9 +23,8 @@ def seed_database(nuke: bool=False):
         print("* Interests seeded")
 
         users = seed_users(db)
-
-        seed_channels(db, users)
-
+        channels = seed_channels(db, users)
+        seed_messages(db, users, channels)
         seed_housing_data(db)
         db.commit()
         print("\nDatabase seeded successfully!\n")

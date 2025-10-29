@@ -26,7 +26,10 @@ class UserCRUD:
             return db_user
         except IntegrityError as e:
             db.rollback()
-            raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail=extract_constraint_info(e))
+            raise HTTPException(
+                status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                detail=extract_constraint_info(e),
+            )
 
     @staticmethod
     def get_by_id(db: Session, user_id: uuid.UUID) -> User:

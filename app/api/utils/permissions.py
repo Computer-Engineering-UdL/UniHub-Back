@@ -22,7 +22,9 @@ def get_channel_permission(min_role: ChannelRole = ChannelRole.USER):
     """
 
     def permission_checker(
-        channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
+        channel_id: uuid.UUID,
+        user: TokenData = Depends(get_current_user),
+        db: Session = Depends(get_db),
     ) -> type[ChannelMember] | None:
         membership = (
             db.query(ChannelMember)
@@ -33,7 +35,15 @@ def get_channel_permission(min_role: ChannelRole = ChannelRole.USER):
             return membership
 
         if not membership:
-            raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are not a member of this channel",
+            )
+        if membership.is_banned:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="You are banned from this channel",
+            )
         if CHANNEL_ROLE_HIERARCHY[membership.role] > CHANNEL_ROLE_HIERARCHY[min_role]:
             raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="Requires elevated access")
 
@@ -43,7 +53,9 @@ def get_channel_permission(min_role: ChannelRole = ChannelRole.USER):
 
 
 def is_channel_member(
-    channel_id: uuid.UUID, user: TokenData = Depends(get_current_user), db: Session = Depends(get_db)
+    channel_id: uuid.UUID,
+    user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
 ) -> type[ChannelMember] | None:
     """Check if user is a channel member"""
     membership = (
@@ -55,6 +67,15 @@ def is_channel_member(
         return membership
 
     if not membership:
-        raise HTTPException(status_code=status.HTTP_403_FORBIDDEN, detail="You are not a member of this channel")
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are not a member of this channel",
+        )
+
+    if membership.is_banned:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You are banned from this channel",
+        )
 
     return membership

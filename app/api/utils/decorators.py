@@ -8,7 +8,9 @@ from starlette import status
 T = TypeVar("T")
 
 
-def handle_crud_errors(not_found_message: str = "Not found") -> Callable[[Callable[..., T]], Callable[..., T]]:
+def handle_api_errors(
+    not_found_message: str = "Not found",
+) -> Callable[[Callable[..., T]], Callable[..., T]]:
     """
     Decorator factory to handle common CRUD errors.
     Accepts a custom message for the 404 Not Found error.
@@ -26,7 +28,10 @@ def handle_crud_errors(not_found_message: str = "Not found") -> Callable[[Callab
             except HTTPException as e:
                 raise e
             except Exception:
-                raise HTTPException(status_code=status.HTTP_500_INTERNAL_SERVER_ERROR, detail="Internal server error")
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Internal server error",
+                )
 
         return wrapper
 

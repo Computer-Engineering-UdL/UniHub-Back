@@ -20,7 +20,9 @@ class InterestCategory(Base):
     name: Mapped[str] = mapped_column(sa.String(120), unique=True, nullable=False)
 
     interests: Mapped[List["Interest"]] = relationship(
-        back_populates="category", cascade="all, delete-orphan", order_by="Interest.name"
+        back_populates="category",
+        cascade="all, delete-orphan",
+        order_by="Interest.name",
     )
 
 

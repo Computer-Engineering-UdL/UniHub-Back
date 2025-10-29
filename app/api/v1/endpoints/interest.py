@@ -4,7 +4,7 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
-from app.api.utils import handle_crud_errors
+from app.api.utils import handle_api_errors
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.types import TokenData
@@ -16,7 +16,7 @@ router = APIRouter()
 
 
 @router.get("/", response_model=List[InterestCategoryRead])
-@handle_crud_errors()
+@handle_api_errors()
 def list_interest_categories(db: Session = Depends(get_db)):
     """Return all interest categories with their interests."""
 
@@ -24,7 +24,7 @@ def list_interest_categories(db: Session = Depends(get_db)):
 
 
 @router.get("/user/{user_id}", response_model=List[InterestRead])
-@handle_crud_errors()
+@handle_api_errors()
 def list_user_interests(user_id: uuid.UUID, db: Session = Depends(get_db)):
     """Return the interests linked to a specific user."""
 
@@ -36,7 +36,7 @@ def list_user_interests(user_id: uuid.UUID, db: Session = Depends(get_db)):
     response_model=List[InterestRead],
     status_code=status.HTTP_201_CREATED,
 )
-@handle_crud_errors()
+@handle_api_errors()
 def add_interest_to_user(
     user_id: uuid.UUID,
     payload: UserInterestCreate,
@@ -56,7 +56,7 @@ def add_interest_to_user(
     "/user/{user_id}/{interest_id}",
     status_code=status.HTTP_204_NO_CONTENT,
 )
-@handle_crud_errors()
+@handle_api_errors()
 def remove_interest_from_user(
     user_id: uuid.UUID,
     interest_id: uuid.UUID,

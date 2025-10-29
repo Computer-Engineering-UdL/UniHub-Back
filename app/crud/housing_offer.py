@@ -62,7 +62,7 @@ class HousingOfferCRUD:
             db.query(HousingOfferTableModel)
             .options(
                 joinedload(HousingOfferTableModel.category),  # Eager-load category
-                joinedload(HousingOfferTableModel.photos),    # Eager-load photos
+                joinedload(HousingOfferTableModel.photos),  # Eager-load photos
             )
             .filter(HousingOfferTableModel.id == offer_id)
             .first()
@@ -98,7 +98,7 @@ class HousingOfferCRUD:
         db: Session,
         offer_id: uuid.UUID,
         offer_update: HousingOfferUpdate,
-        current_user: User
+        current_user: User,
     ) -> Optional[HousingOfferRead]:
         """
         Update a housing offer — only the owner or an admin is allowed to modify it.
@@ -115,11 +115,7 @@ class HousingOfferCRUD:
         Raises:
             PermissionError: If the user is not the owner or admin.
         """
-        db_offer = (
-            db.query(HousingOfferTableModel)
-            .filter(HousingOfferTableModel.id == offer_id)
-            .first()
-        )
+        db_offer = db.query(HousingOfferTableModel).filter(HousingOfferTableModel.id == offer_id).first()
         if not db_offer:
             return None
 
@@ -153,11 +149,7 @@ class HousingOfferCRUD:
         Raises:
             PermissionError: If the user is not the owner or admin.
         """
-        db_offer = (
-            db.query(HousingOfferTableModel)
-            .filter(HousingOfferTableModel.id == offer_id)
-            .first()
-        )
+        db_offer = db.query(HousingOfferTableModel).filter(HousingOfferTableModel.id == offer_id).first()
         if not db_offer:
             return False
 
@@ -167,7 +159,6 @@ class HousingOfferCRUD:
         db.delete(db_offer)
         db.commit()
         return True
-
 
     @staticmethod
     def get_filtered(
@@ -195,15 +186,12 @@ class HousingOfferCRUD:
         """
         query = db.query(HousingOfferTableModel).options(joinedload(HousingOfferTableModel.category))
 
-
         # filters
         if city:
             query = query.filter(HousingOfferTableModel.city.ilike(f"%{city}%"))
         if category_name:
             query = query.filter(
-                HousingOfferTableModel.category.has(
-                    HousingCategoryTableModel.name.ilike(f"%{category_name}%")
-                )
+                HousingOfferTableModel.category.has(HousingCategoryTableModel.name.ilike(f"%{category_name}%"))
             )
         if min_price is not None:
             query = query.filter(HousingOfferTableModel.price >= min_price)
@@ -214,4 +202,3 @@ class HousingOfferCRUD:
 
         offers = query.offset(skip).limit(limit).all()
         return [HousingOfferList.model_validate(o) for o in offers]
-

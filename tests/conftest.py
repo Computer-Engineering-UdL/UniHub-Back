@@ -1,7 +1,5 @@
-import datetime
 import os
 import tempfile
-import uuid
 
 import pytest
 from fastapi import FastAPI
@@ -16,19 +14,20 @@ from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.user import router as user_router
 from app.core import Base, get_db
 from app.core.config import settings
-from app.literals.users import Role
 from app.models import User
 from app.schemas import LoginRequest
-from app.seeds import seed_housing_data, seed_interests
+from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds.messages import seed_messages
 from app.services import authenticate_user
 
 
 @pytest.fixture
 def auth_headers(client, db):
-    """Generate authentication headers for testuser."""
-    user = db.query(User).filter_by(username="testuser").first()
+    """Generate authentication headers for basic_user."""
+    user = db.query(User).filter_by(username="basic_user").first()
     token = authenticate_user(db, LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
     return {"Authorization": f"Bearer {token.access_token}"}
+
 
 @pytest.fixture
 def admin_auth_headers(admin_token):
@@ -42,7 +41,11 @@ def db():
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
 
     try:
-        engine = create_engine(f"sqlite:///{db_path}", connect_args={"check_same_thread": False}, poolclass=None)
+        engine = create_engine(
+            f"sqlite:///{db_path}",
+            connect_args={"check_same_thread": False},
+            poolclass=None,
+        )
 
         @event.listens_for(engine, "connect")
         def set_sqlite_pragma(dbapi_conn, connection_record):
@@ -80,58 +83,12 @@ def db():
 
 def seed_database_test(db):
     """Seed test database with initial data."""
-
-    from app.core import hash_password
-    from app.models import User
-
-    admin_user = User(
-        id=uuid.uuid4(),
-        username="admin",
-        email="admin@admin.com",
-        password=hash_password(settings.DEFAULT_PASSWORD),
-        first_name="Admin",
-        last_name="User",
-        provider="local",
-        role=Role.ADMIN,
-        is_active=True,
-        is_verified=True,
-        created_at=datetime.datetime.now(datetime.UTC),
-    )
-
-    test_user = User(
-        id=uuid.uuid4(),
-        username="testuser",
-        email="test@example.com",
-        password=hash_password(settings.DEFAULT_PASSWORD),
-        first_name="Test",
-        last_name="User",
-        provider="local",
-        role=Role.BASIC,
-        is_active=True,
-        is_verified=True,
-        created_at=datetime.datetime.now(datetime.UTC),
-    )
-
-    test_user2 = User(
-        id=uuid.uuid4(),
-        username="testuser2",
-        email="test2@example.com",
-        password=hash_password(settings.DEFAULT_PASSWORD),
-        first_name="Test2",
-        last_name="User2",
-        provider="local",
-        role=Role.BASIC,
-        is_active=True,
-        is_verified=True,
-        created_at=datetime.datetime.now(datetime.UTC),
-    )
-
-    seed_interests(db)
-    db.add_all([admin_user, test_user, test_user2])
-    db.commit()
-
+    users = seed_users(db)
+    channels = seed_channels(db, users)
+    seed_messages(db, users, channels)
     seed_housing_data(db)
-    db.commit()
+    seed_interests(db)
+
 
 @pytest.fixture
 def app(db):
@@ -167,12 +124,18 @@ def admin_token(client):
 @pytest.fixture
 def user_token(client):
     """Get regular user access token."""
-    response = client.post("/auth/login", data={"username": "testuser", "password": settings.DEFAULT_PASSWORD})
+    response = client.post(
+        "/auth/login",
+        data={"username": "basic_user", "password": settings.DEFAULT_PASSWORD},
+    )
     return response.json()["access_token"]
 
 
 @pytest.fixture
 def user2_token(client):
     """Get second regular user access token."""
-    response = client.post("/auth/login", data={"username": "testuser2", "password": settings.DEFAULT_PASSWORD})
+    response = client.post(
+        "/auth/login",
+        data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
+    )
     return response.json()["access_token"]

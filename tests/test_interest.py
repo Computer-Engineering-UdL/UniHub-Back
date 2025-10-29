@@ -20,7 +20,7 @@ class TestInterestEndpoints:
             assert received == expected
 
     def test_user_interest_crud_flow(self, client, db, auth_headers):
-        user: User = db.query(User).filter_by(username="testuser").first()
+        user: User = db.query(User).filter_by(username="basic_user").first()
         assert user is not None
 
         interest: Interest = db.query(Interest).first()
