@@ -1,6 +1,5 @@
 import os
 import tempfile
-import uuid
 
 import pytest
 from fastapi import FastAPI
@@ -28,6 +27,7 @@ def auth_headers(client, db):
     user = db.query(User).filter_by(username="basic_user").first()
     token = authenticate_user(db, LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
     return {"Authorization": f"Bearer {token.access_token}"}
+
 
 @pytest.fixture
 def admin_auth_headers(admin_token):

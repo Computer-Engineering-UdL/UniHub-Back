@@ -1,10 +1,14 @@
+from __future__ import annotations
+
+import typing
 import uuid
 from datetime import datetime
 from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.schemas import ChannelRead, UserRead
+if typing.TYPE_CHECKING:
+    from app.schemas import ChannelRead, UserRead
 
 
 class MessageBase(BaseModel):
