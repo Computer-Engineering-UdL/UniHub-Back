@@ -2,9 +2,10 @@ import datetime
 import uuid
 from typing import Optional
 
-from pydantic import BaseModel, ConfigDict, Field
+from pydantic import BaseModel, ConfigDict, Field, model_validator
 
 from app.literals.channels import ChannelRole, ChannelType
+from app.literals.users import ROLE_HIERARCHY, Role
 
 # ==========================================
 # Channel Schemas
@@ -18,6 +19,24 @@ class ChannelBase(BaseModel):
     description: Optional[str] = Field(None, max_length=120)
     channel_type: ChannelType = Field(default="public")
     channel_logo: Optional[str] = None
+    category: str = Field(
+        default="General", max_length=100, description="The category of the channel (e.g., General, Engineering)"
+    )
+
+    read_min_role: Role = Field(default=Role.BASIC, description="The minimum role required to read this channel.")
+    write_min_role: Role = Field(default=Role.SELLER, description="The minimum role required to write this channel.")
+
+    @model_validator(mode="after")
+    def validate_role_thresholds(self) -> "ChannelBase":
+        read_rank = ROLE_HIERARCHY[self.read_min_role]
+        write_rank = ROLE_HIERARCHY[self.write_min_role]
+        if write_rank < read_rank:
+            pass
+        if write_rank > read_rank:
+            raise ValueError(
+                "write_min_role must be less than read_min_role",
+            )
+        return self
 
 
 class ChannelCreate(ChannelBase):
@@ -33,6 +52,23 @@ class ChannelUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=120)
     channel_type: ChannelType | None = None
     channel_logo: Optional[str] = None
+    category: Optional[str] = Field(
+        None, max_length=100, description="The category of the channel (e.g., General, Engineering)"
+    )
+
+    read_min_role: Role | None = None
+    write_min_role: Role | None = None
+
+    @model_validator(mode="after")
+    def _validate_role_thresholds(self) -> "ChannelUpdate":
+        if self.read_min_role is not None and self.write_min_role is not None:
+            read_rank = ROLE_HIERARCHY[self.read_min_role]
+            write_rank = ROLE_HIERARCHY[self.write_min_role]
+            if write_rank > read_rank:
+                raise ValueError(
+                    "write_min_role must be less than read_min_role",
+                )
+        return self
 
 
 class ChannelRead(ChannelBase):

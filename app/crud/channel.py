@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.literals.channels import ChannelRole
+from app.literals.users import ROLE_HIERARCHY, Role
 from app.models import Channel, ChannelBan, ChannelMember, ChannelUnban
 from app.schemas import ChannelCreate, ChannelUpdate
 
@@ -65,6 +66,7 @@ class ChannelCRUD:
         skip: int = 0,
         limit: int = 100,
         channel_type: Optional[str] = None,
+        category: Optional[str] = None,
     ) -> list[type[Channel]]:
         """Get all channels with optional filtering.
 
@@ -82,8 +84,50 @@ class ChannelCRUD:
         if channel_type is not None:
             query = query.filter(Channel.channel_type == channel_type)
 
+        if category is not None:
+            query = query.filter(Channel.category == category)
+
         channels = query.offset(skip).limit(limit).all()
         return channels
+
+    # ==========================================
+    # READ (DEPENDS ROLE)
+    # ==========================================
+    @staticmethod
+    def get_all_readable(
+        db: Session,
+        site_role: Optional[Role],
+        skip: int = 0,
+        limit: int = 100,
+        channel_type: Optional[str] = None,
+        category: Optional[str] = None,
+    ) -> list[type[Channel]]:
+        query = db.query(Channel)
+
+        if site_role == Role.ADMIN:
+            if channel_type is not None:
+                query = query.filter(Channel.channel_type == channel_type)
+
+            if category is not None:
+                query = query.filter(Channel.category == category)
+
+            return query.offset(skip).limit(limit).all()
+
+        effective_role = site_role if site_role is not None else Role.BASIC
+
+        effective_rank = ROLE_HIERARCHY[effective_role]
+
+        readable_roles = [role for role, rank in ROLE_HIERARCHY.items() if rank >= effective_rank]
+
+        query = query.filter(Channel.read_min_role.in_(readable_roles))
+
+        if channel_type is not None:
+            query = query.filter(Channel.channel_type == channel_type)
+
+        if category is not None:
+            query = query.filter(Channel.category == category)
+
+        return query.offset(skip).limit(limit).all()
 
     # ==========================================
     # UPDATE
@@ -174,7 +218,7 @@ class ChannelCRUD:
         membership = ChannelMember(channel_id=channel_id, user_id=user_id, role=role)
         db.add(membership)
         db.commit()
-        db.refresh(db_channel)
+        db.refresh(membership)
         return membership
 
     @staticmethod

@@ -1,6 +1,7 @@
 from __future__ import annotations
 
 import uuid
+from typing import Optional
 
 import redis
 from authlib.integrations.starlette_client import OAuth
@@ -17,6 +18,10 @@ from .config import settings
 from .types import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
+oauth2_scheme_optional = OAuth2PasswordBearer(
+    tokenUrl=f"{settings.API_VERSION}/auth/login",
+    auto_error=False,
+)
 oauth = OAuth()
 
 oauth.register(
@@ -50,7 +55,8 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
         user_id: uuid.UUID = uuid.UUID(payload.get("sub"))
         username: str = payload.get("username")
         email: str = payload.get("email")
-        role: Role = payload.get("role")
+        role_raw = payload.get("role")
+        role: Role = role_raw if isinstance(role_raw, Role) else Role(role_raw)
 
         token_data = TokenData(id=user_id, username=username, email=email, role=role)
     except (JWTError, ValidationError, ValueError):
@@ -60,6 +66,23 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
         )
 
     return token_data
+
+
+def get_current_user_optional(token: Optional[str] = Depends(oauth2_scheme_optional)) -> Optional[TokenData]:
+    if not token:
+        return None
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: uuid.UUID = uuid.UUID(payload.get("sub"))
+        username: str = payload.get("username")
+        email: str = payload.get("email")
+
+        role_raw = payload.get("role")
+        role: Role = role_raw if isinstance(role_raw, Role) else Role(role_raw)
+
+        return TokenData(id=user_id, username=username, email=email, role=role)
+    except (JWTError, ValidationError, ValueError):
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Could not validate credentials")
 
 
 def require_role(min_role: Role):

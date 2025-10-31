@@ -1,266 +1,256 @@
-import uuid
-
-
 class TestChannelEndpoints:
     """Test channel CRUD operations with permissions."""
 
-    def test_create_channel_success(self, client, user_token):
-        """Test regular user can create a channel and becomes admin."""
+    def test_create_channel_fails_for_non_admin(self, client, user_token, seller_token):
+        """Test regular users (basic, seller) cannot create a channel."""
+        for token in [user_token, seller_token]:
+            response = client.post(
+                "/channels/",
+                json={
+                    "name": "Failed Channel",
+                    "description": "This should not be created",
+                    "channel_type": "public",
+                    "read_min_role": "Basic",
+                    "write_min_role": "Seller",
+                },
+                headers={"Authorization": f"Bearer {token}"},
+            )
+            assert response.status_code == 403
+
+    def test_create_channel_success_for_admin(self, client, admin_token, admin_user):
+        """Test site admin can create a channel and becomes channel admin."""
         response = client.post(
             "/channels/",
             json={
-                "name": "Test Channel",
-                "description": "A test channel",
+                "name": "Admin Test Channel",
+                "description": "A test channel by admin",
                 "channel_type": "public",
+                "read_min_role": "Basic",
+                "write_min_role": "Seller",
             },
-            headers={"Authorization": f"Bearer {user_token}"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
         data = response.json()
-        assert data["name"] == "Test Channel"
-        assert data["description"] == "A test channel"
-        assert "id" in data
+        assert data["name"] == "Admin Test Channel"
+        assert data["read_min_role"] == "Basic"
+        assert data["write_min_role"] == "Seller"
+
+        channel_id = data["id"]
+        member_response = client.get(
+            f"/channels/{channel_id}/member/{admin_user.id}/",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert member_response.status_code == 200
+        assert member_response.json()["role"] == "admin"
 
     def test_create_channel_without_auth(self, client):
         """Test creating channel without authentication fails."""
         response = client.post(
             "/channels/",
-            json={
-                "name": "Test Channel",
-                "description": "A test channel",
-                "channel_type": "public",
-            },
+            json={"name": "Test Channel", "channel_type": "public"},
         )
         assert response.status_code == 401
 
-    def test_fetch_all_channels_admin_only(self, client, admin_token, user_token):
-        """Test only admins can fetch all channels."""
-        response = client.get("/channels/", headers={"Authorization": f"Bearer {admin_token}"})
-        assert response.status_code == 200
-
-        response = client.get("/channels/", headers={"Authorization": f"Bearer {user_token}"})
-        assert response.status_code == 403
-
-    def test_fetch_channel_requires_membership(self, client, user_token, user2_token):
-        """Test only members can view a channel."""
+    def test_update_channel_requires_site_admin(self, client, admin_token, seller_token, seller_user):
+        """Test only SITE admin can update channel (channel members/admins cannot)."""
         create_response = client.post(
             "/channels/",
-            json={
-                "name": "Private Channel",
-                "description": "Test",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"name": "Update Test", "description": "Original", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         channel_id = create_response.json()["id"]
-
-        response = client.get(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user_token}"})
-        assert response.status_code == 200
-
-        response = client.get(
-            f"/channels/{channel_id}",
-            headers={"Authorization": f"Bearer {user2_token}"},
-        )
-        assert response.status_code == 403
-
-    def test_update_channel_admin_only(self, client, user_token, user2_token):
-        """Test only channel admin can update channel."""
-        create_response = client.post(
-            "/channels/",
-            json={
-                "name": "Update Test",
-                "description": "Original",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
-        )
-        channel_id = create_response.json()["id"]
-
-        response = client.patch(
-            f"/channels/{channel_id}",
-            json={"description": "Updated description"},
-            headers={"Authorization": f"Bearer {user_token}"},
-        )
-        assert response.status_code == 200
-        assert response.json()["description"] == "Updated description"
 
         client.post(
-            f"/channels/{channel_id}/add_member/{self._get_user_id(client, user2_token)}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/add_member/{seller_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
         response = client.patch(
             f"/channels/{channel_id}",
             json={"description": "Hacked"},
-            headers={"Authorization": f"Bearer {user2_token}"},
+            headers={"Authorization": f"Bearer {seller_token}"},
         )
         assert response.status_code == 403
+        response = client.patch(
+            f"/channels/{channel_id}",
+            json={"description": "Updated description"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert response.status_code == 200
+        assert response.json()["description"] == "Updated description"
 
-    def test_delete_channel_admin_only(self, client, user_token, user2_token):
-        """Test only channel admin can delete channel."""
+    def test_delete_channel_requires_site_admin(self, client, admin_token, seller_token, seller_user):
+        """Test only SITE admin can delete channel (channel members/admins cannot)."""
         create_response = client.post(
             "/channels/",
-            json={
-                "name": "Delete Test",
-                "description": "Test",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"name": "Delete Test", "description": "Test", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         channel_id = create_response.json()["id"]
 
         client.post(
-            f"/channels/{channel_id}/add_member/{self._get_user_id(client, user2_token)}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/add_member/{seller_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
-        response = client.delete(
-            f"/channels/{channel_id}",
-            headers={"Authorization": f"Bearer {user2_token}"},
-        )
+        response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {seller_token}"})
         assert response.status_code == 403
 
-        response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user_token}"})
+        response = client.delete(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {admin_token}"})
+        assert response.status_code == 200
+        assert response.json() is True
+
+    def test_fetch_all_channels_filters_by_role(self, client, admin_token, seller_token, user_token):
+        """Test GET /channels/ filters based on site role (Admin, Seller, Basic, Anonymous)."""
+        headers = {"Authorization": f"Bearer {admin_token}"}
+        client.post(
+            "/channels/",
+            json={"name": "Admin Read", "read_min_role": "Admin", "write_min_role": "Admin"},
+            headers=headers,
+        )
+        client.post(
+            "/channels/",
+            json={"name": "Seller Read", "read_min_role": "Seller", "write_min_role": "Seller"},
+            headers=headers,
+        )
+        client.post(
+            "/channels/",
+            json={"name": "Basic Read", "read_min_role": "Basic", "write_min_role": "Basic"},
+            headers=headers,
+        )
+
+        response_admin = client.get("/channels/", headers={"Authorization": f"Bearer {admin_token}"})
+        assert response_admin.status_code == 200
+        names_admin = {c["name"] for c in response_admin.json()}
+        assert names_admin == {"Admin Read", "Seller Read", "Basic Read"}
+
+        response_seller = client.get("/channels/", headers={"Authorization": f"Bearer {seller_token}"})
+        assert response_seller.status_code == 200
+        names_seller = {c["name"] for c in response_seller.json()}
+        assert names_seller == {"Seller Read", "Basic Read"}
+
+        response_basic = client.get("/channels/", headers={"Authorization": f"Bearer {user_token}"})
+        assert response_basic.status_code == 200
+        names_basic = {c["name"] for c in response_basic.json()}
+        assert names_basic == {"Basic Read"}
+
+        response_anon = client.get("/channels/")
+        assert response_anon.status_code == 200
+        names_anon = {c["name"] for c in response_anon.json()}
+        assert names_anon == {"Basic Read"}
+
+    def test_fetch_channel_requires_membership(self, client, admin_token, user_token, user2_token, basic_user):
+        """Test only members can view a channel."""
+        create_response = client.post(
+            "/channels/",
+            json={"name": "Private Channel", "description": "Test", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+        assert create_response.status_code == 200
+        channel_id = create_response.json()["id"]
+
+        client.post(
+            f"/channels/{channel_id}/add_member/{basic_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
+
+        response = client.get(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user_token}"})
         assert response.status_code == 200
 
-    def test_add_member_admin_only(self, client, user_token, user2_token, admin_token):
+        response = client.get(f"/channels/{channel_id}", headers={"Authorization": f"Bearer {user2_token}"})
+        assert response.status_code == 403
+
+    def test_add_member_requires_channel_admin(self, client, admin_token, user_token, basic_user, basic_user_2):
         """Test only channel admin can add members."""
         create_response = client.post(
             "/channels/",
-            json={
-                "name": "Member Test",
-                "description": "Test",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"name": "Member Test", "description": "Test", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         channel_id = create_response.json()["id"]
-        user2_id = self._get_user_id(client, user2_token)
 
         response = client.post(
-            f"/channels/{channel_id}/add_member/{user2_id}",
-            headers={"Authorization": f"Bearer {user_token}"},
-        )
-        assert response.status_code == 200
-
-        admin_id = self._get_user_id(client, admin_token)
-        response = client.post(
-            f"/channels/{channel_id}/add_member/{admin_id}",
+            f"/channels/{channel_id}/add_member/{basic_user.id}",
             headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
 
-    def test_remove_member_moderator_can_remove(self, client, user_token, user2_token):
-        """Test moderators can remove members."""
-        create_response = client.post(
-            "/channels/",
-            json={
-                "name": "Remove Test",
-                "description": "Test",
-                "channel_type": "public",
-            },
+        response = client.post(
+            f"/channels/{channel_id}/add_member/{basic_user_2.id}",
             headers={"Authorization": f"Bearer {user_token}"},
         )
+        assert response.status_code == 403
+
+    def test_remove_member_moderator_can_remove(self, client, admin_token, basic_user):
+        """Test moderators (or admin) can remove members."""
+        create_response = client.post(
+            "/channels/",
+            json={"name": "Remove Test", "description": "Test", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
+        )
         channel_id = create_response.json()["id"]
-        user2_id = self._get_user_id(client, user2_token)
 
         client.post(
-            f"/channels/{channel_id}/add_member/{user2_id}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/add_member/{basic_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
         response = client.post(
-            f"/channels/{channel_id}/remove_member/{user2_id}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/remove_member/{basic_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
 
-    def test_ban_member_moderator_required(self, client, user_token, user2_token):
+    def test_ban_member_moderator_required(self, client, admin_token, basic_user):
         """Test only moderators and above can ban members."""
         create_response = client.post(
             "/channels/",
             json={"name": "Ban Test", "description": "Test", "channel_type": "public"},
-            headers={"Authorization": f"Bearer {user_token}"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         channel_id = create_response.json()["id"]
-        user2_id = self._get_user_id(client, user2_token)
 
         client.post(
-            f"/channels/{channel_id}/add_member/{user2_id}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/add_member/{basic_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
         response = client.post(
             f"/channels/{channel_id}/ban",
-            json={"user_id": str(user2_id), "motive": "Test ban", "duration_days": 7},
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"user_id": str(basic_user.id), "motive": "Test ban", "duration_days": 7},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
         data = response.json()
         assert data["motive"] == "Test ban"
         assert data["active"] is True
 
-    def test_unban_member_moderator_required(self, client, user_token, user2_token):
+    def test_unban_member_moderator_required(self, client, admin_token, basic_user):
         """Test only moderators and above can unban members."""
         create_response = client.post(
             "/channels/",
-            json={
-                "name": "Unban Test",
-                "description": "Test",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"name": "Unban Test", "description": "Test", "channel_type": "public"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         channel_id = create_response.json()["id"]
-        user2_id = self._get_user_id(client, user2_token)
 
         client.post(
-            f"/channels/{channel_id}/add_member/{user2_id}",
-            headers={"Authorization": f"Bearer {user_token}"},
+            f"/channels/{channel_id}/add_member/{basic_user.id}",
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
         client.post(
             f"/channels/{channel_id}/ban",
-            json={"user_id": str(user2_id), "motive": "Test", "duration_days": 7},
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"user_id": str(basic_user.id), "motive": "Test", "duration_days": 7},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
 
         response = client.post(
             f"/channels/{channel_id}/unban",
-            json={"user_id": str(user2_id), "motive": "Appealed"},
-            headers={"Authorization": f"Bearer {user_token}"},
+            json={"user_id": str(basic_user.id), "motive": "Appealed"},
+            headers={"Authorization": f"Bearer {admin_token}"},
         )
         assert response.status_code == 200
         data = response.json()
         assert data["motive"] == "Appealed"
-
-    def test_site_admin_bypasses_channel_permissions(self, client, admin_token, user_token):
-        """Test site admins can perform any channel action."""
-        create_response = client.post(
-            "/channels/",
-            json={
-                "name": "Admin Bypass Test",
-                "description": "Test",
-                "channel_type": "public",
-            },
-            headers={"Authorization": f"Bearer {user_token}"},
-        )
-        channel_id = create_response.json()["id"]
-
-        response = client.patch(
-            f"/channels/{channel_id}",
-            json={"description": "Admin updated"},
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
-        assert response.status_code == 200
-
-        response = client.delete(
-            f"/channels/{channel_id}",
-            headers={"Authorization": f"Bearer {admin_token}"},
-        )
-        assert response.status_code == 200
-
-    def _get_user_id(self, client, token):
-        """Helper to get user ID from token."""
-        response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
-        return uuid.UUID(response.json()["id"])
