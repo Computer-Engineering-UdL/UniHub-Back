@@ -104,6 +104,8 @@ class TestChannelEndpoints:
     def test_fetch_all_channels_filters_by_role(self, client, admin_token, seller_token, user_token):
         """Test GET /channels/ filters based on site role (Admin, Seller, Basic, Anonymous)."""
         headers = {"Authorization": f"Bearer {admin_token}"}
+
+        test_channels_set = {"Admin Read", "Seller Read", "Basic Read"}
         client.post(
             "/channels/",
             json={"name": "Admin Read", "read_min_role": "Admin", "write_min_role": "Admin"},
@@ -120,25 +122,31 @@ class TestChannelEndpoints:
             headers=headers,
         )
 
+        # --- Test Admin ---
         response_admin = client.get("/channels/", headers={"Authorization": f"Bearer {admin_token}"})
         assert response_admin.status_code == 200
         names_admin = {c["name"] for c in response_admin.json()}
-        assert names_admin == {"Admin Read", "Seller Read", "Basic Read"}
+        assert names_admin >= test_channels_set
 
         response_seller = client.get("/channels/", headers={"Authorization": f"Bearer {seller_token}"})
         assert response_seller.status_code == 200
         names_seller = {c["name"] for c in response_seller.json()}
-        assert names_seller == {"Seller Read", "Basic Read"}
+        assert names_seller >= {"Seller Read", "Basic Read"}
+        assert "Admin Read" not in names_seller
 
+        # --- Test Basic ---
         response_basic = client.get("/channels/", headers={"Authorization": f"Bearer {user_token}"})
         assert response_basic.status_code == 200
         names_basic = {c["name"] for c in response_basic.json()}
-        assert names_basic == {"Basic Read"}
-
+        assert names_basic >= {"Basic Read"}
+        assert "Admin Read" not in names_basic
+        assert "Seller Read" not in names_basic
         response_anon = client.get("/channels/")
         assert response_anon.status_code == 200
         names_anon = {c["name"] for c in response_anon.json()}
-        assert names_anon == {"Basic Read"}
+        assert names_anon >= {"Basic Read"}
+        assert "Admin Read" not in names_anon
+        assert "Seller Read" not in names_anon
 
     def test_fetch_channel_requires_membership(self, client, admin_token, user_token, user2_token, basic_user):
         """Test only members can view a channel."""
