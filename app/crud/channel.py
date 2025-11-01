@@ -6,6 +6,7 @@ from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session
 
 from app.literals.channels import ChannelRole
+from app.literals.users import ROLE_HIERARCHY
 from app.models import Channel, ChannelBan, ChannelMember, ChannelUnban
 from app.schemas import ChannelCreate, ChannelUpdate
 
@@ -81,6 +82,22 @@ class ChannelCRUD:
 
         if channel_type is not None:
             query = query.filter(Channel.channel_type == channel_type)
+
+        channels = query.offset(skip).limit(limit).all()
+        return channels
+
+    @staticmethod
+    def get_public_channels(
+        db: Session,
+        user_permission_level: int,
+        skip: int = 0,
+        limit: int = 100,
+    ) -> list[type[Channel]]:
+        """
+        Get all channels visible to a user with a permission level.
+        """
+        visible_roles = [role for role, level in ROLE_HIERARCHY.items() if level >= user_permission_level]
+        query = db.query(Channel).filter(Channel.required_role_read.in_(visible_roles))
 
         channels = query.offset(skip).limit(limit).all()
         return channels
@@ -175,6 +192,31 @@ class ChannelCRUD:
         db.add(membership)
         db.commit()
         db.refresh(db_channel)
+        return membership
+
+    @staticmethod
+    def update_member_role(
+        db: Session,
+        channel_id: uuid.UUID,
+        user_id: uuid.UUID,
+        new_role: ChannelRole,
+    ) -> type[ChannelMember] | None:
+        """
+        Update a specific member's role within a channel.
+        """
+        membership = (
+            db.query(ChannelMember)
+            .filter(ChannelMember.channel_id == channel_id, ChannelMember.user_id == user_id)
+            .first()
+        )
+
+        if not membership:
+            return None  # Member not found in this channel
+
+        membership.role = new_role
+        db.add(membership)
+        db.commit()
+        db.refresh(membership)
         return membership
 
     @staticmethod

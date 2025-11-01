@@ -17,6 +17,9 @@ from .config import settings
 from .types import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
+
+oauth2_scheme_optional = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login", auto_error=False)
+
 oauth = OAuth()
 
 oauth.register(
@@ -58,7 +61,26 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
         )
+    return token_data
 
+
+def get_optional_current_user(token: str | None = Depends(oauth2_scheme_optional)) -> TokenData | None:
+    """
+    Validate JWT token if present, but return None if no token
+    or if token is invalid. Allows anonymous access.
+    """
+    if token is None:
+        return None
+
+    try:
+        payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
+        user_id: uuid.UUID = uuid.UUID(payload.get("sub"))
+        username: str = payload.get("username")
+        email: str = payload.get("email")
+        role: Role = payload.get("role")
+        token_data = TokenData(id=user_id, username=username, email=email, role=role)
+    except (JWTError, ValidationError, ValueError):
+        return None
     return token_data
 
 

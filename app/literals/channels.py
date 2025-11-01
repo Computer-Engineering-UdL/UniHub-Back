@@ -4,6 +4,15 @@ from typing import Literal
 ChannelType = Literal["public", "private", "announcement"]
 
 
+class ChannelCategory(str, Enum):
+    GENERAL = "General"
+    ENGINEERING = "Engineering"
+    SCIENCES = "Sciences"
+    BUSINESS = "Business"
+    ARTS = "Arts"
+    MEDICINE = "Medicine"
+
+
 class ChannelRole(str, Enum):
     ADMIN = "admin"
     MODERATOR = "moderator"

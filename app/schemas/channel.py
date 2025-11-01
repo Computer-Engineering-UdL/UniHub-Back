@@ -4,7 +4,8 @@ from typing import Optional
 
 from pydantic import BaseModel, ConfigDict, Field
 
-from app.literals.channels import ChannelRole, ChannelType
+from app.literals.channels import ChannelCategory, ChannelRole, ChannelType
+from app.literals.users import Role
 
 # ==========================================
 # Channel Schemas
@@ -18,6 +19,9 @@ class ChannelBase(BaseModel):
     description: Optional[str] = Field(None, max_length=120)
     channel_type: ChannelType = Field(default="public")
     channel_logo: Optional[str] = None
+    category: Optional[ChannelCategory] = Field(default=ChannelCategory.GENERAL)
+    required_role_read: Role = Field(default=Role.BASIC)
+    required_role_write: Role = Field(default=Role.SELLER)
 
 
 class ChannelCreate(ChannelBase):
