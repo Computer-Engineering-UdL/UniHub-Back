@@ -3,7 +3,6 @@ import uuid
 from typing import List
 
 from fastapi import APIRouter, Depends, HTTPException, Query
-from pydantic import BaseModel
 from sqlalchemy.orm import Session
 from starlette import status
 
@@ -29,7 +28,7 @@ from app.schemas import (
     MessageRead,
     MessageUpdate,
 )
-from app.schemas.channel import UnbanCreate, UnbanRead
+from app.schemas.channel import MemberRoleUpdate, UnbanCreate, UnbanRead
 
 router = APIRouter()
 
@@ -143,11 +142,6 @@ def remove_member(
     if not removed:
         raise HTTPException(status_code=404, detail="Member not found")
     return removed
-
-
-class MemberRoleUpdate(BaseModel):
-    user_id: uuid.UUID
-    new_role: ChannelRole
 
 
 @router.post("/{channel_id}/set_role", response_model=MembershipRead)
