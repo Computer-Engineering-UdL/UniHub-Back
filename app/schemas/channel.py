@@ -120,6 +120,11 @@ class UnbanRead(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class MemberRoleUpdate(BaseModel):
+    user_id: uuid.UUID
+    new_role: ChannelRole
+
+
 __all__ = [
     "ChannelBase",
     "ChannelCreate",
@@ -131,4 +136,5 @@ __all__ = [
     "UnbanCreate",
     "BanRead",
     "UnbanRead",
+    "MemberRoleUpdate",
 ]
