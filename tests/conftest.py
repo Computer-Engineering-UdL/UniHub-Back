@@ -122,6 +122,16 @@ def admin_token(client):
 
 
 @pytest.fixture
+def seller_token(client):
+    """Get seller user access token."""
+    response = client.post(
+        "/auth/login",
+        data={"username": "seller_user", "password": settings.DEFAULT_PASSWORD},
+    )
+    return response.json()["access_token"]
+
+
+@pytest.fixture
 def user_token(client):
     """Get regular user access token."""
     response = client.post(
