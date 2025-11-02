@@ -126,7 +126,7 @@ def seed_channels(db: Session, users: List[User]) -> List[Channel]:
         print("* No admin users found for channel administration")
         return created_channels
 
-    regular_users = [u for u in users if u.role.value != Role.ADMIN][:8]
+    regular_users = [u for u in users if u.role != Role.ADMIN][:8]
 
     memberships = []
 
