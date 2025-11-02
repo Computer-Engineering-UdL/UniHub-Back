@@ -41,7 +41,7 @@ async def lifespan(app: FastAPI):
         yield
     finally:
         if not settings.USE_FAKE_REDIS:
-            await app.state.redis.close()
+            app.state.redis.close()
         print("App shutting down...")
 
 
