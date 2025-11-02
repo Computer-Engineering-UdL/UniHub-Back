@@ -3,7 +3,16 @@ name: CI/CD Pipeline
 on:
   push:
     branches: [ "main" ]
-
+  workflow_dispatch:
+    inputs:
+      job_to_run:
+        description: 'Select which job to run'
+        required: true
+        default: 'all'
+        type: choice
+        options:
+          - build-and-push
+          - deploy
 env:
   GOOGLE_CLIENT_ID: "dummy"
   GOOGLE_CLIENT_SECRET: "dummy"
@@ -78,6 +87,7 @@ jobs:
           tags: ${{ secrets.DOCKERHUB_USERNAME }}/unihub-back:latest
 
   deploy:
+    if: ${{ github.event_name == 'workflow_dispatch' || github.event_name == 'push' }}
     needs: build-and-push
     runs-on: ubuntu-latest
     steps:
