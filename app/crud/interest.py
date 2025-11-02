@@ -2,7 +2,7 @@ import uuid
 from typing import List
 
 from fastapi import HTTPException
-from sqlalchemy.exc import NoResultFound
+from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Session, selectinload
 from starlette import status
 
@@ -21,22 +21,21 @@ class InterestCRUD:
 
     @staticmethod
     def get_user_interests(db: Session, user_id: uuid.UUID) -> List[Interest]:
-        try:
-            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
-        except NoResultFound:
+        user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+
+        if not user:
             raise NoResultFound("User not found")
+
         return list(user.interests)
 
     @staticmethod
     def add_interest_to_user(db: Session, user_id: uuid.UUID, interest_id: uuid.UUID) -> List[Interest]:
-        try:
-            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
-        except NoResultFound:
+        user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+        if not user:
             raise NoResultFound("User not found")
 
-        try:
-            interest = db.query(Interest).filter(Interest.id == interest_id).first()
-        except NoResultFound:
+        interest = db.query(Interest).filter(Interest.id == interest_id).first()
+        if not interest:
             raise NoResultFound("Interest not found")
 
         if any(existing.id == interest_id for existing in user.interests):
@@ -46,15 +45,23 @@ class InterestCRUD:
             )
 
         user.interests.append(interest)
-        db.commit()
-        db.refresh(user, attribute_names=["interests"])
+
+        try:
+            db.commit()
+            db.refresh(user, attribute_names=["interests"])
+        except IntegrityError:
+            db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Interest already added to user (race condition)",
+            )
+
         return list(user.interests)
 
     @staticmethod
     def remove_interest_from_user(db: Session, user_id: uuid.UUID, interest_id: uuid.UUID) -> bool:
-        try:
-            user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
-        except NoResultFound:
+        user = db.query(User).options(selectinload(User.interests)).filter(User.id == user_id).first()
+        if not user:
             raise NoResultFound("User not found")
 
         interest = next((item for item in user.interests if item.id == interest_id), None)
