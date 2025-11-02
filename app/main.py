@@ -19,13 +19,13 @@ from app.api.v1.endpoints import (
 )
 from app.core import Base, engine
 from app.core.config import settings
+from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
 from app.seeds.seed import seed_database
 
 
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        # Startup logic
         if settings.USE_FAKE_REDIS:
             app.state.redis = fakeredis.FakeRedis(decode_responses=True)
         else:
@@ -42,29 +42,34 @@ async def lifespan(app: FastAPI):
     finally:
         if not settings.USE_FAKE_REDIS:
             await app.state.redis.close()
-        # Shutdown logic
         print("App shutting down...")
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
-app.add_middleware(
-    SessionMiddleware,
-    secret_key=settings.SECRET_KEY,
-)
+app.add_middleware(AutoLoggingMiddleware)
+
+app.exception_handler(Exception)(global_exception_handler)
 
 app.add_middleware(
     SessionMiddleware,
     secret_key=settings.SECRET_KEY,
     session_cookie="session",
-    max_age=3600,  # 1 hour
+    max_age=3600,
     same_site="lax",
-    https_only=False,  # Set to True in production
+    https_only=settings.ENVIRONMENT != "dev",
 )
+
+if settings.ENVIRONMENT != "dev":
+    origins = [
+        "https://computer-engineering-udl.github.io",
+    ]
+else:
+    origins = ["*"]
 
 app.add_middleware(
     CORSMiddleware,
-    allow_origins=["*"],
+    allow_origins=origins,
     allow_credentials=True,
     allow_methods=["*"],
     allow_headers=["*"],
