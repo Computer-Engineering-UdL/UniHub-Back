@@ -16,6 +16,7 @@ from app.literals.users import ROLE_HIERARCHY, Role
 from app.models import ChannelMember
 from app.schemas import (
     ChannelCreate,
+    ChannelDetail,
     ChannelRead,
     ChannelUpdate,
 )
@@ -23,7 +24,7 @@ from app.schemas import (
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ChannelRead])
+@router.get("/", response_model=List[ChannelReadWithCount])
 def fetch_channels(
     db: Session = Depends(get_db),
     user: TokenData | None = Depends(get_optional_current_user),
@@ -42,7 +43,7 @@ def fetch_channels(
     return ChannelCRUD.get_public_channels(db, user_level)
 
 
-@router.get("/{channel_id}", response_model=ChannelRead)
+@router.get("/{channel_id}", response_model=ChannelDetail)
 @handle_api_errors()
 def fetch_channel(
     channel_id: uuid.UUID,
@@ -65,7 +66,7 @@ def fetch_channel(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view this channel",
         )
-    return ChannelRead.model_validate(channel_db)
+    return channel_db
 
 
 @router.post("/", response_model=ChannelRead)
