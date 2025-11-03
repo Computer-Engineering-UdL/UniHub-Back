@@ -104,7 +104,6 @@ class HousingOfferRead(HousingOfferBase):
     user_id: UUID
     posted_date: datetime
     photos: List[str] = []
-    amenities: List["HousingAmenityRead"] = Field(default_factory=list)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -132,6 +131,7 @@ class HousingOfferDetail(HousingOfferRead):
     category: "HousingCategoryRead"
     photos: List["HousingPhotoRead"] = []
     photo_count: int = 0
+    amenities: List["HousingAmenityRead"] = []
 
     model_config = ConfigDict(from_attributes=True)
 

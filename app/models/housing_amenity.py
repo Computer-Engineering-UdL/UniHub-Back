@@ -20,7 +20,7 @@ class HousingAmenityTableModel(Base):
 
     __tablename__ = "housing_amenity"
 
-    code: Mapped[int] = mapped_column(sa.Integer, primary_key=True)
+    code: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement = False)
     name: Mapped[str] = mapped_column(sa.String(120), unique=True, nullable=False)
 
     offers: Mapped[List["HousingOfferTableModel"]] = relationship(

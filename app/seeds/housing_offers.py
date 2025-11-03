@@ -5,7 +5,9 @@ import uuid
 from sqlalchemy.orm import Session
 
 from app.models import (
+    HousingAmenityTableModel,
     HousingCategoryTableModel,
+    HousingOfferAmenity,
     HousingOfferTableModel,
     HousingPhotoTableModel,
     User,
@@ -34,6 +36,33 @@ def seed_housing_data(db: Session) -> None:
         print(f"* Housing categories added: {len(categories)}")
     else:
         print(f"* Housing categories already exist: {len(categories)}")
+
+    amenities = db.query(HousingAmenityTableModel).all()
+    if not amenities:
+        amenities = [
+            HousingAmenityTableModel(code=100, name="Wi-Fi"),
+            HousingAmenityTableModel(code=101, name="Parking"),
+            HousingAmenityTableModel(code=102, name="Washer"),
+            HousingAmenityTableModel(code=103, name="Dryer"),
+            HousingAmenityTableModel(code=104, name="Air Conditioning"),
+            HousingAmenityTableModel(code=105, name="Heating"),
+            HousingAmenityTableModel(code=106, name="Kitchen Access"),
+            HousingAmenityTableModel(code=107, name="Private Bathroom"),
+            HousingAmenityTableModel(code=108, name="Balcony"),
+            HousingAmenityTableModel(code=109, name="Garden Access"),
+            HousingAmenityTableModel(code=110, name="Furnished"),
+            HousingAmenityTableModel(code=111, name="TV"),
+            HousingAmenityTableModel(code=112, name="Desk"),
+            HousingAmenityTableModel(code=113, name="Pet Friendly"),
+            HousingAmenityTableModel(code=114, name="Bicycle Storage"),
+            HousingAmenityTableModel(code=115, name="Elevator"),
+            HousingAmenityTableModel(code=116, name="Security System"),
+        ]
+        db.add_all(amenities)
+        db.flush()
+        print(f"* Housing amenities added: {len(amenities)}")
+    else:
+        print(f"* Housing amenities already exist: {len(amenities)}")
 
     offers_data = [
         {
@@ -170,6 +199,48 @@ def seed_housing_data(db: Session) -> None:
             )
             db.add(photo)
             added_photos += 1
+
+    db.flush()
+
+    amenities_map = {a.name: a for a in db.query(HousingAmenityTableModel).all()}
+
+    for offer, index in created_offers:
+        selected_amenities = []
+
+        if "room" in offer.title.lower():
+            selected_amenities = [
+                amenities_map["Wi-Fi"],
+                amenities_map["Heating"],
+                amenities_map["Desk"],
+                amenities_map["Furnished"],
+            ]
+        elif "flat" in offer.title.lower():
+            selected_amenities = [
+                amenities_map["Wi-Fi"],
+                amenities_map["Air Conditioning"],
+                amenities_map["Kitchen Access"],
+                amenities_map["Washer"],
+                amenities_map["Balcony"],
+            ]
+        elif "house" in offer.title.lower():
+            selected_amenities = [
+                amenities_map["Wi-Fi"],
+                amenities_map["Parking"],
+                amenities_map["Garden Access"],
+                amenities_map["Washer"],
+                amenities_map["Heating"],
+            ]
+        else:
+            selected_amenities = [amenities_map["Wi-Fi"], amenities_map["Heating"]]
+
+        for amenity in selected_amenities:
+            db.add(
+                HousingOfferAmenity(
+                    id=uuid.uuid4(),
+                    offer_id=offer.id,
+                    amenity_code=amenity.code,
+                )
+            )
 
     db.flush()
 

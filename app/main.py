@@ -11,10 +11,10 @@ from app.api.v1.endpoints import (
     admin,
     auth,
     channel,
+    housing_amenity,
     housing_category,
     housing_offer,
     housing_photo,
-    housing_amenity,
     interest,
     user,
 )

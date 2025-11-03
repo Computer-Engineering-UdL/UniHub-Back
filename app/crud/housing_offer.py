@@ -35,7 +35,18 @@ class HousingOfferCRUD:
         Returns:
             HousingOfferRead: The newly created offer, validated with Pydantic.
         """
-        db_offer = HousingOfferTableModel(**offer_in.model_dump())
+        amenities_objs = []
+        if offer_in.amenities:
+            amenities_objs = db.query(HousingAmenityTableModel).filter(
+                HousingAmenityTableModel.code.in_(offer_in.amenities)
+            ).all()
+            missing = set(offer_in.amenities) - {a.code for a in amenities_objs}
+            if missing:
+                raise ValueError(f"Amenities not found: {missing}")
+
+        db_offer_data = offer_in.model_dump(exclude={"amenities"}, exclude_none=True)
+        db_offer = HousingOfferTableModel(**db_offer_data, amenities=amenities_objs)
+        # db_offer = HousingOfferTableModel(**offer_in.model_dump())
 
         try:
             db.add(db_offer)

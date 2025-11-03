@@ -27,6 +27,7 @@ class HousingOfferTableModel(Base):
         user: Many-to-one -> UserTableModel
         category: Many-to-one -> HousingCategoryTableModel
         photos: One-to-many -> HousingPhotoTableModel
+        amenities: Many-to-many -> HousingAmenityTableModel
     """
 
     __tablename__ = "housing_offer"
