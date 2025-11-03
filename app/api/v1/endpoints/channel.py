@@ -20,6 +20,7 @@ from app.schemas import (
     BanCreate,
     BanRead,
     ChannelCreate,
+    ChannelDetail,
     ChannelRead,
     ChannelUpdate,
     MembershipRead,
@@ -28,12 +29,12 @@ from app.schemas import (
     MessageRead,
     MessageUpdate,
 )
-from app.schemas.channel import MemberRoleUpdate, UnbanCreate, UnbanRead
+from app.schemas.channel import ChannelReadWithCount, MemberRoleUpdate, UnbanCreate, UnbanRead
 
 router = APIRouter()
 
 
-@router.get("/", response_model=List[ChannelRead])
+@router.get("/", response_model=List[ChannelReadWithCount])
 def fetch_channels(
     db: Session = Depends(get_db),
     user: TokenData | None = Depends(get_optional_current_user),
@@ -52,7 +53,7 @@ def fetch_channels(
     return ChannelCRUD.get_public_channels(db, user_level)
 
 
-@router.get("/{channel_id}", response_model=ChannelRead)
+@router.get("/{channel_id}", response_model=ChannelDetail)
 @handle_api_errors()
 def fetch_channel(
     channel_id: uuid.UUID,
@@ -75,7 +76,7 @@ def fetch_channel(
             status_code=status.HTTP_403_FORBIDDEN,
             detail="You do not have permission to view this channel",
         )
-    return ChannelRead.model_validate(channel_db)
+    return channel_db
 
 
 @router.post("/", response_model=ChannelRead)
@@ -264,7 +265,7 @@ def get_member(
     membership = ChannelCRUD.get_member(db, channel_id, user_id)
     if not membership:
         raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail="Member not found")
-    return MembershipRead.model_validate(membership)
+    return membership
 
 
 @router.get("/{channel_id}/members", response_model=List[MembershipRead])
@@ -277,7 +278,7 @@ def get_members(
     memberships = ChannelCRUD.get_members(db, channel_id)
     if not memberships:
         return []
-    return [MembershipRead.model_validate(membership) for membership in memberships]
+    return memberships
 
 
 @router.post("/{channel_id}/messages", response_model=MessageRead)

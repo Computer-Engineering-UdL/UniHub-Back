@@ -5,6 +5,8 @@ import uuid
 from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
+from sqlalchemy import func, select
+from sqlalchemy.ext.hybrid import hybrid_property
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core.database import Base
@@ -53,3 +55,13 @@ class Channel(Base):
     )
 
     messages: Mapped[List[Message]] = relationship("Message", back_populates="channel", cascade="all, delete-orphan")
+
+    @hybrid_property
+    def members_count(self):
+        return len(self.members)
+
+    @members_count.expression
+    def members_count(cls):
+        return (
+            select(func.count(ChannelMember.user_id)).where(ChannelMember.channel_id == cls.id).label("members_count")
+        )
