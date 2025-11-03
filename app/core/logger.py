@@ -1,3 +1,4 @@
+import datetime
 import json
 import logging
 from contextvars import ContextVar
@@ -12,17 +13,57 @@ class RequestIDFilter(logging.Filter):
 
 
 class JSONFormatter(logging.Formatter):
+    def formatTime(self, record, datefmt=None):
+        ct = datetime.datetime.fromtimestamp(record.created)
+        if datefmt:
+            s = ct.strftime(datefmt)
+        else:
+            s = ct.isoformat()
+        return s
+
     def format(self, record):
         log_obj = {
             "timestamp": self.formatTime(record, self.datefmt),
             "level": record.levelname,
-            "request_id": getattr(record, "request_id", ""),
             "message": record.getMessage(),
             "module": record.module,
             "function": record.funcName,
+            "request_id": getattr(record, "request_id", ""),
         }
+
+        standard_attributes = (
+            "args",
+            "asctime",
+            "created",
+            "exc_info",
+            "exc_text",
+            "filename",
+            "funcName",
+            "levelname",
+            "levelno",
+            "lineno",
+            "message",
+            "module",
+            "msecs",
+            "msg",
+            "name",
+            "pathname",
+            "process",
+            "processName",
+            "relativeCreated",
+            "stack_info",
+            "thread",
+            "threadName",
+            "request_id",
+        )
+
+        for key, value in record.__dict__.items():
+            if key not in standard_attributes:
+                log_obj[key] = value
+
         if record.exc_info:
             log_obj["exception"] = self.formatException(record.exc_info)
+
         return json.dumps(log_obj)
 
 
