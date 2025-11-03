@@ -139,7 +139,6 @@ class ChannelDetail(ChannelReadWithCount):
 
     memberships: list[MembershipRead] = []
     bans: list[BanRead] = []
-    unbans: list[UnbanRead] = []
 
 
 __all__ = [
