@@ -168,3 +168,72 @@ def delete_offer(
         raise HTTPException(status_code=400, detail="Failed to delete offer.")
     return None
 
+@router.post(
+    "/{offer_id}/amenities/{code}",
+    response_model=HousingOfferRead,
+    status_code=status.HTTP_200_OK,
+    summary="Add an amenity to a housing offer",
+    response_description="Returns the offer after adding the amenity.",
+)
+def add_amenity_to_offer(
+    offer_id: uuid.UUID,
+    code: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    Add an amenity (e.g., WIFI, PARKING) to a specific housing offer.
+
+    Only the owner of the offer or an administrator is authorized to perform this action.
+    """
+    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
+    if not db_offer:
+        raise HTTPException(status_code=404, detail="Offer not found.")
+
+    is_admin = current_user.role == Role.ADMIN
+    if db_offer.user_id != current_user.id and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this offer.")
+
+    try:
+        offer = HousingOfferCRUD.add_amenity(db, offer_id, code)
+        if not offer:
+            raise HTTPException(status_code=404, detail="Amenity not found.")
+        return offer
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to add amenity: {e}")
+
+
+@router.delete(
+    "/{offer_id}/amenities/{code}",
+    response_model=HousingOfferRead,
+    status_code=status.HTTP_200_OK,
+    summary="Remove an amenity from a housing offer",
+    response_description="Returns the offer after removing the amenity.",
+)
+def remove_amenity_from_offer(
+    offer_id: uuid.UUID,
+    code: int,
+    db: Session = Depends(get_db),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    Remove an existing amenity from a specific housing offer.
+
+    Only the offer's owner or an administrator can perform this operation.
+    """
+    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
+    if not db_offer:
+        raise HTTPException(status_code=404, detail="Offer not found.")
+
+    is_admin = current_user.role == Role.ADMIN
+    if db_offer.user_id != current_user.id and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to modify this offer.")
+
+    try:
+        offer = HousingOfferCRUD.remove_amenity(db, offer_id, code)
+        if not offer:
+            raise HTTPException(status_code=404, detail="Amenity not found.")
+        return offer
+    except Exception as e:
+        raise HTTPException(status_code=400, detail=f"Failed to remove amenity: {e}")
+

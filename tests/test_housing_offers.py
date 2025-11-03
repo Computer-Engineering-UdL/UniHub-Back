@@ -5,7 +5,7 @@ from app.core.security import get_payload
 from app.models import HousingCategoryTableModel, HousingOfferTableModel
 
 
-def sample_offer_payload(user_id: str = None, category_id: str = None) -> dict:
+def sample_offer_payload(user_id: str = None, category_id: str = None, amenities: list[int] | None = None) -> dict:
     payload = {
         "category_id": category_id,
         "title": "Test Apartment",
@@ -28,6 +28,8 @@ def sample_offer_payload(user_id: str = None, category_id: str = None) -> dict:
     }
     if user_id:
         payload["user_id"] = user_id
+    if amenities is not None:
+        payload["amenities"] = amenities
     return payload
 
 class TestHousingOfferEndpoints:
@@ -41,6 +43,20 @@ class TestHousingOfferEndpoints:
         payload = sample_offer_payload(user_id=user_id, category_id=str(category.id))
         resp = client.post("/offers/", json=payload, headers=auth_headers)
         assert resp.status_code == 201
+
+    def test_create_offer_with_amenities(self, client, user_token, auth_headers, db):
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None, "Category not found in test database!"
+
+        amenities = [100, 101, 102]
+        payload = sample_offer_payload(user_id=user_id, category_id=str(category.id), amenities=amenities)
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        print("Response JSON:", resp.json())
+        assert resp.status_code == 201
+        data = resp.json()
+        assert "id" in data
 
     def test_create_offer_without_auth(self, client, db):
         category = db.query(HousingCategoryTableModel).first()
