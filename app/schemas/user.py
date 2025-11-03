@@ -27,6 +27,7 @@ class UserBase(BaseModel):
     last_name: str = Field(min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
+    year_of_study: Optional[int] = Field(None, ge=1, le=12)
     avatar_url: Optional[str] = Field(None, max_length=500)
     room_number: Optional[str] = Field(None, max_length=20)
     is_active: bool = Field(default=True)
@@ -65,6 +66,7 @@ class UserUpdate(BaseModel):
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
     university: Optional[str] = Field(None, max_length=100)
+    year_of_study: Optional[int] = Field(None, ge=1, le=12)
     avatar_url: Optional[str] = Field(None, max_length=500)
     is_verified: Optional[bool] = None
     role: Optional[Role] = None

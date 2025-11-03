@@ -37,6 +37,9 @@ class ChannelUpdate(BaseModel):
     description: Optional[str] = Field(None, max_length=120)
     channel_type: ChannelType | None = None
     channel_logo: Optional[str] = None
+    category: Optional[ChannelCategory] = None
+    required_role_read: Optional[Role] = None
+    required_role_write: Optional[Role] = None
 
 
 class ChannelRead(ChannelBase):

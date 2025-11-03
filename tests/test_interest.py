@@ -1,3 +1,5 @@
+import uuid
+
 from app.models import Interest, User
 from app.seeds.interests import INTEREST_CATALOG
 
@@ -56,3 +58,47 @@ class TestInterestEndpoints:
         after_delete = client.get(f"/interest/user/{user.id}")
         assert after_delete.status_code == 200
         assert after_delete.json() == []
+
+    def test_get_interests_for_invalid_user_returns_404(self, client):
+        """
+        GET  now returns 404
+        if the user_id does not exist.
+        """
+        fake_user_id = uuid.uuid4()
+        response = client.get(f"/interest/user/{fake_user_id}")
+
+        assert response.status_code == 404
+        assert response.json()["detail"] == "User not found"
+
+    def test_add_interest_for_invalid_user_returns_404(self, client, db, admin_auth_headers):
+        """
+        POST (add interest) returns 404
+        if the user_id does not exist.
+        """
+        fake_user_id = uuid.uuid4()
+        interest: Interest = db.query(Interest).first()
+        assert interest is not None
+
+        response = client.post(
+            f"/interest/user/{fake_user_id}",
+            json={"interest_id": str(interest.id)},
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "User not found"
+
+    def test_remove_interest_for_invalid_user_returns_404(self, client, db, admin_auth_headers):
+        """
+        DELETE remove interest returns 404
+        if the user_id does not exist.
+        """
+        fake_user_id = uuid.uuid4()
+        interest: Interest = db.query(Interest).first()
+        assert interest is not None
+
+        response = client.delete(
+            f"/interest/user/{fake_user_id}/{interest.id}",
+            headers=admin_auth_headers,
+        )
+        assert response.status_code == 404
+        assert response.json()["detail"] == "User not found"

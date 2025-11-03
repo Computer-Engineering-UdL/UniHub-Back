@@ -30,6 +30,7 @@ class User(Base):
     last_name = Column(sa.String(100), nullable=False)
     phone = Column(sa.String(20), nullable=True)
     university = Column(sa.String(100), nullable=True)
+    year_of_study = Column(sa.Integer, nullable=True)
     avatar_url = Column(sa.String(500), nullable=True)
     room_number = Column(sa.String(20), nullable=True)
     provider = Column(sa.String(50), nullable=False, default="local")
