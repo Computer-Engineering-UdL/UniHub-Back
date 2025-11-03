@@ -13,6 +13,7 @@ from app.core import Base
 from app.literals.housing import GenderPreferences, OfferStatus
 
 if TYPE_CHECKING:
+    from app.models.housing_amenity import HousingAmenityTableModel
     from app.models.housing_category import HousingCategoryTableModel
     from app.models.housing_photo import HousingPhotoTableModel
     from app.models.user import User
@@ -26,6 +27,7 @@ class HousingOfferTableModel(Base):
         user: Many-to-one -> UserTableModel
         category: Many-to-one -> HousingCategoryTableModel
         photos: One-to-many -> HousingPhotoTableModel
+        amenities: Many-to-many -> HousingAmenityTableModel
     """
 
     __tablename__ = "housing_offer"
@@ -67,6 +69,12 @@ class HousingOfferTableModel(Base):
     user: Mapped["User"] = relationship(back_populates="housing_offers")
     category: Mapped["HousingCategoryTableModel"] = relationship(back_populates="housing_offers")
     photos: Mapped[List["HousingPhotoTableModel"]] = relationship(back_populates="offer", cascade="all, delete-orphan")
+    amenities: Mapped[List["HousingAmenityTableModel"]] = relationship(
+        "HousingAmenityTableModel",
+        secondary="housing_offer_amenity",
+        lazy="selectin",
+        back_populates="offers"
+    )
 
     def __repr__(self) -> str:
         return f"<HousingOffer(id={self.id}, title={self.title}, status={self.status})>"

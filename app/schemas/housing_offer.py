@@ -8,8 +8,10 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
+    from .housing_amenity import HousingAmenityRead
     from .housing_category import HousingCategoryRead
     from .housing_photo import HousingPhotoRead
+
 
 # Type aliases
 GenderPreferences = Literal["any", "male", "female"]
@@ -61,7 +63,7 @@ class HousingOfferCreate(HousingOfferBase):
     """Schema for creating a new housing offer."""
 
     user_id: UUID
-
+    amenities: list[int] | None = Field(default=None, description="Optional list of amenity codes")
 
 # Update Schema (For PATCH)
 class HousingOfferUpdate(BaseModel):
@@ -85,6 +87,11 @@ class HousingOfferUpdate(BaseModel):
     category_id: UUID | None = None
     city: str | None = Field(None, min_length=1, max_length=100)
     address: str | None = Field(None, min_length=1, max_length=255)
+
+    amenities: list[int] | None = Field(
+        default=None,
+        description="Optional list of amenity codes to update"
+    )
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -124,6 +131,7 @@ class HousingOfferDetail(HousingOfferRead):
     category: "HousingCategoryRead"
     photos: List["HousingPhotoRead"] = []
     photo_count: int = 0
+    amenities: List["HousingAmenityRead"] = []
 
     model_config = ConfigDict(from_attributes=True)
 
