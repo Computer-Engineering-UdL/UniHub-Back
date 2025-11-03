@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import fakeredis
@@ -22,6 +23,15 @@ from app.core import Base, engine
 from app.core.config import settings
 from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
 from app.seeds.seed import seed_database
+
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_error_logger = logging.getLogger("uvicorn.error")
+
+uvicorn_access_logger.propagate = False
+uvicorn_error_logger.propagate = False
+
+uvicorn_access_logger.handlers = []
+uvicorn_error_logger.handlers = []
 
 
 @asynccontextmanager
