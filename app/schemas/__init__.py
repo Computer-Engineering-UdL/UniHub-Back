@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.schemas.auth import *  # noqa
 from app.schemas.channel import *  # noqa
+from app.schemas.housing_amenity import *  # noqa
 from app.schemas.housing_category import *  # noqa
 from app.schemas.housing_offer import *  # noqa
 from app.schemas.housing_photo import *  # noqa
@@ -14,6 +15,7 @@ from app.schemas.user import *  # noqa
 from . import (
     auth,
     channel,
+    housing_amenity,
     housing_category,
     housing_offer,
     housing_photo,
@@ -26,6 +28,7 @@ for module in (
     housing_offer,
     housing_category,
     housing_photo,
+    housing_amenity,
     interest,
     channel,
     user,
@@ -45,6 +48,7 @@ __all__ = (
     + housing_offer.__all__
     + housing_category.__all__
     + housing_photo.__all__
+    + housing_amenity.__all__
     + interest.__all__
     + user.__all__
     + auth.__all__

@@ -4,7 +4,7 @@ from typing import List, Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
-from app.models import HousingCategoryTableModel, HousingOfferTableModel
+from app.models import HousingAmenityTableModel, HousingCategoryTableModel, HousingOfferTableModel
 from app.models.user import User
 from app.schemas import (
     HousingOfferCreate,
@@ -63,6 +63,7 @@ class HousingOfferCRUD:
             .options(
                 joinedload(HousingOfferTableModel.category),  # Eager-load category
                 joinedload(HousingOfferTableModel.photos),  # Eager-load photos
+                joinedload(HousingOfferTableModel.amenities),
             )
             .filter(HousingOfferTableModel.id == offer_id)
             .first()
@@ -125,6 +126,7 @@ class HousingOfferCRUD:
 
         # Apply updates dynamically
         update_data = offer_update.model_dump(exclude_unset=True)
+
         for key, value in update_data.items():
             setattr(db_offer, key, value)
 
@@ -201,4 +203,41 @@ class HousingOfferCRUD:
             query = query.filter(HousingOfferTableModel.status == status)
 
         offers = query.offset(skip).limit(limit).all()
-        return [HousingOfferList.model_validate(o) for o in offers]
+        return [HousingOfferList.model_validate(o) for o in offers]\
+
+
+    @staticmethod
+    def add_amenity(db: Session, offer_id: uuid.UUID, amenity_code: int) -> Optional[HousingOfferRead]:
+        """
+        Add an amenity to a housing offer.
+        """
+        offer = db.query(HousingOfferTableModel).filter_by(id=offer_id).first()
+        amenity = db.query(HousingAmenityTableModel).filter_by(code=amenity_code).first()
+
+        if not offer or not amenity:
+            return None
+
+        if amenity not in offer.amenities:
+            offer.amenities.append(amenity) # type: ignore[attr-defined]
+            db.commit()
+            db.refresh(offer)
+
+        return HousingOfferRead.model_validate(offer)
+
+    @staticmethod
+    def remove_amenity(db: Session, offer_id: uuid.UUID, amenity_code: int) -> Optional[HousingOfferRead]:
+        """
+        Remove an amenity from a housing offer.
+        """
+        offer = db.query(HousingOfferTableModel).filter_by(id=offer_id).first()
+        amenity = db.query(HousingAmenityTableModel).filter_by(code=amenity_code).first()
+
+        if not offer or not amenity:
+            return None
+
+        if amenity in offer.amenities:
+            offer.amenities.remove(amenity) # type: ignore[attr-defined]
+            db.commit()
+            db.refresh(offer)
+
+        return HousingOfferRead.model_validate(offer)

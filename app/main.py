@@ -14,6 +14,7 @@ from app.api.v1.endpoints import (
     housing_category,
     housing_offer,
     housing_photo,
+    housing_amenity,
     interest,
     user,
 )
@@ -88,11 +89,13 @@ app.include_router(
     prefix=f"{settings.API_VERSION}/photos",
     tags=["housing photos"],
 )
+app.include_router(
+    housing_amenity.router,
+    prefix=f"{settings.API_VERSION}/amenities",
+    tags=["housing amenities"],
+)
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
-
-
-# app.include_router(announcement.router, prefix=f"{settings.API_VERSION}/announcements", tags=["announcements"])
 
 
 @app.get("/")
