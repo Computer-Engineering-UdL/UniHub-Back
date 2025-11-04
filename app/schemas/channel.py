@@ -128,6 +128,19 @@ class MemberRoleUpdate(BaseModel):
     new_role: ChannelRole
 
 
+class ChannelReadWithCount(ChannelRead):
+    """Channel info with member count."""
+
+    members_count: int
+
+
+class ChannelDetail(ChannelReadWithCount):
+    """Detailed channel info with relationships."""
+
+    memberships: list[MembershipRead] = []
+    bans: list[BanRead] = []
+
+
 __all__ = [
     "ChannelBase",
     "ChannelCreate",
@@ -140,4 +153,6 @@ __all__ = [
     "BanRead",
     "UnbanRead",
     "MemberRoleUpdate",
+    "ChannelDetail",
+    "ChannelReadWithCount",
 ]

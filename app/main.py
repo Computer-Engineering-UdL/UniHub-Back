@@ -1,3 +1,4 @@
+import logging
 from contextlib import asynccontextmanager
 
 import fakeredis
@@ -16,12 +17,23 @@ from app.api.v1.endpoints import (
     housing_offer,
     housing_photo,
     interest,
+    members,
+    messages,
     user,
 )
 from app.core import Base, engine
 from app.core.config import settings
 from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
 from app.seeds.seed import seed_database
+
+uvicorn_access_logger = logging.getLogger("uvicorn.access")
+uvicorn_error_logger = logging.getLogger("uvicorn.error")
+
+uvicorn_access_logger.propagate = False
+uvicorn_error_logger.propagate = False
+
+uvicorn_access_logger.handlers = []
+uvicorn_error_logger.handlers = []
 
 
 @asynccontextmanager
@@ -79,6 +91,9 @@ app.add_middleware(
 app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
 app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["user"])
 app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
+app.include_router(members.router, prefix=f"{settings.API_VERSION}/channels", tags=["members"])
+app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channels", tags=["messages"])
+
 app.include_router(
     housing_offer.router,
     prefix=f"{settings.API_VERSION}/offers",
