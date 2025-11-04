@@ -21,7 +21,7 @@ class HousingAmenityTableModel(Base):
     __tablename__ = "housing_amenity"
 
     code: Mapped[int] = mapped_column(sa.Integer, primary_key=True, autoincrement = False)
-    name: Mapped[str] = mapped_column(sa.String(120), unique=True, nullable=False)
+    name: Mapped[str | None] = mapped_column(sa.String(120), unique=True, nullable=True)
 
     offers: Mapped[List["HousingOfferTableModel"]] = relationship(
         secondary="housing_offer_amenity",

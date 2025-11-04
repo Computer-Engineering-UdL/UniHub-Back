@@ -2,7 +2,7 @@ import uuid
 from datetime import date
 
 from app.core.security import get_payload
-from app.models import HousingCategoryTableModel, HousingOfferTableModel
+from app.models import HousingCategoryTableModel, HousingOfferAmenity, HousingOfferTableModel
 
 
 def sample_offer_payload(user_id: str = None, category_id: str = None, amenities: list[int] | None = None) -> dict:
@@ -52,11 +52,57 @@ class TestHousingOfferEndpoints:
 
         amenities = [100, 101, 102]
         payload = sample_offer_payload(user_id=user_id, category_id=str(category.id), amenities=amenities)
+
         resp = client.post("/offers/", json=payload, headers=auth_headers)
         print("Response JSON:", resp.json())
         assert resp.status_code == 201
+
         data = resp.json()
-        assert "id" in data
+        offer_id = data["id"]
+
+        linked_amenities = (
+            db.query(HousingOfferAmenity)
+            .filter(HousingOfferAmenity.offer_id == uuid.UUID(offer_id))
+            .all()
+        )
+        assert len(linked_amenities) == len(amenities), (
+            f"Expected {len(amenities)} amenities, found {len(linked_amenities)} in DB"
+        )
+
+        codes_in_db = sorted([a.amenity_code for a in linked_amenities])
+        assert codes_in_db == sorted(amenities)
+
+    def test_create_offer_with_nonexistent_amenities(self, client, user_token, auth_headers, db):
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None, "Category not found in test database!"
+
+        amenities = [999, 1234] #nonexistent
+
+        payload = sample_offer_payload(
+            user_id=user_id,
+            category_id=str(category.id),
+            amenities=amenities
+        )
+
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        data = resp.json()
+
+        assert resp.status_code == 400
+        assert "Amenities not found" in data["detail"]
+
+    def test_get_offer_includes_amenities(self, client, auth_headers, db):
+        offer = db.query(HousingOfferTableModel).first()
+        assert offer is not None
+
+        resp = client.get(f"/offers/{offer.id}", headers=auth_headers)
+        assert resp.status_code == 200
+
+        data = resp.json()
+        assert "amenities" in data
+        assert isinstance(data["amenities"], list)
+        assert all("code" in a for a in data["amenities"])
 
     def test_create_offer_without_auth(self, client, db):
         category = db.query(HousingCategoryTableModel).first()

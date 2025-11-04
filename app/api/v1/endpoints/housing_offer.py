@@ -39,6 +39,7 @@ def create_offer(
     Only logged-in users can create offers.
     """
     offer_in.user_id = current_user.id
+
     try:
         offer = HousingOfferCRUD.create(db, offer_in)
         return offer
