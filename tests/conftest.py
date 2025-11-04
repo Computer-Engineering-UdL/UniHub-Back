@@ -11,6 +11,8 @@ from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
+from app.api.v1.endpoints.members import router as members_router
+from app.api.v1.endpoints.messages import router as messages_router
 from app.api.v1.endpoints.user import router as user_router
 from app.core import Base, get_db
 from app.core.config import settings
@@ -99,6 +101,8 @@ def app(db):
     app.include_router(auth_router, prefix="/auth")
     app.include_router(interest_router, prefix="/interest")
     app.include_router(channel_router, prefix="/channels")
+    app.include_router(members_router, prefix="/channels")
+    app.include_router(messages_router, prefix="/channels")
     app.include_router(housing_offer_router, prefix="/offers")
 
     def override_get_db():

@@ -154,4 +154,5 @@ __all__ = [
     "UnbanRead",
     "MemberRoleUpdate",
     "ChannelDetail",
+    "ChannelReadWithCount",
 ]
