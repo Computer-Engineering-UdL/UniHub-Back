@@ -18,6 +18,7 @@ from app.schemas import (
     ChannelCreate,
     ChannelDetail,
     ChannelRead,
+    ChannelReadWithCount,
     ChannelUpdate,
 )
 
