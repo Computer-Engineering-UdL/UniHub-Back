@@ -91,8 +91,8 @@ app.add_middleware(
 app.include_router(auth.router, prefix=f"{settings.API_VERSION}/auth", tags=["auth"])
 app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["user"])
 app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
-app.include_router(members.router, prefix=f"{settings.API_VERSION}/channels", tags=["members"])
-app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channels", tags=["messages"])
+app.include_router(members.router, prefix=f"{settings.API_VERSION}/channel", tags=["members"])
+app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channel", tags=["messages"])
 
 app.include_router(
     housing_offer.router,
