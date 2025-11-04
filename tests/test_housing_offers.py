@@ -201,7 +201,7 @@ class TestHousingOfferEndpoints:
 
         # Verify required fields in the first item
         sample = data[0]
-        for field in ["id", "title", "price", "area", "status", "posted_date", "city"]:
+        for field in ["id", "title", "price", "area", "status", "posted_date", "city", "user_id"]:
             assert field in sample
 
     def test_list_offers_with_city_filter(self, client):

@@ -118,6 +118,7 @@ class HousingOfferList(BaseModel):
     area: Decimal
     status: OfferStatus
     posted_date: datetime
+    user_id: UUID
 
     city: str
 
