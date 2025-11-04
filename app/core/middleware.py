@@ -8,10 +8,28 @@ from starlette.middleware.base import BaseHTTPMiddleware
 from .logger import logger, request_id_var
 
 
+def get_client_ip(request: Request) -> str:
+    """Extract the real client IP from proxy headers or fallback to direct connection."""
+    forwarded_for = request.headers.get("X-Forwarded-For")
+    if forwarded_for:
+        return forwarded_for.split(",")[0].strip()
+
+    real_ip = request.headers.get("X-Real-IP")
+    if real_ip:
+        return real_ip
+
+    cf_connecting_ip = request.headers.get("CF-Connecting-IP")
+    if cf_connecting_ip:
+        return cf_connecting_ip
+
+    return request.client.host if request.client else "unknown"
+
+
 class AutoLoggingMiddleware(BaseHTTPMiddleware):
     async def dispatch(self, request: Request, call_next):
         request_id = request.headers.get("X-Request-ID", str(uuid4()))
         request_id_var.set(request_id)
+        client_ip = get_client_ip(request)
 
         logger.info(
             f"{request.method} {request.url.path}",
@@ -19,7 +37,7 @@ class AutoLoggingMiddleware(BaseHTTPMiddleware):
                 "method": request.method,
                 "path": request.url.path,
                 "query_params": str(request.query_params),
-                "client_ip": request.client.host if request.client else None,
+                "client_ip": client_ip,
             },
         )
 
