@@ -75,6 +75,16 @@ class HousingOfferTableModel(Base):
         lazy="selectin",
         back_populates="offers"
     )
+    liked_by_users: Mapped[List["User"]] = relationship(
+        "User",
+        secondary="user_like",
+        primaryjoin="and_(HousingOfferTableModel.id==UserLike.target_id, "
+                    "UserLike.target_type=='housing_offer')",
+        secondaryjoin="User.id==UserLike.user_id",
+        viewonly=True,
+        back_populates=None,
+        lazy="selectin",
+    )
 
     def __repr__(self) -> str:
         return f"<HousingOffer(id={self.id}, title={self.title}, status={self.status})>"

@@ -17,6 +17,8 @@ if TYPE_CHECKING:
     from app.models.housing_offer import HousingOfferTableModel
     from app.models.interest import Interest, UserInterest
     from app.models.message import Message
+    from app.models.user_like import UserLike
+
 
 
 class User(Base):
@@ -59,6 +61,12 @@ class User(Base):
         secondary="user_interest",
         back_populates="users",
         order_by="Interest.name",
+    )
+
+    likes: Mapped[List[UserLike]] = relationship(
+        "UserLike",
+        cascade="all, delete-orphan",
+        back_populates="user",
     )
 
     @property

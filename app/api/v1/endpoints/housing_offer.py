@@ -181,7 +181,7 @@ def list_offers_by_user(
     db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 20,
-    current_user: TokenData = Depends(get_current_user),
+    #current_user: TokenData = Depends(get_current_user),
 ):
     """
     Retrieve all housing offers created by a specific user.
@@ -193,12 +193,14 @@ def list_offers_by_user(
         raise HTTPException(status_code=404, detail="User not found.")
 
     # Only allow access if admin or same user
-    is_admin = current_user.role == Role.ADMIN
-    if current_user.id != user_id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to view these offers.")
+    # is_admin = current_user.role == Role.ADMIN
+    # if current_user.id != user_id and not is_admin:
+    #     raise HTTPException(status_code=403, detail="Not authorized to view these offers.")
 
     offers = HousingOfferCRUD.get_by_user(db, user_id, skip=skip, limit=limit)
     return offers
+
+
 
 @router.post(
     "/{offer_id}/amenities/{code}",
