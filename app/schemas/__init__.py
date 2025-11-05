@@ -4,6 +4,7 @@ from pydantic import BaseModel
 
 from app.schemas.auth import *  # noqa
 from app.schemas.channel import *  # noqa
+from app.schemas.conversation import *  # noqa
 from app.schemas.housing_amenity import *  # noqa
 from app.schemas.housing_category import *  # noqa
 from app.schemas.housing_offer import *  # noqa
@@ -15,6 +16,7 @@ from app.schemas.user import *  # noqa
 from . import (
     auth,
     channel,
+    conversation,
     housing_amenity,
     housing_category,
     housing_offer,
@@ -34,6 +36,7 @@ for module in (
     user,
     auth,
     message,
+    conversation,
 ):
     for name in dir(module):
         obj = getattr(module, name)
