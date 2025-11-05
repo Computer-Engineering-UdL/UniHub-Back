@@ -1,4 +1,4 @@
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 
 class HousingAmenityBase(BaseModel):
@@ -14,8 +14,7 @@ class HousingAmenityCreate(HousingAmenityBase):
 class HousingAmenityRead(HousingAmenityBase):
     """Schema for reading (returning) an amenity."""
 
-    class Config:
-        from_attributes = True  # allows ORM → Pydantic conversion
+    model_config = ConfigDict(from_attributes=True)
 
 __all__ = [
     "HousingAmenityBase",

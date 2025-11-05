@@ -39,6 +39,7 @@ def create_offer(
     Only logged-in users can create offers.
     """
     offer_in.user_id = current_user.id
+
     try:
         offer = HousingOfferCRUD.create(db, offer_in)
         return offer
@@ -167,6 +168,37 @@ def delete_offer(
     if not success:
         raise HTTPException(status_code=400, detail="Failed to delete offer.")
     return None
+
+@router.get(
+    "/user/{user_id}",
+    response_model=List[HousingOfferList],
+    status_code=status.HTTP_200_OK,
+    summary="List all offers from a specific user",
+    response_description="Returns all housing offers created by the given user.",
+)
+def list_offers_by_user(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+    skip: int = 0,
+    limit: int = 20,
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    Retrieve all housing offers created by a specific user.
+    - Accessible to admins or the user themselves.
+    """
+    # Ensure the user exists
+    db_user = UserCRUD.get_by_id(db, user_id)
+    if not db_user:
+        raise HTTPException(status_code=404, detail="User not found.")
+
+    # Only allow access if admin or same user
+    is_admin = current_user.role == Role.ADMIN
+    if current_user.id != user_id and not is_admin:
+        raise HTTPException(status_code=403, detail="Not authorized to view these offers.")
+
+    offers = HousingOfferCRUD.get_by_user(db, user_id, skip=skip, limit=limit)
+    return offers
 
 @router.post(
     "/{offer_id}/amenities/{code}",

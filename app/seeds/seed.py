@@ -4,6 +4,7 @@ from sqlalchemy.orm import Session
 
 from app.core import Base, engine
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds.conversations import seed_conversations
 from app.seeds.messages import seed_messages
 
 
@@ -26,6 +27,7 @@ def seed_database(nuke: bool = False):
         channels = seed_channels(db, users)
         seed_messages(db, users, channels)
         seed_housing_data(db)
+        seed_conversations(db)
         db.commit()
         print("\nDatabase seeded successfully!\n")
 

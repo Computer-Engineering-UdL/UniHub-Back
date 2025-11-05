@@ -214,7 +214,7 @@ class HousingOfferCRUD:
             query = query.filter(HousingOfferTableModel.status == status)
 
         offers = query.offset(skip).limit(limit).all()
-        return [HousingOfferList.model_validate(o) for o in offers]\
+        return [HousingOfferList.model_validate(o) for o in offers]
 
 
     @staticmethod
@@ -252,3 +252,24 @@ class HousingOfferCRUD:
             db.refresh(offer)
 
         return HousingOfferRead.model_validate(offer)
+
+    @staticmethod
+    def get_by_user(
+            db: Session,
+            user_id: uuid.UUID,
+            skip: int = 0,
+            limit: int = 50,
+    ) -> List[HousingOfferList]:
+        """
+        Retrieve all housing offers created by a specific user.
+        """
+        query = (
+            db.query(HousingOfferTableModel)
+            .filter(HousingOfferTableModel.user_id == user_id)
+            .order_by(HousingOfferTableModel.posted_date.desc())
+            .offset(skip)
+            .limit(limit)
+        )
+
+        offers = query.all()
+        return [HousingOfferList.model_validate(o) for o in offers]
