@@ -53,9 +53,6 @@ class HousingOfferTableModel(Base):
     deposit: Mapped[float | None] = mapped_column(sa.Numeric)
     num_rooms: Mapped[int | None] = mapped_column(sa.Integer)
     num_bathrooms: Mapped[int | None] = mapped_column(sa.Integer)
-    furnished: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
-    utilities_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
-    internet_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
     gender_preference: Mapped[GenderPreferences | None] = mapped_column(sa.String(10))
     status: Mapped[OfferStatus] = mapped_column(sa.String(20), default="active", nullable=False)
 

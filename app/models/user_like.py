@@ -9,6 +9,7 @@ from sqlalchemy import ForeignKey
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
+from app.literals.like_status import LikeStatus, LikeTargetType
 
 if TYPE_CHECKING:
     from app.models import User
@@ -16,23 +17,27 @@ if TYPE_CHECKING:
 
 class UserLike(Base):
     """
-    Association table connecting users with liked entities (currently housing offers).
-    Can be extended in the future by using target_type.
+    Association object between User and liked entities (e.g. housing offers, job offers, items).
+    Uses a composite primary key, similar to ChannelMember.
     """
+
     __tablename__ = "user_like"
-    __table_args__ = (
-        sa.UniqueConstraint("user_id", "target_id", "target_type", name="uq_user_like"),
-    )
 
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
     user_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True
+        sa.UUID(as_uuid=True), ForeignKey("user.id", ondelete="CASCADE"), primary_key=True
     )
-    target_id: Mapped[uuid.UUID] = mapped_column(nullable=False, index=True)
-    target_type: Mapped[str] = mapped_column(sa.String(50), nullable=False)
-    liked_at: Mapped[datetime.datetime] = mapped_column(
-        sa.DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False
+    target_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True)
+    target_type: Mapped[LikeTargetType] = mapped_column(sa.Enum(LikeTargetType), primary_key=True)
+
+    status: Mapped[LikeStatus] = mapped_column(
+        sa.Enum(LikeStatus, name="like_status_enum"),
+        default=LikeStatus.ACTIVE,
+        nullable=False,
+        index=True,
+    )
+    updated_at: Mapped[datetime.datetime] = mapped_column(
+        sa.DateTime, default=datetime.datetime.now(datetime.UTC), onupdate=datetime.datetime.now(datetime.UTC)
     )
 
-    # Optional: explicit relationships for ORM clarity
-    user: Mapped["User"] = relationship(back_populates="likes", viewonly=True)
+    # ORM relationships
+    user: Mapped["User"] = relationship(back_populates="likes")

@@ -20,9 +20,6 @@ def sample_offer_payload(user_id: str = None, category_id: str = None, amenities
         "deposit": 500.0,
         "num_rooms": 2,
         "num_bathrooms": 1,
-        "furnished": True,
-        "utilities_included": True,
-        "internet_included": False,
         "gender_preference": None,
         "status": "active",
     }

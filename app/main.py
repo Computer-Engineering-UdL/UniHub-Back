@@ -21,6 +21,7 @@ from app.api.v1.endpoints import (
     members,
     messages,
     user,
+    user_like,
 )
 from app.core import Base, engine
 from app.core.config import settings
@@ -94,6 +95,7 @@ app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["us
 app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
 app.include_router(members.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel members"])
 app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel messages"])
+app
 
 app.include_router(conversation.router, prefix=f"{settings.API_VERSION}/conversation", tags=["conversation"])
 
@@ -117,6 +119,7 @@ app.include_router(
     prefix=f"{settings.API_VERSION}/amenities",
     tags=["housing amenities"],
 )
+app.include_router(user_like.router, prefix=f"{settings.API_VERSION}/likes", tags=["user likes"])
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
 
