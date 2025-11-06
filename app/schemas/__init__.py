@@ -12,6 +12,7 @@ from app.schemas.housing_photo import *  # noqa
 from app.schemas.interest import *  # noqa
 from app.schemas.message import *  # noqa
 from app.schemas.user import *  # noqa
+from app.schemas.user_like import *  # noqa
 
 from . import (
     auth,
@@ -24,6 +25,7 @@ from . import (
     interest,
     message,
     user,
+    user_like,
 )
 
 for module in (
@@ -37,6 +39,7 @@ for module in (
     auth,
     message,
     conversation,
+    user_like,
 ):
     for name in dir(module):
         obj = getattr(module, name)
@@ -56,4 +59,6 @@ __all__ = (
     + user.__all__
     + auth.__all__
     + message.__all__
+    + conversation.__all__
+    + user_like.__all__
 )

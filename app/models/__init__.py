@@ -10,6 +10,7 @@ from app.models.housing_photo import HousingPhotoTableModel
 from app.models.interest import Interest, InterestCategory, UserInterest
 from app.models.message import Message
 from app.models.user import User, create_payload_from_user
+from app.models.user_like import UserLike
 
 __all__ = [
     "User",
@@ -31,4 +32,5 @@ __all__ = [
     "create_payload_from_user",
     "Conversation",
     "ConversationMessage",
+    "UserLike",
 ]
