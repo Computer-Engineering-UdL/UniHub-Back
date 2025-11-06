@@ -29,19 +29,28 @@ services:
       - unihub
     restart: unless-stopped
 
-  redis:
-    image: bitnami/redis:latest
+  valkey:
+    image: valkey/valkey:latest
+    container_name: valkey
+    restart: unless-stopped
+    ports:
+      - "${VALKEY_PORT_NUMBER}:6379"
+    volumes:
+      - valkey_data:/data
+    command: >
+      valkey-server
+      --save 60 1
+      --loglevel warning
+      --appendonly yes
+      --requirepass ${VALKEY_PASSWORD}
     env_file:
       - .env
-    environment:
-      - ALLOW_EMPTY_PASSWORD=no
-      - REDIS_PORT_NUMBER=${REDIS_PORT_NUMBER}
-      - REDIS_PASSWORD=${REDIS_PASSWORD}
     networks:
       - unihub
 
 volumes:
   db-data:
+  valkey_data:
 
 networks:
   unihub:

@@ -28,10 +28,10 @@ class Settings(BaseSettings):
     GITHUB_CLIENT_ID: str = "dummy"
     GITHUB_CLIENT_SECRET: str = "dummy"
 
-    REDIS_PORT_NUMBER: str = "6379"
-    REDIS_HOST: str = "localhost"
-    REDIS_PASSWORD: str = "supersecret"
-    USE_FAKE_REDIS: bool = False
+    VALKEY_PORT_NUMBER: str = "6379"
+    VALKEY_HOST: str = "localhost"
+    VALKEY_PASSWORD: str = "supersecret"
+    USE_FAKE_VALKEY: bool = False
 
     NUKE_COOLDOWN_SECONDS: int = 30
 
@@ -53,8 +53,8 @@ class Settings(BaseSettings):
 
     @computed_field
     @property
-    def REDIS_URL(self) -> str:
-        return f"redis://:{self.REDIS_PASSWORD}@{self.REDIS_HOST}:{self.REDIS_PORT_NUMBER}"
+    def VALKEY_URL(self) -> str:
+        return f"redis://:{self.VALKEY_PASSWORD}@{self.VALKEY_HOST}:{self.VALKEY_PORT_NUMBER}"
 
 
 settings = Settings()

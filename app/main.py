@@ -1,8 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
 
-import fakeredis
-import redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -26,6 +24,7 @@ from app.api.v1.endpoints import (
 from app.core import Base, engine
 from app.core.config import settings
 from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
+from app.core.valkey import valkey_client
 from app.seeds.seed import seed_database
 
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
@@ -41,23 +40,14 @@ uvicorn_error_logger.handlers = []
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        if settings.USE_FAKE_REDIS:
-            app.state.redis = fakeredis.FakeRedis(decode_responses=True)
-        else:
-            app.state.redis = redis.Redis(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT_NUMBER,
-                password=settings.REDIS_PASSWORD,
-                decode_responses=True,
-            )
         seed_database()
         Base.metadata.create_all(bind=engine)
+        await valkey_client.connect()
         print("Tables created, app starting...")
         yield
     finally:
-        if not settings.USE_FAKE_REDIS:
-            await app.state.redis.close()
         print("App shutting down...")
+        await valkey_client.disconnect()
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
