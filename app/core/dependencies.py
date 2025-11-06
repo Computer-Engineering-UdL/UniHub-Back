@@ -1,8 +1,10 @@
 from __future__ import annotations
 
+import asyncio
 import uuid
+from functools import wraps
+from typing import Callable, Optional
 
-import redis
 from authlib.integrations.starlette_client import OAuth
 from fastapi import Depends, HTTPException, status
 from fastapi.security import OAuth2PasswordBearer
@@ -14,6 +16,7 @@ from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
 
 from .config import settings
+from .rate_limiter import CooldownManager, RateLimiter, RateLimitStrategy
 from .types import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
@@ -101,5 +104,134 @@ def require_role(min_role: Role):
     return role_checker
 
 
-async def get_redis(request: Request) -> redis.Redis:
-    return request.app.state.redis
+def rate_limit(
+    max_requests: int = 10,
+    window_seconds: int = 60,
+    strategy: RateLimitStrategy = RateLimitStrategy.SLIDING_WINDOW,
+    key_prefix: str = "endpoint",
+    per_user: bool = True,
+):
+    """
+    Rate limit decorator for FastAPI endpoints
+
+    Args:
+        max_requests: Maximum requests allowed
+        window_seconds: Time window in seconds
+        strategy: Rate limiting strategy
+        key_prefix: Prefix for the rate limit key
+        per_user: If True, rate limit per user. If False, global rate limit
+    """
+
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            current_user = kwargs.get("current_user") or kwargs.get("user")
+            request = kwargs.get("request")
+
+            if per_user and current_user:
+                key = f"{key_prefix}:{current_user.id}"
+            elif request:
+                client_ip = request.client.host
+                key = f"{key_prefix}:{client_ip}"
+            else:
+                key = key_prefix
+
+            is_allowed, remaining, retry_after = await RateLimiter.check_rate_limit(
+                key=key, max_requests=max_requests, window_seconds=window_seconds, strategy=strategy
+            )
+
+            if not is_allowed:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "error": "Rate limit exceeded",
+                        "retry_after": retry_after,
+                        "message": f"Too many requests. Please try again in {retry_after} seconds.",
+                    },
+                    headers={
+                        "Retry-After": str(retry_after),
+                        "X-RateLimit-Limit": str(max_requests),
+                        "X-RateLimit-Remaining": str(remaining),
+                        "X-RateLimit-Reset": str(retry_after),
+                    },
+                )
+
+            result = func(*args, **kwargs)
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+def cooldown(action: str, cooldown_seconds: int):
+    """
+    Cooldown decorator for specific actions
+    Simpler than rate limiting - just enforces a wait between actions
+
+    Args:
+        action: Name of the action
+        cooldown_seconds: Cooldown duration in seconds
+    """
+
+    def decorator(func: Callable):
+        @wraps(func)
+        async def wrapper(*args, **kwargs):
+            current_user = kwargs.get("current_user") or kwargs.get("user")
+
+            if not current_user:
+                raise HTTPException(
+                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required for this action"
+                )
+
+            can_perform, seconds_remaining = await CooldownManager.check_cooldown(
+                user_id=current_user.id, action=action, cooldown_seconds=cooldown_seconds
+            )
+
+            if not can_perform:
+                raise HTTPException(
+                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                    detail={
+                        "error": "Action on cooldown",
+                        "action": action,
+                        "retry_after": seconds_remaining,
+                        "message": f"Please wait {seconds_remaining} seconds before performing this action again.",
+                    },
+                    headers={"Retry-After": str(seconds_remaining)},
+                )
+            result = func(*args, **kwargs)
+            if asyncio.iscoroutine(result):
+                return await result
+            return result
+
+        return wrapper
+
+    return decorator
+
+
+async def check_rate_limit_dependency(
+    request: Request,
+    current_user: Optional[TokenData] = Depends(get_current_user),
+    max_requests: int = 10,
+    window_seconds: int = 60,
+):
+    """
+    Dependency function for rate limiting
+    """
+    if current_user:
+        key = f"api:{request.url.path}:{current_user.id}"
+    else:
+        key = f"api:{request.url.path}:{request.client.host}"
+
+    is_allowed, remaining, retry_after = await RateLimiter.check_rate_limit(
+        key=key, max_requests=max_requests, window_seconds=window_seconds
+    )
+
+    if not is_allowed:
+        raise HTTPException(
+            status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+            detail=f"Rate limit exceeded. Retry after {retry_after} seconds.",
+            headers={"Retry-After": str(retry_after)},
+        )

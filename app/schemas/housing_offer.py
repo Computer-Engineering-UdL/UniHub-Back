@@ -38,9 +38,6 @@ class HousingOfferBase(BaseModel):
     deposit: Decimal | None = Field(default=None, ge=0)
     num_rooms: int | None = Field(default=None, ge=0)
     num_bathrooms: int | None = Field(default=None, ge=0)
-    furnished: bool = Field(default=False)
-    utilities_included: bool = Field(default=False)
-    internet_included: bool = Field(default=False)
     gender_preference: GenderPreferences | None = None
     status: OfferStatus = Field(default="active")
 
@@ -79,9 +76,6 @@ class HousingOfferUpdate(BaseModel):
     area: Decimal | None = Field(None, gt=0)
     num_rooms: int | None = Field(None, ge=0)
     num_bathrooms: int | None = Field(None, ge=0)
-    furnished: bool | None = None
-    utilities_included: bool | None = None
-    internet_included: bool | None = None
     gender_preference: GenderPreferences | None = None
     status: OfferStatus | None = None
     category_id: UUID | None = None

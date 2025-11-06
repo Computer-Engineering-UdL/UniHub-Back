@@ -1,8 +1,6 @@
 import logging
 from contextlib import asynccontextmanager
 
-import fakeredis
-import redis
 from fastapi import FastAPI
 from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
@@ -21,10 +19,12 @@ from app.api.v1.endpoints import (
     members,
     messages,
     user,
+    user_like,
 )
 from app.core import Base, engine
 from app.core.config import settings
 from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
+from app.core.valkey import valkey_client
 from app.seeds.seed import seed_database
 
 uvicorn_access_logger = logging.getLogger("uvicorn.access")
@@ -40,23 +40,14 @@ uvicorn_error_logger.handlers = []
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
-        if settings.USE_FAKE_REDIS:
-            app.state.redis = fakeredis.FakeRedis(decode_responses=True)
-        else:
-            app.state.redis = redis.Redis(
-                host=settings.REDIS_HOST,
-                port=settings.REDIS_PORT_NUMBER,
-                password=settings.REDIS_PASSWORD,
-                decode_responses=True,
-            )
         seed_database()
         Base.metadata.create_all(bind=engine)
+        await valkey_client.connect()
         print("Tables created, app starting...")
         yield
     finally:
-        if not settings.USE_FAKE_REDIS:
-            app.state.redis.close()
         print("App shutting down...")
+        await valkey_client.disconnect()
 
 
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
@@ -94,6 +85,7 @@ app.include_router(user.router, prefix=f"{settings.API_VERSION}/user", tags=["us
 app.include_router(channel.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel"])
 app.include_router(members.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel members"])
 app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel messages"])
+app
 
 app.include_router(conversation.router, prefix=f"{settings.API_VERSION}/conversation", tags=["conversation"])
 
@@ -117,6 +109,7 @@ app.include_router(
     prefix=f"{settings.API_VERSION}/amenities",
     tags=["housing amenities"],
 )
+app.include_router(user_like.router, prefix=f"{settings.API_VERSION}/likes", tags=["user likes"])
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
 

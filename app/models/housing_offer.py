@@ -53,9 +53,6 @@ class HousingOfferTableModel(Base):
     deposit: Mapped[float | None] = mapped_column(sa.Numeric)
     num_rooms: Mapped[int | None] = mapped_column(sa.Integer)
     num_bathrooms: Mapped[int | None] = mapped_column(sa.Integer)
-    furnished: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
-    utilities_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
-    internet_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
     gender_preference: Mapped[GenderPreferences | None] = mapped_column(sa.String(10))
     status: Mapped[OfferStatus] = mapped_column(sa.String(20), default="active", nullable=False)
 
@@ -74,6 +71,16 @@ class HousingOfferTableModel(Base):
         secondary="housing_offer_amenity",
         lazy="selectin",
         back_populates="offers"
+    )
+    liked_by_users: Mapped[List["User"]] = relationship(
+        "User",
+        secondary="user_like",
+        primaryjoin="and_(HousingOfferTableModel.id==UserLike.target_id, "
+                    "UserLike.target_type=='housing_offer')",
+        secondaryjoin="User.id==UserLike.user_id",
+        viewonly=True,
+        back_populates=None,
+        lazy="selectin",
     )
 
     def __repr__(self) -> str:
