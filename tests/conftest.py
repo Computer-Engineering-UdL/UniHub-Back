@@ -16,6 +16,7 @@ from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.members import router as members_router
 from app.api.v1.endpoints.messages import router as messages_router
 from app.api.v1.endpoints.user import router as user_router
+from app.api.v1.endpoints.user_like import router as user_like_router
 from app.core import Base, get_db
 from app.core.config import settings
 from app.models import User
@@ -123,6 +124,7 @@ def app(db):
     app.include_router(messages_router, prefix="/channels")
     app.include_router(housing_offer_router, prefix="/offers")
     app.include_router(conversation_router, prefix="/conversations")
+    app.include_router(user_like_router, prefix="/user-likes")
 
     def override_get_db():
         yield db
