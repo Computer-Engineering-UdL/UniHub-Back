@@ -8,6 +8,7 @@ from pydantic import BaseModel, ConfigDict, EmailStr, Field, field_validator
 
 from app.core.security import hash_password
 from app.literals.users import Role
+from app.schemas.university import FacultyRead
 
 if TYPE_CHECKING:
     from .interest import InterestRead
@@ -26,7 +27,7 @@ class UserBase(BaseModel):
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
-    university: Optional[str] = Field(None, max_length=100)
+    faculty_id: Optional[uuid.UUID] = None
     year_of_study: Optional[int] = Field(None, ge=1, le=12)
     avatar_url: Optional[str] = Field(None, max_length=500)
     room_number: Optional[str] = Field(None, max_length=20)
@@ -65,7 +66,7 @@ class UserUpdate(BaseModel):
     first_name: Optional[str] = Field(None, min_length=1, max_length=100)
     last_name: Optional[str] = Field(None, min_length=1, max_length=100)
     phone: Optional[str] = Field(None, max_length=20)
-    university: Optional[str] = Field(None, max_length=100)
+    faculty: Optional[FacultyRead] = None
     year_of_study: Optional[int] = Field(None, ge=1, le=12)
     avatar_url: Optional[str] = Field(None, max_length=500)
     is_verified: Optional[bool] = None
