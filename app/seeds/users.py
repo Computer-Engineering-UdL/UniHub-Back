@@ -9,6 +9,7 @@ from app.core import hash_password
 from app.core.config import settings
 from app.literals.users import Role
 from app.models import Interest, User
+from app.models.university import Faculty, University
 
 
 def seed_users(db: Session) -> List[User]:
@@ -18,6 +19,20 @@ def seed_users(db: Session) -> List[User]:
     if admin is not None:
         existing_users = db.query(User).limit(3).all()
         return existing_users
+
+    udl = db.query(University).filter_by(name="Universidad de Lleida").first()
+
+    faculties_map = {}
+    if udl and udl.faculties:
+        for fac in udl.faculties:
+            faculties_map[fac.name] = fac
+    else:
+        print("ERROR: University of Lleida or its faculties not found.")
+        print("Make sure to run seed_universities() BEFORE seed_users().")
+
+    def get_faculty(name: str) -> Faculty | None:
+        """Returns the Faculty object or None if not found"""
+        return faculties_map.get(name)
 
     def make_user(**kwargs) -> User:
         return User(
@@ -34,7 +49,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Admin",
             last_name="User",
             phone="+34 666 777 888",
-            university="Universitat de Lleida",
+            faculty=get_faculty("Facultad de Derecho, Economía y Turismo"),
             avatar_url="https://avatar.iran.liara.run/public/12",
             room_number="101",
             provider="local",
@@ -48,7 +63,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Joan",
             last_name="Pere",
             phone="+34 666 111 222",
-            university="Universitat de Lleida",
+            faculty=get_faculty("Escuela Politécnica Superior"),
             avatar_url="https://avatar.iran.liara.run/public/34",
             room_number="202",
             provider="local",
@@ -62,7 +77,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Jane",
             last_name="Smith",
             phone="+34 666 333 444",
-            university="Universitat de Barcelona",
+            faculty=get_faculty("Facultad de Derecho, Economía y Turismo"),
             avatar_url="https://avatar.iran.liara.run/public/45",
             room_number="303",
             provider="local",
@@ -76,7 +91,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Carlos",
             last_name="Méndez",
             phone="+34 666 555 666",
-            university="Universitat Autònoma de Barcelona",
+            faculty=get_faculty("Escuela Técnica Superior de Ingeniería Agroalimentaria y Forestal y de Veterinaria"),
             avatar_url="https://avatar.iran.liara.run/public/56",
             room_number="404",
             provider="local",
@@ -90,7 +105,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Lucía",
             last_name="Rodríguez",
             phone="+34 666 777 999",
-            university="Universitat de Barcelona",
+            faculty=get_faculty("Facultad de Medicina"),
             avatar_url="https://avatar.iran.liara.run/public/67",
             room_number="505",
             provider="local",
@@ -104,7 +119,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Marc",
             last_name="Torres",
             phone="+34 666 888 000",
-            university="Universitat Rovira i Virgili",
+            faculty=get_faculty("Facultad de Medicina"),
             avatar_url="https://avatar.iran.liara.run/public/78",
             room_number="606",
             provider="local",
@@ -118,7 +133,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Sofía",
             last_name="Martínez",
             phone="+34 666 123 456",
-            university="Universitat Autònoma de Barcelona",
+            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
             avatar_url="https://avatar.iran.liara.run/public/89",
             room_number="707",
             provider="google",
@@ -132,7 +147,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Andreu",
             last_name="Vila",
             phone="+34 666 234 567",
-            university="Universitat de Girona",
+            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
             avatar_url="https://avatar.iran.liara.run/public/91",
             room_number="808",
             provider="local",
@@ -146,7 +161,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Paula",
             last_name="Hernández",
             phone="+34 666 345 678",
-            university="Universitat Politècnica de Catalunya",
+            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
             avatar_url="https://avatar.iran.liara.run/public/101",
             room_number="909",
             provider="local",
@@ -160,7 +175,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="David",
             last_name="Pons",
             phone="+34 666 987 654",
-            university="Universitat de Lleida",
+            faculty=get_faculty("Facultad de Letras"),
             avatar_url="https://avatar.iran.liara.run/public/112",
             room_number="111",
             provider="google",
@@ -174,7 +189,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Elena",
             last_name="Costa",
             phone="+34 666 765 432",
-            university="Universitat Rovira i Virgili",
+            faculty=get_faculty("Facultad de Letras"),
             avatar_url="https://avatar.iran.liara.run/public/120",
             room_number="212",
             provider="local",

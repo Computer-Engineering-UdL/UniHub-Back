@@ -356,7 +356,7 @@ class TestConversationMessages:
             headers={"Authorization": f"Bearer {user_token}"},
         )
 
-        assert response.status_code == status.HTTP_422_UNPROCESSABLE_ENTITY
+        assert response.status_code == status.HTTP_422_UNPROCESSABLE_CONTENT
 
     def test_get_conversation_messages(self, client, user_token, user2_token):
         """Test retrieving messages from a conversation."""
