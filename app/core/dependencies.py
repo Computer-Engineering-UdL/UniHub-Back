@@ -6,17 +6,19 @@ from functools import wraps
 from typing import Callable, Optional
 
 from authlib.integrations.starlette_client import OAuth
-from fastapi import Depends, HTTPException, status
+from fastapi import Depends, HTTPException, Query, status
 from fastapi.security import OAuth2PasswordBearer
 from jose import JWTError, jwt
 from pydantic import ValidationError
 from starlette.requests import Request
 
+from app.core.logger import logger
 from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
 
 from .config import settings
 from .rate_limiter import CooldownManager, RateLimiter, RateLimitStrategy
+from .security import get_payload
 from .types import TokenData
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
@@ -235,3 +237,16 @@ async def check_rate_limit_dependency(
             detail=f"Rate limit exceeded. Retry after {retry_after} seconds.",
             headers={"Retry-After": str(retry_after)},
         )
+
+
+async def get_current_user_ws(token: Optional[str] = Query(None)) -> Optional[dict]:
+    """Extract user from WebSocket query parameter token."""
+    if not token:
+        return None
+
+    try:
+        payload = get_payload(token)
+        return payload
+    except Exception as e:
+        logger.error(f"WebSocket auth error: {e}")
+        return None
