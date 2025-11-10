@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, relationship
 from app.core import Base
 
 if TYPE_CHECKING:
-    pass
+    from app.models.user import User
 
 
 class University(Base):
@@ -29,3 +29,5 @@ class Faculty(Base):
     address = Column(sa.String(255), nullable=True)
     university_id = Column(sa.UUID, ForeignKey("university.id"), nullable=False)
     university: Mapped["University"] = relationship("University", back_populates="faculties")
+
+    users: Mapped[List["User"]] = relationship("User", back_populates="faculty")

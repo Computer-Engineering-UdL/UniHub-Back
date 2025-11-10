@@ -93,8 +93,8 @@ def db(engine):
 
     yield db_session
 
-    db_session.close()
     transaction.rollback()
+    db_session.close()
     connection.close()
 
 
