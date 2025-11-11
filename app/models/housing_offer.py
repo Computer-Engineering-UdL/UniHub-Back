@@ -83,5 +83,12 @@ class HousingOfferTableModel(Base):
         lazy="selectin",
     )
 
+    @property
+    def base_image(self) -> str | None:
+        """Returns the first photo URL if available."""
+        if self.photos:  # type: ignore[attr-defined]
+            return self.photos[0].url
+        return None
+
     def __repr__(self) -> str:
         return f"<HousingOffer(id={self.id}, title={self.title}, status={self.status})>"
