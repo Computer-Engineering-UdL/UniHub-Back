@@ -90,7 +90,8 @@ def seed_user_conversations(db: Session) -> None:
             ),
             (
                 student,
-                "Yes, definitely! I'm a student at the {student.university}. When would be a good time to see it?",
+                "Yes, definitely! I'm a student at the {student.faculty.university.name}. "
+                "When would be a good time to see it?",
             ),
             (seller, "I'm available on Friday afternoon or Saturday morning. Would either of those work for you?"),
             (student, "Friday afternoon works perfectly for me. Shall we say around 4 PM?"),
@@ -139,7 +140,7 @@ def seed_user_conversations(db: Session) -> None:
             (
                 student1,
                 (
-                    f"Hey {student2.first_name}, I saw we're both at {student1.university}. "
+                    f"Hey {student2.first_name}, I saw we're both at {student1.faculty.university.name}. "
                     "Are you also looking for a flat for the next semester?"
                 ),
             ),
