@@ -23,6 +23,7 @@ def seed_database(nuke: bool = False):
 
         seed_interests(db)
         print("* Interests seeded")
+
         seed_universities(db)
         users = seed_users(db)
         channels = seed_channels(db, users)

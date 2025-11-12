@@ -263,6 +263,7 @@ class HousingOfferCRUD:
         """
         query = (
             db.query(HousingOfferTableModel)
+            .options(joinedload(HousingOfferTableModel.photos))
             .filter(HousingOfferTableModel.user_id == user_id)
             .order_by(HousingOfferTableModel.posted_date.desc())
             .offset(skip)
@@ -270,4 +271,10 @@ class HousingOfferCRUD:
         )
 
         offers = query.all()
-        return [HousingOfferList.model_validate(o) for o in offers]
+        return [
+            HousingOfferList.model_validate({
+                **o.__dict__,
+                "base_image": o.photos[0].url if o.photos else None
+            })
+            for o in offers
+        ]

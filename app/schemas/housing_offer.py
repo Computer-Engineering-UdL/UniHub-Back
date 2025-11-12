@@ -114,6 +114,7 @@ class HousingOfferList(BaseModel):
     user_id: UUID
 
     city: str
+    base_image: str | None = None # First photo URL if available
 
     model_config = ConfigDict(from_attributes=True)
 
