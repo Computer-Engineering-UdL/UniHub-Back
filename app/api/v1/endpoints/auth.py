@@ -35,7 +35,7 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     return authenticate_user(db, login_request)
 
 
-@router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)
+@router.get("/login/{provider}", response_class=RedirectResponse, include_in_schema=True)
 async def login_oauth(provider: OAuthProvider, request: Request, oauth: OAuth = Depends(get_oauth)):
     provider_str = provider.value
     redirect_uri = request.url_for("auth_callback", provider=provider_str)
