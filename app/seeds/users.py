@@ -20,7 +20,7 @@ def seed_users(db: Session) -> List[User]:
         existing_users = db.query(User).limit(3).all()
         return existing_users
 
-    udl = db.query(University).filter_by(name="Universidad de Lleida").first()
+    udl = db.query(University).filter_by(name="University of Lleida").first()
 
     faculties_map = {}
     if udl and udl.faculties:
@@ -49,7 +49,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Admin",
             last_name="User",
             phone="+34 666 777 888",
-            faculty=get_faculty("Facultad de Derecho, Economía y Turismo"),
+            faculty=get_faculty("Faculty of Law, Economics and Tourism"),
             avatar_url="https://avatar.iran.liara.run/public/12",
             room_number="101",
             provider="local",
@@ -63,7 +63,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Joan",
             last_name="Pere",
             phone="+34 666 111 222",
-            faculty=get_faculty("Escuela Politécnica Superior"),
+            faculty=get_faculty("Higher Polytechnic School"),
             avatar_url="https://avatar.iran.liara.run/public/34",
             room_number="202",
             provider="local",
@@ -77,7 +77,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Jane",
             last_name="Smith",
             phone="+34 666 333 444",
-            faculty=get_faculty("Facultad de Derecho, Economía y Turismo"),
+            faculty=get_faculty("Faculty of Law, Economics and Tourism"),
             avatar_url="https://avatar.iran.liara.run/public/45",
             room_number="303",
             provider="local",
@@ -91,7 +91,9 @@ def seed_users(db: Session) -> List[User]:
             first_name="Carlos",
             last_name="Méndez",
             phone="+34 666 555 666",
-            faculty=get_faculty("Escuela Técnica Superior de Ingeniería Agroalimentaria y Forestal y de Veterinaria"),
+            faculty=get_faculty(
+                "Higher Technical School of Agri-Food and Forestry Engineering and Veterinary Medicine"
+            ),
             avatar_url="https://avatar.iran.liara.run/public/56",
             room_number="404",
             provider="local",
@@ -105,7 +107,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Lucía",
             last_name="Rodríguez",
             phone="+34 666 777 999",
-            faculty=get_faculty("Facultad de Medicina"),
+            faculty=get_faculty("Faculty of Medicine"),
             avatar_url="https://avatar.iran.liara.run/public/67",
             room_number="505",
             provider="local",
@@ -119,7 +121,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Marc",
             last_name="Torres",
             phone="+34 666 888 000",
-            faculty=get_faculty("Facultad de Medicina"),
+            faculty=get_faculty("Faculty of Medicine"),
             avatar_url="https://avatar.iran.liara.run/public/78",
             room_number="606",
             provider="local",
@@ -133,7 +135,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Sofía",
             last_name="Martínez",
             phone="+34 666 123 456",
-            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
+            faculty=get_faculty("Faculty of Nursing and Physiotherapy"),
             avatar_url="https://avatar.iran.liara.run/public/89",
             room_number="707",
             provider="google",
@@ -147,7 +149,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Andreu",
             last_name="Vila",
             phone="+34 666 234 567",
-            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
+            faculty=get_faculty("Faculty of Nursing and Physiotherapy"),
             avatar_url="https://avatar.iran.liara.run/public/91",
             room_number="808",
             provider="local",
@@ -161,7 +163,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Paula",
             last_name="Hernández",
             phone="+34 666 345 678",
-            faculty=get_faculty("Facultad de Enfermería y Fisioterapia"),
+            faculty=get_faculty("Faculty of Nursing and Physiotherapy"),
             avatar_url="https://avatar.iran.liara.run/public/101",
             room_number="909",
             provider="local",
@@ -175,7 +177,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="David",
             last_name="Pons",
             phone="+34 666 987 654",
-            faculty=get_faculty("Facultad de Letras"),
+            faculty=get_faculty("Faculty of Arts"),
             avatar_url="https://avatar.iran.liara.run/public/112",
             room_number="111",
             provider="google",
@@ -189,7 +191,7 @@ def seed_users(db: Session) -> List[User]:
             first_name="Elena",
             last_name="Costa",
             phone="+34 666 765 432",
-            faculty=get_faculty("Facultad de Letras"),
+            faculty=get_faculty("Faculty of Arts"),
             avatar_url="https://avatar.iran.liara.run/public/120",
             room_number="212",
             provider="local",

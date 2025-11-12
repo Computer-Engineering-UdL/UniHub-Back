@@ -107,6 +107,14 @@ class UserList(BaseModel):
     model_config = ConfigDict(from_attributes=True)
 
 
+class UserSimplified(BaseModel):
+    """Lightweight schema for list endpoints."""
+
+    id: uuid.UUID
+    username: str
+    model_config = ConfigDict(from_attributes=True)
+
+
 # ==========================================
 # Public Schema (for external APIs)
 # ==========================================
@@ -170,4 +178,5 @@ __all__ = [
     "UserVerify",
     "UserDetail",
     "UserPublic",
+    "UserSimplified",
 ]

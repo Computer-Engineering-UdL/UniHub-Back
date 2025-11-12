@@ -5,6 +5,8 @@ from fastapi.exceptions import HTTPException
 from sqlalchemy.exc import NoResultFound
 from starlette import status
 
+from app.core.logger import logger
+
 T = TypeVar("T")
 
 
@@ -27,7 +29,8 @@ def handle_api_errors(
                 raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail_message)
             except HTTPException as e:
                 raise e
-            except Exception:
+            except Exception as e:
+                logger.error(e)
                 raise HTTPException(
                     status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
                     detail="Internal server error",
