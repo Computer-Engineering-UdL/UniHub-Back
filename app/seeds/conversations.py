@@ -90,7 +90,7 @@ def seed_user_conversations(db: Session) -> None:
             ),
             (
                 student,
-                "Yes, definitely! I'm a student at the {student.faculty.university.name}. "
+                f"Yes, definitely! I'm a student at the {student.faculty.university.name}. "
                 "When would be a good time to see it?",
             ),
             (seller, "I'm available on Friday afternoon or Saturday morning. Would either of those work for you?"),

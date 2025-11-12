@@ -1,12 +1,16 @@
+from __future__ import annotations
+
 import uuid
-from typing import List
+from typing import TYPE_CHECKING, List
 from uuid import UUID
 
 import sqlalchemy as sa
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
-from app.models.housing_offer import HousingOfferTableModel
+
+if TYPE_CHECKING:
+    from app.models.housing_offer import HousingOfferTableModel
 
 
 class HousingCategoryTableModel(Base):
@@ -23,7 +27,7 @@ class HousingCategoryTableModel(Base):
     name: Mapped[str] = mapped_column(sa.String(50), nullable=False, unique=True)
 
     # ----- RELATIONSHIPS -----
-    housing_offers: Mapped[List["HousingOfferTableModel"]] = relationship(back_populates="category")
+    housing_offers: Mapped[List[HousingOfferTableModel]] = relationship(back_populates="category")
 
     def __repr__(self) -> str:
         return f"<HousingCategory(id={self.id}, name={self.name})>"

@@ -102,26 +102,32 @@ class UserList(BaseModel):
     first_name: str
     last_name: str
     role: Role
-    is_active: bool
+    is_verified: bool
     created_at: datetime.datetime
+    model_config = ConfigDict(from_attributes=True)
+
+
+class UserSimplified(BaseModel):
+    """Lightweight schema for list endpoints."""
+
+    id: uuid.UUID
+    username: str
     model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
 # Public Schema (for external APIs)
 # ==========================================
-# class UserPublic(BaseModel):
-#     id: uuid.UUID
-#     username: str
-#     email: EmailStr
-#     first_name: str
-#     last_name: str
-#     provider: Provider
-#     role: Role
-#     phone: Optional[str] = None
-#     university: Optional[str] = None
-#
-#     model_config = ConfigDict(from_attributes=True)
+class UserPublic(BaseModel):
+    id: uuid.UUID
+    username: str
+    first_name: str
+    last_name: str
+    avatar_url: Optional[str] = Field(None, max_length=500)
+    faculty: Optional[FacultyRead] = None
+    is_verified: Optional[bool] = None
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 # ==========================================
@@ -171,4 +177,6 @@ __all__ = [
     "RoleUpdate",
     "UserVerify",
     "UserDetail",
+    "UserPublic",
+    "UserSimplified",
 ]

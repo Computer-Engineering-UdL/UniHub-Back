@@ -13,9 +13,9 @@ from app.core import Base
 from app.literals.housing import GenderPreferences, OfferStatus
 
 if TYPE_CHECKING:
+    from app.models.file_association import FileAssociation
     from app.models.housing_amenity import HousingAmenityTableModel
     from app.models.housing_category import HousingCategoryTableModel
-    from app.models.housing_photo import HousingPhotoTableModel
     from app.models.user import User
 
 
@@ -26,7 +26,7 @@ class HousingOfferTableModel(Base):
     Relationships:
         user: Many-to-one -> UserTableModel
         category: Many-to-one -> HousingCategoryTableModel
-        photos: One-to-many -> HousingPhotoTableModel
+        file_associations: One-to-many -> FileAssociation (replaces photos)
         amenities: Many-to-many -> HousingAmenityTableModel
     """
 
@@ -37,8 +37,7 @@ class HousingOfferTableModel(Base):
 
     # ----- FOREIGN KEYS -----
     user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
-
-    category_id: Mapped[int] = mapped_column(ForeignKey("housing_category.id"), nullable=False)
+    category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("housing_category.id"), nullable=False)
 
     # ----- REQUIRED FIELDS -----
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
@@ -57,38 +56,52 @@ class HousingOfferTableModel(Base):
     status: Mapped[OfferStatus] = mapped_column(sa.String(20), default="active", nullable=False)
 
     # ----- DATES -----
-    posted_date: Mapped[datetime.datetime] = (
-        mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False))
+    posted_date: Mapped[datetime.datetime] = mapped_column(
+        sa.DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False
+    )
     start_date: Mapped[date] = mapped_column(nullable=False)
     end_date: Mapped[date | None] = mapped_column()
 
     # ----- RELATIONSHIPS -----
     user: Mapped["User"] = relationship(back_populates="housing_offers")
     category: Mapped["HousingCategoryTableModel"] = relationship(back_populates="housing_offers")
-    photos: Mapped[List["HousingPhotoTableModel"]] = relationship(back_populates="offer", cascade="all, delete-orphan")
-    amenities: Mapped[List["HousingAmenityTableModel"]] = relationship(
-        "HousingAmenityTableModel",
-        secondary="housing_offer_amenity",
+
+    file_associations: Mapped[List["FileAssociation"]] = relationship(
+        "FileAssociation",
+        primaryjoin="and_(HousingOfferTableModel.id==foreign(FileAssociation.entity_id), "
+        "FileAssociation.entity_type=='housing_offer')",
+        cascade="all, delete-orphan",
         lazy="selectin",
-        back_populates="offers"
+        viewonly=True,
     )
+
+    amenities: Mapped[List["HousingAmenityTableModel"]] = relationship(
+        "HousingAmenityTableModel", secondary="housing_offer_amenity", lazy="selectin", back_populates="offers"
+    )
+
     liked_by_users: Mapped[List["User"]] = relationship(
         "User",
         secondary="user_like",
-        primaryjoin="and_(HousingOfferTableModel.id==UserLike.target_id, "
-                    "UserLike.target_type=='housing_offer')",
+        primaryjoin="and_(HousingOfferTableModel.id==UserLike.target_id, UserLike.target_type=='housing_offer')",
         secondaryjoin="User.id==UserLike.user_id",
         viewonly=True,
         back_populates=None,
         lazy="selectin",
     )
 
+    # ----- HELPER PROPERTIES -----
     @property
-    def base_image(self) -> str | None:
-        """Returns the first photo URL if available."""
-        if self.photos:  # type: ignore[attr-defined]
-            return self.photos[0].url
-        return None
+    def photos(self):
+        """
+        Convenience property to get photo associations.
+        Filters file_associations for category='photo' or no category.
+        """
+        return [assoc for assoc in self.file_associations if assoc.category in ("photo", None)]
+
+    @property
+    def owner_id(self):
+        """Alias for user_id for backward compatibility."""
+        return self.user_id
 
     def __repr__(self) -> str:
         return f"<HousingOffer(id={self.id}, title={self.title}, status={self.status})>"

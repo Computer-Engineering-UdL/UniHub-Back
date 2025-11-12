@@ -14,6 +14,7 @@ from app.schemas.user import (
     UserCreate,
     UserDetail,
     UserPasswordChange,
+    UserPublic,
     UserRead,
     UserUpdate,
 )
@@ -135,3 +136,18 @@ def delete_user(
     Delete a user. Requires ADMIN role.
     """
     return UserCRUD.delete(db, user_id)
+
+
+@router.get("/public/{user_id}", response_model=UserPublic)
+@handle_api_errors()
+def get_public_user_profile(
+    user_id: uuid.UUID,
+    db: Session = Depends(get_db),
+):
+    """
+    Get public profile of a user by ID.
+    """
+    user_db = UserCRUD.get_by_id(db, user_id)
+    if user_db.is_active:
+        return user_db
+    return None

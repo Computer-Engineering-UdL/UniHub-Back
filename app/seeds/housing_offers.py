@@ -4,14 +4,16 @@ import uuid
 
 from sqlalchemy.orm import Session
 
+from app.crud.file_association import FileAssociationCRUD
 from app.models import (
+    File,
     HousingAmenityTableModel,
     HousingCategoryTableModel,
     HousingOfferAmenity,
     HousingOfferTableModel,
-    HousingPhotoTableModel,
     User,
 )
+from app.schemas import FileAssociationCreate
 
 
 def seed_housing_data(db: Session) -> None:
@@ -183,6 +185,7 @@ def seed_housing_data(db: Session) -> None:
 
     db.flush()
 
+    # Process photos and create file associations
     added_photos = 0
     for offer, index in created_offers:
         photo_dir = f"app/static_photos/offer{index}"
@@ -191,17 +194,45 @@ def seed_housing_data(db: Session) -> None:
 
         photo_files = [f for f in os.listdir(photo_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
 
+        file_ids = []
         for file_name in photo_files:
-            photo = HousingPhotoTableModel(
-                id=uuid.uuid4(),
-                url=f"/static_photos/offer{index}/{file_name}",
-                offer_id=offer.id,
-            )
-            db.add(photo)
-            added_photos += 1
+            file_path = os.path.join(photo_dir, file_name)
 
-    db.flush()
+            try:
+                with open(file_path, "rb") as f:
+                    file_content = f.read()
 
+                content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
+
+                file_record = File(
+                    id=uuid.uuid4(),
+                    filename=file_name,
+                    content_type=content_type,
+                    file_data=file_content,
+                    file_size=len(file_content),
+                    uploader_id=user.id,
+                    is_public=True,
+                )
+                db.add(file_record)
+                file_ids.append(file_record.id)
+            except Exception as e:
+                print(f"Error reading file {file_path}: {e}")
+                continue
+
+        db.flush()
+
+        # Create file associations
+        if file_ids:
+            associations = [
+                FileAssociationCreate(
+                    file_id=file_id, entity_type="housing_offer", entity_id=offer.id, order=idx, category="photo"
+                )
+                for idx, file_id in enumerate(file_ids)
+            ]
+            FileAssociationCRUD.bulk_create(db, associations)
+            added_photos += len(file_ids)
+
+    # Add amenities
     amenities_map = {a.name: a for a in db.query(HousingAmenityTableModel).all()}
 
     for offer, index in created_offers:
@@ -242,7 +273,7 @@ def seed_housing_data(db: Session) -> None:
                 )
             )
 
-    db.flush()
+    db.commit()
 
     if created_offers:
         print(f"* Housing offers added: {len(created_offers)}")

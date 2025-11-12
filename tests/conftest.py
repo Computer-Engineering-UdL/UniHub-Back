@@ -1,3 +1,4 @@
+import asyncio
 import os
 import tempfile
 import time
@@ -11,6 +12,8 @@ from sqlalchemy.orm import Session, sessionmaker
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.conversation import router as conversation_router
+from app.api.v1.endpoints.file_association import router as file_association_router
+from app.api.v1.endpoints.files import router as file_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.members import router as members_router
@@ -19,6 +22,7 @@ from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.user_like import router as user_like_router
 from app.core import Base, get_db
 from app.core.config import settings
+from app.core.valkey import valkey_client
 from app.models import User
 from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
@@ -125,6 +129,8 @@ def app(db):
     app.include_router(housing_offer_router, prefix="/offers")
     app.include_router(conversation_router, prefix="/conversations")
     app.include_router(user_like_router, prefix="/user-likes")
+    app.include_router(file_router, prefix="/files")
+    app.include_router(file_association_router, prefix="/file-associations")
 
     def override_get_db():
         yield db
@@ -174,3 +180,47 @@ def user2_token(client):
         data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
     )
     return response.json()["access_token"]
+
+
+@pytest.fixture(scope="session")
+def event_loop():
+    """Create an event loop for the test session."""
+    loop = asyncio.get_event_loop_policy().new_event_loop()
+    yield loop
+    loop.close()
+
+
+@pytest.fixture(scope="session", autouse=True)
+async def setup_valkey():
+    """Initialize Valkey client for tests using fake Redis."""
+
+    valkey_client._is_fake = True
+    valkey_client._client = None
+    await valkey_client.connect()
+    yield
+    await valkey_client.disconnect()
+
+
+@pytest.fixture(autouse=True)
+async def clear_valkey():
+    """Clear Valkey data between tests to avoid interference."""
+    if valkey_client._client:
+        try:
+            await valkey_client._client.flushdb()
+        except Exception:
+            pass
+    yield
+
+
+@pytest.fixture(scope="session", autouse=True)
+def configure_test_settings():
+    """Configure settings for test environment."""
+
+    if "text/plain" not in settings.ALLOWED_FILE_TYPES:
+        settings.ALLOWED_FILE_TYPES = list(settings.ALLOWED_FILE_TYPES) + ["text/plain"]
+
+    settings.TESTING = True
+
+    yield
+
+    settings.TESTING = False
