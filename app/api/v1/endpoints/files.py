@@ -10,7 +10,7 @@ from sqlalchemy.orm import Session
 from app.api.utils import handle_api_errors
 from app.core import get_db
 from app.core.config import settings
-from app.core.dependencies import cooldown, get_current_user, rate_limit
+from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.crud.files import FileCRUD
 from app.literals.users import Role
@@ -20,8 +20,6 @@ router = APIRouter()
 
 
 @router.post("/", response_model=FileUpload)
-@rate_limit(max_requests=10, window_seconds=3600, key_prefix="file_upload")
-@cooldown(action="file_upload", cooldown_seconds=5)
 @handle_api_errors()
 async def upload_file(
     file: UploadFile = File(...),
@@ -66,7 +64,6 @@ async def upload_file(
 
 
 @router.get("/public/{file_id}")
-@rate_limit(max_requests=100, window_seconds=60, key_prefix="public_file_view")
 @handle_api_errors()
 def view_public_file(file_id: str, db: Session = Depends(get_db), request: Request = None):
     """
@@ -132,7 +129,6 @@ def update_file_visibility(
 
 
 @router.get("/{file_id}", response_model=FileDetail)
-@rate_limit(max_requests=100, window_seconds=60, key_prefix="file_detail")
 @handle_api_errors()
 def get_file_detail(
     file_id: str,
@@ -164,7 +160,6 @@ def get_file_detail(
 
 
 @router.get("/{file_id}/download")
-@rate_limit(max_requests=50, window_seconds=60, key_prefix="file_download")
 @handle_api_errors()
 def download_file(
     file_id: str,
@@ -203,7 +198,6 @@ def download_file(
 
 
 @router.get("/{file_id}/view")
-@rate_limit(max_requests=50, window_seconds=60, key_prefix="file_view")
 @handle_api_errors()
 def view_file(
     file_id: str,
@@ -243,7 +237,6 @@ def view_file(
 
 
 @router.delete("/{file_id}", status_code=starlette.status.HTTP_204_NO_CONTENT)
-@cooldown(action="file_delete", cooldown_seconds=2)
 @handle_api_errors()
 def delete_file(
     file_id: str,

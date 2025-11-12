@@ -1,3 +1,4 @@
+import asyncio
 from functools import wraps
 from typing import Any, Callable, TypeVar
 
@@ -16,11 +17,29 @@ def handle_api_errors(
     """
     Decorator factory to handle common CRUD errors.
     Accepts a custom message for the 404 Not Found error.
+    Supports both sync and async functions.
     """
 
     def decorator(func: Callable[..., T]) -> Callable[..., T]:
         @wraps(func)
-        def wrapper(*args: Any, **kwargs: Any) -> T:
+        async def async_wrapper(*args: Any, **kwargs: Any) -> T:
+            try:
+                result = await func(*args, **kwargs)
+                return result
+            except NoResultFound as e:
+                detail_message = str(e) if e.args else not_found_message
+                raise HTTPException(status_code=status.HTTP_404_NOT_FOUND, detail=detail_message)
+            except HTTPException as e:
+                raise e
+            except Exception as e:
+                logger.error(e)
+                raise HTTPException(
+                    status_code=status.HTTP_500_INTERNAL_SERVER_ERROR,
+                    detail="Internal server error",
+                )
+
+        @wraps(func)
+        def sync_wrapper(*args: Any, **kwargs: Any) -> T:
             try:
                 result = func(*args, **kwargs)
                 return result
@@ -36,6 +55,9 @@ def handle_api_errors(
                     detail="Internal server error",
                 )
 
-        return wrapper
+        if asyncio.iscoroutinefunction(func):
+            return async_wrapper
+        else:
+            return sync_wrapper
 
     return decorator
