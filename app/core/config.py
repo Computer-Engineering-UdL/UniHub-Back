@@ -35,6 +35,16 @@ class Settings(BaseSettings):
 
     NUKE_COOLDOWN_SECONDS: int = 30
 
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10 MB
+    ALLOWED_FILE_TYPES: list[str] = [
+        "image/jpeg",
+        "image/png",
+        "image/gif",
+        "image/webp",
+    ]
+
+    TESTING: bool = False
+
     model_config = SettingsConfigDict(
         env_file=f"{Path(__file__).parent.parent.parent}/.env",
         env_file_encoding="utf-8",

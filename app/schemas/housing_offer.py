@@ -1,5 +1,6 @@
 from __future__ import annotations
 
+import uuid
 from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, List, Literal
@@ -8,10 +9,9 @@ from uuid import UUID
 from pydantic import BaseModel, ConfigDict, Field, field_validator
 
 if TYPE_CHECKING:
+    from .file_association import FileAssociationWithFile
     from .housing_amenity import HousingAmenityRead
     from .housing_category import HousingCategoryRead
-    from .housing_photo import HousingPhotoRead
-
 
 # Type aliases
 GenderPreferences = Literal["any", "male", "female"]
@@ -22,7 +22,7 @@ OfferStatus = Literal["active", "expired", "rented", "inactive"]
 class HousingOfferBase(BaseModel):
     """Base schema with shared fields for create/update."""
 
-    category_id: UUID
+    category_id: uuid.UUID
     title: str = Field(min_length=1, max_length=100)
     description: str = Field(min_length=1, max_length=5000)
     price: Decimal = Field(gt=0)
@@ -61,6 +61,8 @@ class HousingOfferCreate(HousingOfferBase):
 
     user_id: UUID
     amenities: list[int] | None = Field(default=None, description="Optional list of amenity codes")
+    photo_ids: list[UUID] = []
+
 
 # Update Schema (For PATCH)
 class HousingOfferUpdate(BaseModel):
@@ -82,10 +84,7 @@ class HousingOfferUpdate(BaseModel):
     city: str | None = Field(None, min_length=1, max_length=100)
     address: str | None = Field(None, min_length=1, max_length=255)
 
-    amenities: list[int] | None = Field(
-        default=None,
-        description="Optional list of amenity codes to update"
-    )
+    amenities: list[int] | None = Field(default=None, description="Optional list of amenity codes to update")
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -97,7 +96,7 @@ class HousingOfferRead(HousingOfferBase):
     id: UUID
     user_id: UUID
     posted_date: datetime
-    photos: List[str] = []
+    photo_count: int = 0
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -115,6 +114,7 @@ class HousingOfferList(BaseModel):
     user_id: UUID
 
     city: str
+    base_image: str | None = None # First photo URL if available
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -123,12 +123,9 @@ class HousingOfferList(BaseModel):
 class HousingOfferDetail(HousingOfferRead):
     """Detailed schema with related objects."""
 
+    photos: list[FileAssociationWithFile] = []
     category: "HousingCategoryRead"
-    photos: List["HousingPhotoRead"] = []
-    photo_count: int = 0
     amenities: List["HousingAmenityRead"] = []
-
-    model_config = ConfigDict(from_attributes=True)
 
 
 __all__ = [

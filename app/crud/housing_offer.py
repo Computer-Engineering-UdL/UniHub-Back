@@ -4,9 +4,11 @@ from typing import List, Optional
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from app.crud.file_association import FileAssociationCRUD
 from app.models import HousingAmenityTableModel, HousingCategoryTableModel, HousingOfferTableModel
 from app.models.user import User
 from app.schemas import (
+    FileAssociationCreate,
     HousingOfferCreate,
     HousingOfferDetail,
     HousingOfferList,
@@ -35,45 +37,47 @@ class HousingOfferCRUD:
         Returns:
             HousingOfferRead: The newly created offer, validated with Pydantic.
         """
+        photo_ids = offer_in.photo_ids
         amenities_objs = []
         if offer_in.amenities:
-            amenities_objs = db.query(HousingAmenityTableModel).filter(
-                HousingAmenityTableModel.code.in_(offer_in.amenities)
-            ).all()
+            amenities_objs = (
+                db.query(HousingAmenityTableModel).filter(HousingAmenityTableModel.code.in_(offer_in.amenities)).all()
+            )
             missing = set(offer_in.amenities) - {a.code for a in amenities_objs}
             if missing:
                 raise ValueError(f"Amenities not found: {missing}")
 
-        db_offer_data = offer_in.model_dump(exclude={"amenities"}, exclude_none=True)
+        db_offer_data = offer_in.model_dump(exclude={"amenities", "photo_ids"}, exclude_none=True)
         db_offer = HousingOfferTableModel(**db_offer_data, amenities=amenities_objs)
-        # db_offer = HousingOfferTableModel(**offer_in.model_dump())
 
         try:
             db.add(db_offer)
             db.commit()
             db.refresh(db_offer)
-            return HousingOfferRead.model_validate(db_offer)
+            if photo_ids:
+                associations = [
+                    FileAssociationCreate(
+                        file_id=file_id,
+                        entity_type="housing_offer",
+                        entity_id=db_offer.id,
+                        order=index,
+                        category="photo",
+                    )
+                    for index, file_id in enumerate(photo_ids)
+                ]
+                FileAssociationCRUD.bulk_create(db, associations)
+            return db_offer
         except IntegrityError as e:
             db.rollback()
             raise e
 
     @staticmethod
     def get_by_id(db: Session, offer_id: uuid.UUID) -> Optional[HousingOfferDetail]:
-        """
-        Retrieve a specific housing offer by its ID, including related category and photos.
-
-        Args:
-            db (Session): Database session.
-            offer_id (UUID): Unique identifier of the offer.
-
-        Returns:
-            Optional[HousingOfferDetail]: Detailed offer data if found, otherwise None.
-        """
         db_offer = (
             db.query(HousingOfferTableModel)
             .options(
-                joinedload(HousingOfferTableModel.category),  # Eager-load category
-                joinedload(HousingOfferTableModel.photos),  # Eager-load photos
+                joinedload(HousingOfferTableModel.category),
+                joinedload(HousingOfferTableModel.file_associations),
                 joinedload(HousingOfferTableModel.amenities),
             )
             .filter(HousingOfferTableModel.id == offer_id)
@@ -83,10 +87,8 @@ class HousingOfferCRUD:
         if not db_offer:
             return None
 
-        # Convert SQLAlchemy model to Pydantic model
         offer_detail = HousingOfferDetail.model_validate(db_offer)
-        offer_detail.photo_count = len(db_offer.photos) if db_offer.photos else 0
-
+        offer_detail.photo_count = len(db_offer.photos)
         return offer_detail
 
     @staticmethod
@@ -131,11 +133,9 @@ class HousingOfferCRUD:
         if not db_offer:
             return None
 
-        # Check permissions
         if db_offer.user_id != current_user.id and not current_user.is_admin:
             raise PermissionError("You are not allowed to modify this offer.")
 
-        # Apply updates dynamically
         update_data = offer_update.model_dump(exclude_unset=True)
 
         for key, value in update_data.items():
@@ -199,7 +199,6 @@ class HousingOfferCRUD:
         """
         query = db.query(HousingOfferTableModel).options(joinedload(HousingOfferTableModel.category))
 
-        # filters
         if city:
             query = query.filter(HousingOfferTableModel.city.ilike(f"%{city}%"))
         if category_name:
@@ -216,7 +215,6 @@ class HousingOfferCRUD:
         offers = query.offset(skip).limit(limit).all()
         return [HousingOfferList.model_validate(o) for o in offers]
 
-
     @staticmethod
     def add_amenity(db: Session, offer_id: uuid.UUID, amenity_code: int) -> Optional[HousingOfferRead]:
         """
@@ -229,7 +227,7 @@ class HousingOfferCRUD:
             return None
 
         if amenity not in offer.amenities:
-            offer.amenities.append(amenity) # type: ignore[attr-defined]
+            offer.amenities.append(amenity)
             db.commit()
             db.refresh(offer)
 
@@ -247,7 +245,7 @@ class HousingOfferCRUD:
             return None
 
         if amenity in offer.amenities:
-            offer.amenities.remove(amenity) # type: ignore[attr-defined]
+            offer.amenities.remove(amenity)
             db.commit()
             db.refresh(offer)
 
@@ -255,16 +253,17 @@ class HousingOfferCRUD:
 
     @staticmethod
     def get_by_user(
-            db: Session,
-            user_id: uuid.UUID,
-            skip: int = 0,
-            limit: int = 50,
+        db: Session,
+        user_id: uuid.UUID,
+        skip: int = 0,
+        limit: int = 50,
     ) -> List[HousingOfferList]:
         """
         Retrieve all housing offers created by a specific user.
         """
         query = (
             db.query(HousingOfferTableModel)
+            .options(joinedload(HousingOfferTableModel.photos))
             .filter(HousingOfferTableModel.user_id == user_id)
             .order_by(HousingOfferTableModel.posted_date.desc())
             .offset(skip)
@@ -272,4 +271,10 @@ class HousingOfferCRUD:
         )
 
         offers = query.all()
-        return [HousingOfferList.model_validate(o) for o in offers]
+        return [
+            HousingOfferList.model_validate({
+                **o.__dict__,
+                "base_image": o.photos[0].url if o.photos else None
+            })
+            for o in offers
+        ]

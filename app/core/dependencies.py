@@ -125,36 +125,37 @@ def rate_limit(
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            current_user = kwargs.get("current_user") or kwargs.get("user")
-            request = kwargs.get("request")
+            if not settings.TESTING:
+                current_user = kwargs.get("current_user") or kwargs.get("user")
+                request = kwargs.get("request")
 
-            if per_user and current_user:
-                key = f"{key_prefix}:{current_user.id}"
-            elif request:
-                client_ip = request.client.host
-                key = f"{key_prefix}:{client_ip}"
-            else:
-                key = key_prefix
+                if per_user and current_user:
+                    key = f"{key_prefix}:{current_user.id}"
+                elif request:
+                    client_ip = request.client.host
+                    key = f"{key_prefix}:{client_ip}"
+                else:
+                    key = key_prefix
 
-            is_allowed, remaining, retry_after = await RateLimiter.check_rate_limit(
-                key=key, max_requests=max_requests, window_seconds=window_seconds, strategy=strategy
-            )
-
-            if not is_allowed:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail={
-                        "error": "Rate limit exceeded",
-                        "retry_after": retry_after,
-                        "message": f"Too many requests. Please try again in {retry_after} seconds.",
-                    },
-                    headers={
-                        "Retry-After": str(retry_after),
-                        "X-RateLimit-Limit": str(max_requests),
-                        "X-RateLimit-Remaining": str(remaining),
-                        "X-RateLimit-Reset": str(retry_after),
-                    },
+                is_allowed, remaining, retry_after = await RateLimiter.check_rate_limit(
+                    key=key, max_requests=max_requests, window_seconds=window_seconds, strategy=strategy
                 )
+
+                if not is_allowed:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "error": "Rate limit exceeded",
+                            "retry_after": retry_after,
+                            "message": f"Too many requests. Please try again in {retry_after} seconds.",
+                        },
+                        headers={
+                            "Retry-After": str(retry_after),
+                            "X-RateLimit-Limit": str(max_requests),
+                            "X-RateLimit-Remaining": str(remaining),
+                            "X-RateLimit-Reset": str(retry_after),
+                        },
+                    )
 
             result = func(*args, **kwargs)
             if asyncio.iscoroutine(result):
@@ -179,28 +180,29 @@ def cooldown(action: str, cooldown_seconds: int):
     def decorator(func: Callable):
         @wraps(func)
         async def wrapper(*args, **kwargs):
-            current_user = kwargs.get("current_user") or kwargs.get("user")
+            if not settings.TESTING:
+                current_user = kwargs.get("current_user") or kwargs.get("user")
 
-            if not current_user:
-                raise HTTPException(
-                    status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required for this action"
+                if not current_user:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED, detail="Authentication required for this action"
+                    )
+
+                can_perform, seconds_remaining = await CooldownManager.check_cooldown(
+                    user_id=current_user.id, action=action, cooldown_seconds=cooldown_seconds
                 )
 
-            can_perform, seconds_remaining = await CooldownManager.check_cooldown(
-                user_id=current_user.id, action=action, cooldown_seconds=cooldown_seconds
-            )
-
-            if not can_perform:
-                raise HTTPException(
-                    status_code=status.HTTP_429_TOO_MANY_REQUESTS,
-                    detail={
-                        "error": "Action on cooldown",
-                        "action": action,
-                        "retry_after": seconds_remaining,
-                        "message": f"Please wait {seconds_remaining} seconds before performing this action again.",
-                    },
-                    headers={"Retry-After": str(seconds_remaining)},
-                )
+                if not can_perform:
+                    raise HTTPException(
+                        status_code=status.HTTP_429_TOO_MANY_REQUESTS,
+                        detail={
+                            "error": "Action on cooldown",
+                            "action": action,
+                            "retry_after": seconds_remaining,
+                            "message": f"Please wait {seconds_remaining} seconds before performing this action again.",
+                        },
+                        headers={"Retry-After": str(seconds_remaining)},
+                    )
             result = func(*args, **kwargs)
             if asyncio.iscoroutine(result):
                 return await result

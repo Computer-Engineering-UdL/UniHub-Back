@@ -5,10 +5,11 @@ from pydantic import BaseModel
 from app.schemas.auth import *  # noqa
 from app.schemas.channel import *  # noqa
 from app.schemas.conversation import *  # noqa
+from app.schemas.file_association import *  # noqa
+from app.schemas.files import *  # noqa
 from app.schemas.housing_amenity import *  # noqa
 from app.schemas.housing_category import *  # noqa
 from app.schemas.housing_offer import *  # noqa
-from app.schemas.housing_photo import *  # noqa
 from app.schemas.interest import *  # noqa
 from app.schemas.message import *  # noqa
 from app.schemas.user import *  # noqa
@@ -18,10 +19,11 @@ from . import (
     auth,
     channel,
     conversation,
+    file_association,
+    files,
     housing_amenity,
     housing_category,
     housing_offer,
-    housing_photo,
     interest,
     message,
     user,
@@ -31,7 +33,6 @@ from . import (
 for module in (
     housing_offer,
     housing_category,
-    housing_photo,
     housing_amenity,
     interest,
     channel,
@@ -40,6 +41,8 @@ for module in (
     message,
     conversation,
     user_like,
+    files,
+    file_association,
 ):
     for name in dir(module):
         obj = getattr(module, name)
@@ -53,7 +56,6 @@ __all__ = (
     channel.__all__
     + housing_offer.__all__
     + housing_category.__all__
-    + housing_photo.__all__
     + housing_amenity.__all__
     + interest.__all__
     + user.__all__
@@ -61,4 +63,6 @@ __all__ = (
     + message.__all__
     + conversation.__all__
     + user_like.__all__
+    + files.__all__
+    + file_association.__all__
 )
