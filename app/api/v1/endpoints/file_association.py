@@ -7,7 +7,7 @@ from sqlalchemy.orm import Session
 
 from app.api.utils import handle_api_errors
 from app.core.database import get_db
-from app.core.dependencies import cooldown, get_current_user, rate_limit
+from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.crud.file_association import FileAssociationCRUD
 from app.crud.files import FileCRUD
@@ -24,8 +24,6 @@ router = APIRouter()
 
 
 @router.post("/", response_model=FileAssociationRead, status_code=status.HTTP_201_CREATED)
-@rate_limit(max_requests=20, window_seconds=3600, key_prefix="file_association_create")
-@cooldown(action="file_association_create", cooldown_seconds=2)
 @handle_api_errors()
 def create_association(
     association_in: FileAssociationCreate,
@@ -52,8 +50,6 @@ def create_association(
 
 
 @router.post("/bulk", response_model=List[FileAssociationRead], status_code=status.HTTP_201_CREATED)
-@rate_limit(max_requests=10, window_seconds=3600, key_prefix="file_association_bulk")
-@cooldown(action="file_association_bulk", cooldown_seconds=5)
 @handle_api_errors()
 def create_associations_bulk(
     associations: List[FileAssociationCreate],
@@ -82,7 +78,6 @@ def create_associations_bulk(
 
 
 @router.get("/{association_id}", response_model=FileAssociationRead)
-@rate_limit(max_requests=100, window_seconds=60, key_prefix="file_association_detail")
 @handle_api_errors()
 def get_association(
     association_id: uuid.UUID,
@@ -100,7 +95,6 @@ def get_association(
 
 
 @router.get("/entity/{entity_type}/{entity_id}", response_model=List[FileAssociationWithFile])
-@rate_limit(max_requests=100, window_seconds=60, key_prefix="file_association_by_entity")
 @handle_api_errors()
 def get_associations_by_entity(
     entity_type: str,
@@ -182,7 +176,6 @@ def reorder_associations(
 
 
 @router.delete("/{association_id}", status_code=status.HTTP_204_NO_CONTENT)
-@cooldown(action="file_association_delete", cooldown_seconds=2)
 @handle_api_errors()
 def delete_association(
     association_id: uuid.UUID,
@@ -209,7 +202,6 @@ def delete_association(
 
 
 @router.delete("/entity/{entity_type}/{entity_id}", status_code=status.HTTP_204_NO_CONTENT)
-@cooldown(action="file_association_delete_entity", cooldown_seconds=5)
 @handle_api_errors()
 def delete_associations_by_entity(
     entity_type: str,
