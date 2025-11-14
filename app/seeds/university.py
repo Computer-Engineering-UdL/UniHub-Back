@@ -4,13 +4,14 @@ from app.models.university import Faculty, University
 
 
 def seed_universities(db: Session):
+    """Seed universities and their faculties."""
     udl = db.query(University).filter_by(name="University of Lleida").first()
-
     if udl:
         return
 
     new_udl = University(name="University of Lleida")
     db.add(new_udl)
+    db.flush()
 
     faculties_list = [
         "Faculty of Arts",
@@ -23,7 +24,5 @@ def seed_universities(db: Session):
     ]
 
     faculties = [Faculty(name=name, university=new_udl) for name in faculties_list]
-
     db.add_all(faculties)
-    db.commit()
-    print("University of Lleida and its faculties have been added.")
+    db.flush()

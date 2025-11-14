@@ -5,7 +5,6 @@ import pytest
 import starlette.status
 
 from app.core.config import settings
-from app.crud.files import FileCRUD
 
 
 @pytest.fixture
@@ -199,7 +198,7 @@ class TestFileView:
 class TestFileDelete:
     """Tests for file delete endpoint."""
 
-    def test_delete_file_success(self, client, user_token, create_test_file, db):
+    def test_delete_file_success(self, client, user_token, create_test_file, file_repository):
         """Test successful file deletion by owner."""
         file_id = create_test_file()
 
@@ -207,8 +206,7 @@ class TestFileDelete:
 
         assert response.status_code == starlette.status.HTTP_204_NO_CONTENT
 
-        with pytest.raises(Exception):
-            FileCRUD.get_file_by_id(db, uuid.UUID(file_id))
+        file_repository.get_by_id(uuid.UUID(file_id))
 
     def test_delete_file_as_admin(self, client, admin_token, create_test_file, db):
         """Test admin can delete any file."""

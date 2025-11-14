@@ -3,10 +3,13 @@
 from sqlalchemy.orm import Session
 
 from app.core import Base, engine
-from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds import seed_housing_data
+from app.seeds.channels import seed_channels
 from app.seeds.conversations import seed_conversations
+from app.seeds.interests import seed_interests
 from app.seeds.messages import seed_messages
 from app.seeds.university import seed_universities
+from app.seeds.users import seed_users
 
 
 def seed_database(nuke: bool = False):
@@ -22,20 +25,32 @@ def seed_database(nuke: bool = False):
         print("\nSeeding database...")
 
         seed_interests(db)
-        print("* Interests seeded")
+        print("- Interests seeded")
 
         seed_universities(db)
+        print("- Universities seeded")
+
         users = seed_users(db)
+        print("- Users seeded")
+
         channels = seed_channels(db, users)
+        print("- Channels seeded")
+
         seed_messages(db, users, channels)
-        seed_housing_data(db)
+        print("- Messages seeded")
+
+        seed_housing_data(db, users)
+        print("- Housing data seeded")
+
         seed_conversations(db)
+        print("- Conversations seeded")
+
         db.commit()
         print("\nDatabase seeded successfully!\n")
 
     except Exception as e:
         db.rollback()
-        print(f"\nError seeding database: {e}\n")
+        print(f"Error seeding database: {e}\n")
         raise
     finally:
         db.close()

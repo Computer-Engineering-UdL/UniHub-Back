@@ -1,13 +1,13 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import require_role
 from app.core.types import TokenData
-from app.crud.housing_category import HousingCategoryCRUD
+from app.domains.housing.category_service import HousingCategoryService
 from app.literals.users import Role
 from app.schemas import (
     HousingCategoryCreate,
@@ -22,6 +22,11 @@ router = APIRouter(
 )
 
 
+def get_category_service(db: Session = Depends(get_db)) -> HousingCategoryService:
+    """Dependency to inject HousingCategoryService."""
+    return HousingCategoryService(db)
+
+
 @router.post(
     "/",
     response_model=HousingCategoryRead,
@@ -31,7 +36,7 @@ router = APIRouter(
 )
 def create_category(
     category_in: HousingCategoryCreate,
-    db: Session = Depends(get_db),
+    service: HousingCategoryService = Depends(get_category_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
@@ -40,7 +45,7 @@ def create_category(
     This endpoint allows adding a new category (e.g., Apartment, Room, Studio)
     that can later be associated with housing offers.
     """
-    return HousingCategoryCRUD.create(db, category_in)
+    return service.create_category(category_in)
 
 
 @router.get(
@@ -53,7 +58,7 @@ def create_category(
 def list_categories(
     skip: int = 0,
     limit: int = 100,
-    db: Session = Depends(get_db),
+    service: HousingCategoryService = Depends(get_category_service),
 ):
     """
     Retrieve a paginated list of all housing categories.
@@ -62,7 +67,7 @@ def list_categories(
         skip (int): Number of records to skip for pagination.
         limit (int): Maximum number of categories to return (default: 100).
     """
-    return HousingCategoryCRUD.list(db, skip=skip, limit=limit)
+    return service.list_categories(skip, limit)
 
 
 @router.get(
@@ -74,7 +79,7 @@ def list_categories(
 )
 def get_category(
     category_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: HousingCategoryService = Depends(get_category_service),
 ):
     """
     Retrieve details of a specific housing category by its ID.
@@ -82,10 +87,7 @@ def get_category(
     Raises:
         HTTPException: If the category does not exist.
     """
-    category = HousingCategoryCRUD.get_by_id(db, category_id)
-    if not category:
-        raise HTTPException(status_code=404, detail="Category not found.")
-    return category
+    return service.get_category_by_id(category_id)
 
 
 @router.patch(
@@ -98,7 +100,7 @@ def get_category(
 def update_category(
     category_id: uuid.UUID,
     category_update: HousingCategoryUpdate,
-    db: Session = Depends(get_db),
+    service: HousingCategoryService = Depends(get_category_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
@@ -107,10 +109,7 @@ def update_category(
     Raises:
         HTTPException: If the category does not exist.
     """
-    category = HousingCategoryCRUD.update(db, category_id, category_update)
-    if not category:
-        raise HTTPException(status_code=404, detail="Category not found.")
-    return category
+    return service.update_category(category_id, category_update)
 
 
 @router.delete(
@@ -121,7 +120,7 @@ def update_category(
 )
 def delete_category(
     category_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: HousingCategoryService = Depends(get_category_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
@@ -130,6 +129,4 @@ def delete_category(
     Raises:
         HTTPException: If the category does not exist.
     """
-    success = HousingCategoryCRUD.delete(db, category_id)
-    if not success:
-        raise HTTPException(status_code=404, detail="Category not found.")
+    service.delete_category(category_id)

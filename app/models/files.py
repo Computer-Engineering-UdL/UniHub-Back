@@ -19,11 +19,14 @@ class File(Base):
     id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
     filename = Column(sa.String(255), nullable=False)
     content_type = Column(sa.String(100), nullable=False)
-    file_data = Column(sa.LargeBinary, nullable=False)
     file_size = Column(sa.Integer, nullable=False)
     uploaded_at = Column(sa.DateTime, nullable=False, default=sa.func.now())
     deleted = Column(sa.Boolean, nullable=False, default=False)
     is_public = Column(sa.Boolean, nullable=False, default=False)
+
+    storage_path = Column(sa.String(500), nullable=True)
+    storage_type = Column(sa.String(50), nullable=False, default="database")
+    file_data = Column(sa.LargeBinary, nullable=True)
 
     uploader_id = Column(sa.UUID, ForeignKey("user.id"), nullable=False, index=True)
     uploaded_by: Mapped[User] = relationship("User", foreign_keys=[uploader_id])

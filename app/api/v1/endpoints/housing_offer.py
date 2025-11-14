@@ -1,14 +1,13 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.types import TokenData
-from app.crud.housing_offer import HousingOfferCRUD
-from app.crud.user import UserCRUD
+from app.domains.housing.offer_service import HousingOfferService
 from app.literals.users import Role
 from app.schemas import (
     HousingOfferCreate,
@@ -21,6 +20,11 @@ from app.schemas import (
 router = APIRouter()
 
 
+def get_housing_offer_service(db: Session = Depends(get_db)) -> HousingOfferService:
+    """Dependency to inject HousingOfferService."""
+    return HousingOfferService(db)
+
+
 @router.post(
     "/",
     response_model=HousingOfferRead,
@@ -30,7 +34,7 @@ router = APIRouter()
 )
 def create_offer(
     offer_in: HousingOfferCreate,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -39,12 +43,7 @@ def create_offer(
     Only logged-in users can create offers.
     """
     offer_in.user_id = current_user.id
-
-    try:
-        offer = HousingOfferCRUD.create(db, offer_in)
-        return offer
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Offer creation failed: {e}")
+    return service.create_offer(offer_in)
 
 
 @router.get(
@@ -56,17 +55,14 @@ def create_offer(
 )
 def get_offer(
     offer_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
 ):
     """
     Retrieve a specific housing offer by its unique ID.
 
     Includes related photos and category information.
     """
-    offer = HousingOfferCRUD.get_by_id(db, offer_id)
-    if not offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
-    return offer
+    return service.get_offer_by_id(offer_id)
 
 
 @router.get(
@@ -77,7 +73,7 @@ def get_offer(
     response_description="Returns a list of filtered housing offers.",
 )
 def list_offers(
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     skip: int = 0,
     limit: int = 20,
     city: str | None = None,
@@ -93,17 +89,15 @@ def list_offers(
     - `min_price`, `max_price`: price range
     - `status`: offer status (e.g. active, expired)
     """
-    offers = HousingOfferCRUD.get_filtered(
-        db=db,
+    return service.list_offers(
+        skip=skip,
+        limit=limit,
         city=city,
         category_name=category_name,
         min_price=min_price,
         max_price=max_price,
-        status=status,
-        skip=skip,
-        limit=limit,
+        status_filter=status,
     )
-    return offers
 
 
 @router.patch(
@@ -116,7 +110,7 @@ def list_offers(
 def update_offer(
     offer_id: uuid.UUID,
     offer_update: HousingOfferUpdate,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -124,19 +118,8 @@ def update_offer(
 
     Only the offer's owner or an administrator can perform this operation.
     """
-    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
-    if not db_offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
-
     is_admin = current_user.role == Role.ADMIN
-    if db_offer.user_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to update this offer.")
-
-    db_user = UserCRUD.get_by_id(db, current_user.id)
-    updated = HousingOfferCRUD.update(db, offer_id, offer_update, db_user)
-    if not updated:
-        raise HTTPException(status_code=400, detail="Failed to update offer.")
-    return updated
+    return service.update_offer(offer_id, offer_update, current_user.id, is_admin)
 
 
 @router.delete(
@@ -147,7 +130,7 @@ def update_offer(
 )
 def delete_offer(
     offer_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -155,19 +138,9 @@ def delete_offer(
 
     Only the owner of the offer or an administrator is authorized to delete it.
     """
-    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
-    if not db_offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
-
     is_admin = current_user.role == Role.ADMIN
-    if db_offer.user_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to delete this offer.")
+    service.delete_offer(offer_id, current_user.id, is_admin)
 
-    db_user = UserCRUD.get_by_id(db, current_user.id)
-    success = HousingOfferCRUD.delete(db, offer_id, db_user)
-    if not success:
-        raise HTTPException(status_code=400, detail="Failed to delete offer.")
-    return None
 
 @router.get(
     "/user/{user_id}",
@@ -178,28 +151,15 @@ def delete_offer(
 )
 def list_offers_by_user(
     user_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     skip: int = 0,
     limit: int = 20,
-    #current_user: TokenData = Depends(get_current_user),
 ):
     """
     Retrieve all housing offers created by a specific user.
     - Accessible to admins or the user themselves.
     """
-    # Ensure the user exists
-    db_user = UserCRUD.get_by_id(db, user_id)
-    if not db_user:
-        raise HTTPException(status_code=404, detail="User not found.")
-
-    # Only allow access if admin or same user
-    # is_admin = current_user.role == Role.ADMIN
-    # if current_user.id != user_id and not is_admin:
-    #     raise HTTPException(status_code=403, detail="Not authorized to view these offers.")
-
-    offers = HousingOfferCRUD.get_by_user(db, user_id, skip=skip, limit=limit)
-    return offers
-
+    return service.list_offers_by_user(user_id, skip, limit)
 
 
 @router.post(
@@ -212,7 +172,7 @@ def list_offers_by_user(
 def add_amenity_to_offer(
     offer_id: uuid.UUID,
     code: int,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -220,21 +180,8 @@ def add_amenity_to_offer(
 
     Only the owner of the offer or an administrator is authorized to perform this action.
     """
-    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
-    if not db_offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
-
     is_admin = current_user.role == Role.ADMIN
-    if db_offer.user_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to modify this offer.")
-
-    try:
-        offer = HousingOfferCRUD.add_amenity(db, offer_id, code)
-        if not offer:
-            raise HTTPException(status_code=404, detail="Amenity not found.")
-        return offer
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to add amenity: {e}")
+    return service.add_amenity(offer_id, code, current_user.id, is_admin)
 
 
 @router.delete(
@@ -247,7 +194,7 @@ def add_amenity_to_offer(
 def remove_amenity_from_offer(
     offer_id: uuid.UUID,
     code: int,
-    db: Session = Depends(get_db),
+    service: HousingOfferService = Depends(get_housing_offer_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -255,19 +202,5 @@ def remove_amenity_from_offer(
 
     Only the offer's owner or an administrator can perform this operation.
     """
-    db_offer = HousingOfferCRUD.get_by_id(db, offer_id)
-    if not db_offer:
-        raise HTTPException(status_code=404, detail="Offer not found.")
-
     is_admin = current_user.role == Role.ADMIN
-    if db_offer.user_id != current_user.id and not is_admin:
-        raise HTTPException(status_code=403, detail="Not authorized to modify this offer.")
-
-    try:
-        offer = HousingOfferCRUD.remove_amenity(db, offer_id, code)
-        if not offer:
-            raise HTTPException(status_code=404, detail="Amenity not found.")
-        return offer
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to remove amenity: {e}")
-
+    return service.remove_amenity(offer_id, code, current_user.id, is_admin)

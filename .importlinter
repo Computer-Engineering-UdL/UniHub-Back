@@ -6,8 +6,7 @@ name = Layer architecture
 type = layers
 layers =
     app.api
-    app.services
-    app.crud
+    app.domains
     app.schemas
     app.models
     app.core
@@ -20,11 +19,18 @@ source_modules =
     app.core
 forbidden_modules =
     app.api
-    app.services
-    app.crud
+    app.domains
     app.schemas
     app.models
     app.seeds
+
+[importlinter:contract:domains-independence]
+name = Domains should not import from the API layer
+type = forbidden
+source_modules =
+    app.domains
+forbidden_modules =
+    app.api
 
 [importlinter:contract:schemas-independence]
 name = Schemas should not import from business logic
@@ -33,10 +39,8 @@ source_modules =
     app.schemas
 forbidden_modules =
     app.api
-    app.services
-    app.crud
+    app.domains
     app.core.dependencies
-    app.core.seed
 
 [importlinter:contract:models-independence]
 name = Models should not import from upper layers
@@ -45,6 +49,5 @@ source_modules =
     app.models
 forbidden_modules =
     app.api
-    app.services
-    app.crud
+    app.domains
     app.schemas

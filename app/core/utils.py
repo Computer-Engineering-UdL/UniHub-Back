@@ -1,7 +1,4 @@
-from functools import wraps
-from typing import Any, Callable, TypeVar
-
-from sqlalchemy.exc import IntegrityError, SQLAlchemyError
+from sqlalchemy.exc import IntegrityError
 
 
 def extract_constraint_info(exc: IntegrityError) -> str:
@@ -25,23 +22,3 @@ def extract_constraint_info(exc: IntegrityError) -> str:
         return "Invalid field value"
 
     return "Database operation failed"
-
-
-T = TypeVar("T")
-
-
-def handle_crud_errors(func: Callable[..., T]) -> Callable[..., T]:
-    @wraps(func)
-    def wrapper(*args: Any, **kwargs: Any) -> T:
-        if "db" in kwargs:
-            db = kwargs["db"]
-        else:
-            db = args[0]
-        try:
-            result = func(*args, **kwargs)
-            return result
-        except SQLAlchemyError as e:
-            db.rollback()
-            raise e
-
-    return wrapper

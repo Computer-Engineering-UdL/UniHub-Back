@@ -8,7 +8,7 @@ from app.api.utils import handle_api_errors
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, require_role
 from app.core.types import TokenData
-from app.crud.user import UserCRUD
+from app.domains.user.user_service import UserService
 from app.literals.users import Role
 from app.schemas.user import (
     UserCreate,
@@ -22,66 +22,74 @@ from app.schemas.user import (
 router = APIRouter()
 
 
+def get_user_service(db: Session = Depends(get_db)) -> UserService:
+    """Dependency to inject UserService."""
+    return UserService(db)
+
+
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
 @handle_api_errors()
 def create_user(
     user_in: UserCreate,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Create a new user. Requires ADMIN role.
     """
-    return UserCRUD.create(db, user_in)
+    return service.create_user(user_in)
 
 
 @router.get("/me", response_model=UserDetail)
 @handle_api_errors()
-def get_current_user_profile(db: Session = Depends(get_db), current_user: TokenData = Depends(get_current_user)):
+def get_current_user_profile(
+    service: UserService = Depends(get_user_service),
+    current_user: TokenData = Depends(get_current_user),
+):
     """
     Get current authenticated user's profile.
     """
-    return UserCRUD.get_by_id(db, current_user.id)
+    return service.get_user_detail(current_user.id)
 
 
 @router.get("/{user_id}", response_model=UserDetail)
 @handle_api_errors()
 def get_user(
     user_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Retrieve a user by ID. Requires ADMIN role.
     """
-    return UserCRUD.get_by_id(db, user_id)
+    return service.get_user_detail(user_id)
 
 
 @router.get("/", response_model=List[UserRead])
 def list_users(
-    db: Session = Depends(get_db),
     skip: int = 0,
     limit: int = 100,
     search: str | None = None,
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Retrieve all users (with optional pagination and search). Requires ADMIN role.
     """
-    return UserCRUD.get_all(db, skip=skip, limit=limit, search=search)
+    return service.list_users(skip=skip, limit=limit, search=search)
 
 
 @router.patch("/me", response_model=UserRead)
 @handle_api_errors()
 def update_current_user(
     user_in: UserUpdate,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
     Update current authenticated user's profile.
     """
-    return UserCRUD.update(db, current_user.id, user_in)
+    return service.update_user(current_user.id, user_in)
 
 
 @router.patch("/{user_id}", response_model=UserRead)
@@ -89,26 +97,26 @@ def update_current_user(
 def update_user(
     user_id: uuid.UUID,
     user_in: UserUpdate,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Update a user (partial). Requires ADMIN role.
     """
-    return UserCRUD.update(db, user_id, user_in)
+    return service.update_user(user_id, user_in)
 
 
 @router.put("/me/password", response_model=UserRead)
 @handle_api_errors()
 def change_current_user_password(
     password_change: UserPasswordChange,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
     Change current authenticated user's password.
     """
-    return UserCRUD.set_password(db, current_user.id, password_change)
+    return service.change_password(current_user.id, password_change, verify_current=True)
 
 
 @router.put("/{user_id}/password", response_model=UserRead)
@@ -116,38 +124,36 @@ def change_current_user_password(
 def change_user_password(
     user_id: uuid.UUID,
     password_change: UserPasswordChange,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Change a user's password. Requires ADMIN role.
+    Admin password changes don't verify current password.
     """
-    return UserCRUD.set_password(db, user_id, password_change)
+    return service.change_password(user_id, password_change, verify_current=False)
 
 
 @router.delete("/{user_id}", status_code=status.HTTP_204_NO_CONTENT)
 @handle_api_errors()
 def delete_user(
     user_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """
     Delete a user. Requires ADMIN role.
     """
-    return UserCRUD.delete(db, user_id)
+    service.delete_user(user_id)
 
 
 @router.get("/public/{user_id}", response_model=UserPublic)
 @handle_api_errors()
 def get_public_user_profile(
     user_id: uuid.UUID,
-    db: Session = Depends(get_db),
+    service: UserService = Depends(get_user_service),
 ):
     """
     Get public profile of a user by ID.
     """
-    user_db = UserCRUD.get_by_id(db, user_id)
-    if user_db.is_active:
-        return user_db
-    return None
+    return service.get_public_profile(user_id)

@@ -6,7 +6,7 @@ from sqlalchemy.orm import Session
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.types import TokenData
-from app.crud.housing_amenity import HousingAmenityCRUD
+from app.domains.housing.amenity_service import HousingAmenityService
 from app.literals.users import Role
 from app.schemas import (
     HousingAmenityCreate,
@@ -14,6 +14,11 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
+
+def get_amenity_service(db: Session = Depends(get_db)) -> HousingAmenityService:
+    """Dependency to inject HousingAmenityService."""
+    return HousingAmenityService(db)
 
 
 @router.post(
@@ -25,7 +30,7 @@ router = APIRouter()
 )
 def create_amenity(
     amenity_in: HousingAmenityCreate,
-    db: Session = Depends(get_db),
+    service: HousingAmenityService = Depends(get_amenity_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -37,10 +42,7 @@ def create_amenity(
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to create amenities.")
 
-    try:
-        return HousingAmenityCRUD.create(db, amenity_in)
-    except Exception as e:
-        raise HTTPException(status_code=400, detail=f"Failed to create amenity: {e}")
+    return service.create_amenity(amenity_in)
 
 
 @router.get(
@@ -52,15 +54,12 @@ def create_amenity(
 )
 def get_amenity(
     code: int,
-    db: Session = Depends(get_db),
+    service: HousingAmenityService = Depends(get_amenity_service),
 ):
     """
     Retrieve a housing amenity by its numeric OTA code.
     """
-    amenity = HousingAmenityCRUD.get_by_code(db, code)
-    if not amenity:
-        raise HTTPException(status_code=404, detail="Amenity not found.")
-    return amenity
+    return service.get_amenity_by_code(code)
 
 
 @router.get(
@@ -71,14 +70,14 @@ def get_amenity(
     response_description="Returns all defined housing amenities.",
 )
 def list_amenities(
-    db: Session = Depends(get_db),
+    service: HousingAmenityService = Depends(get_amenity_service),
     skip: int = 0,
     limit: int = 100,
 ):
     """
     Retrieve all registered amenities with optional pagination.
     """
-    return HousingAmenityCRUD.get_all(db, skip=skip, limit=limit)
+    return service.list_amenities(skip, limit)
 
 
 @router.delete(
@@ -89,7 +88,7 @@ def list_amenities(
 )
 def delete_amenity(
     code: int,
-    db: Session = Depends(get_db),
+    service: HousingAmenityService = Depends(get_amenity_service),
     current_user: TokenData = Depends(get_current_user),
 ):
     """
@@ -101,7 +100,4 @@ def delete_amenity(
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Not authorized to delete amenities.")
 
-    success = HousingAmenityCRUD.delete(db, code)
-    if not success:
-        raise HTTPException(status_code=404, detail="Amenity not found or could not be deleted.")
-    return None
+    service.delete_amenity(code)

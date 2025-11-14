@@ -1,3 +1,6 @@
+from app.core.config import settings
+
+
 def _auth(token: str) -> dict[str, str]:
     """Build Authorization header once."""
     return {"Authorization": f"Bearer {token}"}
@@ -107,7 +110,7 @@ class TestUsersAPI:
     # ---------------------------------
     def test_change_my_password(self, client, user_token):
         payload = {
-            "current_password": "password",
+            "current_password": settings.DEFAULT_PASSWORD,
             "new_password": "NewStrongPassw0rd!",
             "confirm_password": "NewStrongPassw0rd!",
         }

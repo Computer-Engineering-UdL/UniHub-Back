@@ -45,6 +45,12 @@ class Settings(BaseSettings):
 
     TESTING: bool = False
 
+    MINIO_ENDPOINT: str = "localhost:9000"
+    MINIO_ACCESS_KEY: str = "minioadmin"
+    MINIO_SECRET_KEY: str = "minioadmin"
+    MINIO_BUCKET: str = "files"
+    MINIO_SECURE: bool = False
+
     model_config = SettingsConfigDict(
         env_file=f"{Path(__file__).parent.parent.parent}/.env",
         env_file_encoding="utf-8",

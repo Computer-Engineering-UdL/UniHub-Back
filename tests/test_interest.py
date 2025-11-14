@@ -68,7 +68,7 @@ class TestInterestEndpoints:
         response = client.get(f"/interest/user/{fake_user_id}")
 
         assert response.status_code == 404
-        assert response.json()["detail"] == "User not found"
+        assert response.json()["detail"] == f"User with id {fake_user_id} not found"
 
     def test_add_interest_for_invalid_user_returns_404(self, client, db, admin_auth_headers):
         """
@@ -85,7 +85,7 @@ class TestInterestEndpoints:
             headers=admin_auth_headers,
         )
         assert response.status_code == 404
-        assert response.json()["detail"] == "User not found"
+        assert response.json()["detail"] == f"User with id {fake_user_id} not found"
 
     def test_remove_interest_for_invalid_user_returns_404(self, client, db, admin_auth_headers):
         """
@@ -101,4 +101,4 @@ class TestInterestEndpoints:
             headers=admin_auth_headers,
         )
         assert response.status_code == 404
-        assert response.json()["detail"] == "User not found"
+        assert response.json()["detail"] == f"User with id {fake_user_id} not found"

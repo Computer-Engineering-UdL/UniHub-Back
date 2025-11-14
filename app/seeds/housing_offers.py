@@ -1,70 +1,71 @@
 import datetime
 import os
 import uuid
+from typing import List
 
 from sqlalchemy.orm import Session
 
-from app.crud.file_association import FileAssociationCRUD
-from app.models import (
-    File,
-    HousingAmenityTableModel,
-    HousingCategoryTableModel,
-    HousingOfferAmenity,
-    HousingOfferTableModel,
-    User,
-)
+from app.domains.file.file_association_repository import FileAssociationRepository
+from app.domains.file.file_repository import FileRepository
+from app.domains.housing import HousingAmenityRepository, HousingCategoryRepository, HousingOfferRepository
+from app.models import HousingCategoryTableModel, HousingOfferTableModel, User
 from app.schemas import FileAssociationCreate
 
 
-def seed_housing_data(db: Session) -> None:
+def seed_housing_data(db: Session, users: List[User]) -> None:
     """Populate database with example housing categories, offers, and photos."""
 
-    user = db.query(User).first()
-    if not user:
-        print("No user found. Skipping housing seed.")
+    if not users:
+        print("! No users found. Skipping housing seed.")
         return
 
-    categories = db.query(HousingCategoryTableModel).all()
-    if not categories:
-        categories = [
-            HousingCategoryTableModel(id=uuid.uuid4(), name="Room"),
-            HousingCategoryTableModel(id=uuid.uuid4(), name="Flat"),
-            HousingCategoryTableModel(id=uuid.uuid4(), name="Detached House"),
-            HousingCategoryTableModel(id=uuid.uuid4(), name="Studio"),
-            HousingCategoryTableModel(id=uuid.uuid4(), name="Loft"),
-        ]
-        db.add_all(categories)
-        db.flush()
-        print(f"* Housing categories added: {len(categories)}")
-    else:
-        print(f"* Housing categories already exist: {len(categories)}")
+    user = users[0]
 
-    amenities = db.query(HousingAmenityTableModel).all()
-    if not amenities:
-        amenities = [
-            HousingAmenityTableModel(code=100, name="Wi-Fi"),
-            HousingAmenityTableModel(code=101, name="Parking"),
-            HousingAmenityTableModel(code=102, name="Washer"),
-            HousingAmenityTableModel(code=103, name="Dryer"),
-            HousingAmenityTableModel(code=104, name="Air Conditioning"),
-            HousingAmenityTableModel(code=105, name="Heating"),
-            HousingAmenityTableModel(code=106, name="Kitchen Access"),
-            HousingAmenityTableModel(code=107, name="Private Bathroom"),
-            HousingAmenityTableModel(code=108, name="Balcony"),
-            HousingAmenityTableModel(code=109, name="Garden Access"),
-            HousingAmenityTableModel(code=110, name="Furnished"),
-            HousingAmenityTableModel(code=111, name="TV"),
-            HousingAmenityTableModel(code=112, name="Desk"),
-            HousingAmenityTableModel(code=113, name="Pet Friendly"),
-            HousingAmenityTableModel(code=114, name="Bicycle Storage"),
-            HousingAmenityTableModel(code=115, name="Elevator"),
-            HousingAmenityTableModel(code=116, name="Security System"),
+    category_repo = HousingCategoryRepository(db)
+    amenity_repo = HousingAmenityRepository(db)
+    offer_repo = HousingOfferRepository(db)
+    file_repo = FileRepository(db)
+    file_assoc_repo = FileAssociationRepository(db)
+
+    categories = category_repo.get_all()
+    if not categories:
+        categories_data = [
+            {"id": uuid.uuid4(), "name": "Room"},
+            {"id": uuid.uuid4(), "name": "Flat"},
+            {"id": uuid.uuid4(), "name": "Detached House"},
+            {"id": uuid.uuid4(), "name": "Studio"},
+            {"id": uuid.uuid4(), "name": "Loft"},
         ]
-        db.add_all(amenities)
+        for cat_data in categories_data:
+            category = HousingCategoryTableModel(**cat_data)
+            db.add(category)
+            categories.append(category)
         db.flush()
-        print(f"* Housing amenities added: {len(amenities)}")
-    else:
-        print(f"* Housing amenities already exist: {len(amenities)}")
+
+    amenities = amenity_repo.get_all()
+    if not amenities:
+        amenities_data = [
+            {"code": 100, "name": "Wi-Fi"},
+            {"code": 101, "name": "Parking"},
+            {"code": 102, "name": "Washer"},
+            {"code": 103, "name": "Dryer"},
+            {"code": 104, "name": "Air Conditioning"},
+            {"code": 105, "name": "Heating"},
+            {"code": 106, "name": "Kitchen Access"},
+            {"code": 107, "name": "Private Bathroom"},
+            {"code": 108, "name": "Balcony"},
+            {"code": 109, "name": "Garden Access"},
+            {"code": 110, "name": "Furnished"},
+            {"code": 111, "name": "TV"},
+            {"code": 112, "name": "Desk"},
+            {"code": 113, "name": "Pet Friendly"},
+            {"code": 114, "name": "Bicycle Storage"},
+            {"code": 115, "name": "Elevator"},
+            {"code": 116, "name": "Security System"},
+        ]
+        for amenity_data in amenities_data:
+            amenity_repo.create(amenity_data)
+        amenities = amenity_repo.get_all()
 
     offers_data = [
         {
@@ -74,7 +75,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 18,
             "city": "Madrid",
             "address": "Calle de Serrano 25",
-            "category": categories[0],
+            "category_id": categories[0].id,
+            "amenity_codes": [100, 105, 110, 112],
         },
         {
             "title": "Modern 2-bedroom flat with terrace",
@@ -83,7 +85,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 65,
             "city": "Barcelona",
             "address": "Passeig de Gracia 12",
-            "category": categories[1],
+            "category_id": categories[1].id,
+            "amenity_codes": [100, 104, 106, 102, 108],
         },
         {
             "title": "Quiet detached house with garden",
@@ -92,7 +95,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 120,
             "city": "Valencia",
             "address": "Calle Mayor 8",
-            "category": categories[2],
+            "category_id": categories[2].id,
+            "amenity_codes": [100, 101, 109, 102, 105, 113],
         },
         {
             "title": "Sunny loft apartment in city center",
@@ -101,7 +105,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 50,
             "city": "Sevilla",
             "address": "Avenida de la Constitución 45",
-            "category": categories[4],
+            "category_id": categories[4].id,
+            "amenity_codes": [100, 105, 110],
         },
         {
             "title": "Affordable studio near the beach",
@@ -110,7 +115,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 28,
             "city": "Málaga",
             "address": "Calle Larios 30",
-            "category": categories[3],
+            "category_id": categories[3].id,
+            "amenity_codes": [100, 105],
         },
         {
             "title": "Large family house with pool",
@@ -119,7 +125,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 180,
             "city": "Alicante",
             "address": "Carrer de la Mar 10",
-            "category": categories[2],
+            "category_id": categories[2].id,
+            "amenity_codes": [100, 101, 109, 102, 105],
         },
         {
             "title": "Modern flat with private parking",
@@ -128,7 +135,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 90,
             "city": "Zaragoza",
             "address": "Calle del Coso 14",
-            "category": categories[1],
+            "category_id": categories[1].id,
+            "amenity_codes": [100, 101, 104, 106, 102],
         },
         {
             "title": "Room in shared flat with students",
@@ -137,7 +145,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 15,
             "city": "Granada",
             "address": "Calle Recogidas 11",
-            "category": categories[0],
+            "category_id": categories[0].id,
+            "amenity_codes": [100, 105, 110, 112],
         },
         {
             "title": "Stylish loft with panoramic views",
@@ -146,7 +155,8 @@ def seed_housing_data(db: Session) -> None:
             "area": 70,
             "city": "Bilbao",
             "address": "Gran Vía de Don Diego López 50",
-            "category": categories[4],
+            "category_id": categories[4].id,
+            "amenity_codes": [100, 104, 108, 110],
         },
         {
             "title": "Quiet studio near public library",
@@ -155,131 +165,95 @@ def seed_housing_data(db: Session) -> None:
             "area": 25,
             "city": "Tarragona",
             "address": "Rambla Nova 32",
-            "category": categories[3],
+            "category_id": categories[3].id,
+            "amenity_codes": [100, 105],
         },
     ]
 
     created_offers = []
+    added_photos = 0
 
     for i, data in enumerate(offers_data, start=1):
         existing = db.query(HousingOfferTableModel).filter_by(title=data["title"], city=data["city"]).first()
         if existing:
             continue
 
-        offer = HousingOfferTableModel(
-            id=uuid.uuid4(),
-            title=data["title"],
-            description=data["description"],
-            price=data["price"],
-            area=data["area"],
-            offer_valid_until=datetime.date(2025, 12, 31),
-            start_date=datetime.date(2025, 10, 17),
-            city=data["city"],
-            address=data["address"],
-            user_id=user.id,
-            category_id=data["category"].id,
-            posted_date=datetime.datetime.now(datetime.UTC),
+        amenity_codes = data.pop("amenity_codes", [])
+
+        offer_data = {
+            **data,
+            "id": uuid.uuid4(),
+            "offer_valid_until": datetime.date(2025, 12, 31),
+            "start_date": datetime.date(2025, 10, 17),
+            "user_id": user.id,
+            "posted_date": datetime.datetime.now(datetime.UTC),
+        }
+
+        photo_ids = _process_offer_photos(db, i, user.id, file_repo)
+
+        offer = offer_repo.create(
+            offer_data,
+            amenity_codes=amenity_codes,
+            photo_ids=photo_ids,
         )
-        db.add(offer)
-        created_offers.append((offer, i))
 
-    db.flush()
-
-    # Process photos and create file associations
-    added_photos = 0
-    for offer, index in created_offers:
-        photo_dir = f"app/static_photos/offer{index}"
-        if not os.path.isdir(photo_dir):
-            continue
-
-        photo_files = [f for f in os.listdir(photo_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
-
-        file_ids = []
-        for file_name in photo_files:
-            file_path = os.path.join(photo_dir, file_name)
-
-            try:
-                with open(file_path, "rb") as f:
-                    file_content = f.read()
-
-                content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
-
-                file_record = File(
-                    id=uuid.uuid4(),
-                    filename=file_name,
-                    content_type=content_type,
-                    file_data=file_content,
-                    file_size=len(file_content),
-                    uploader_id=user.id,
-                    is_public=True,
-                )
-                db.add(file_record)
-                file_ids.append(file_record.id)
-            except Exception as e:
-                print(f"Error reading file {file_path}: {e}")
-                continue
-
-        db.flush()
-
-        # Create file associations
-        if file_ids:
+        if photo_ids:
             associations = [
                 FileAssociationCreate(
-                    file_id=file_id, entity_type="housing_offer", entity_id=offer.id, order=idx, category="photo"
+                    file_id=file_id,
+                    entity_type="housing_offer",
+                    entity_id=offer.id,
+                    order=idx,
+                    category="photo",
                 )
-                for idx, file_id in enumerate(file_ids)
+                for idx, file_id in enumerate(photo_ids)
             ]
-            FileAssociationCRUD.bulk_create(db, associations)
-            added_photos += len(file_ids)
+            file_assoc_repo.bulk_create([assoc.model_dump() for assoc in associations])
+            added_photos += len(photo_ids)
 
-    # Add amenities
-    amenities_map = {a.name: a for a in db.query(HousingAmenityTableModel).all()}
-
-    for offer, index in created_offers:
-        selected_amenities = []
-
-        if "room" in offer.title.lower():
-            selected_amenities = [
-                amenities_map["Wi-Fi"],
-                amenities_map["Heating"],
-                amenities_map["Desk"],
-                amenities_map["Furnished"],
-            ]
-        elif "flat" in offer.title.lower():
-            selected_amenities = [
-                amenities_map["Wi-Fi"],
-                amenities_map["Air Conditioning"],
-                amenities_map["Kitchen Access"],
-                amenities_map["Washer"],
-                amenities_map["Balcony"],
-            ]
-        elif "house" in offer.title.lower():
-            selected_amenities = [
-                amenities_map["Wi-Fi"],
-                amenities_map["Parking"],
-                amenities_map["Garden Access"],
-                amenities_map["Washer"],
-                amenities_map["Heating"],
-            ]
-        else:
-            selected_amenities = [amenities_map["Wi-Fi"], amenities_map["Heating"]]
-
-        for amenity in selected_amenities:
-            db.add(
-                HousingOfferAmenity(
-                    id=uuid.uuid4(),
-                    offer_id=offer.id,
-                    amenity_code=amenity.code,
-                )
-            )
+        created_offers.append(offer)
 
     db.commit()
 
     if created_offers:
-        print(f"* Housing offers added: {len(created_offers)}")
-        print(f"* Housing photos added: {added_photos}")
-    else:
-        print("* No new housing offers added (already exist).")
+        print(f"  → {len(created_offers)} housing offers added")
+        print(f"  → {added_photos} photos added")
 
-    total_offers = db.query(HousingOfferTableModel).count()
-    print(f"> Total offers in DB: {total_offers}")
+
+def _process_offer_photos(
+    db: Session, offer_index: int, uploader_id: uuid.UUID, file_repo: FileRepository
+) -> List[uuid.UUID]:
+    """Process photos for an offer and return list of file IDs."""
+    photo_dir = f"app/static_photos/offer{offer_index}"
+    if not os.path.isdir(photo_dir):
+        return []
+
+    photo_files = [f for f in os.listdir(photo_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
+    file_ids = []
+
+    for file_name in photo_files:
+        file_path = os.path.join(photo_dir, file_name)
+        try:
+            with open(file_path, "rb") as f:
+                file_content = f.read()
+
+            content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
+
+            file_data = {
+                "id": uuid.uuid4(),
+                "filename": file_name,
+                "content_type": content_type,
+                "file_data": file_content,
+                "file_size": len(file_content),
+                "uploader_id": uploader_id,
+                "is_public": True,
+                "storage_type": "database",
+            }
+
+            file_record = file_repo.create(file_data)
+            file_ids.append(file_record.id)
+        except Exception as e:
+            print(f"! Error reading file {file_path}: {e}")
+            continue
+
+    return file_ids

@@ -27,7 +27,6 @@ from app.models import User
 from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
 from app.seeds.messages import seed_messages
-from app.services import authenticate_user
 
 
 def seed_database_test(db: Session):
@@ -35,7 +34,7 @@ def seed_database_test(db: Session):
     users = seed_users(db)
     channels = seed_channels(db, users)
     seed_messages(db, users, channels)
-    seed_housing_data(db)
+    seed_housing_data(db, users)
     seed_interests(db)
 
 
@@ -103,10 +102,146 @@ def db(engine):
 
 
 @pytest.fixture
-def auth_headers(client, db):
+def auth_service(db):
+    """Create AuthService instance for tests."""
+    from app.domains.auth.auth_service import AuthService
+
+    return AuthService(db)
+
+
+@pytest.fixture
+def user_service(db):
+    """Create UserService instance for tests."""
+    from app.domains.user.user_service import UserService
+
+    return UserService(db)
+
+
+@pytest.fixture
+def file_service(db):
+    """Create FileService instance for tests."""
+    from app.domains.file.file_service import FileService
+
+    return FileService(db)
+
+
+@pytest.fixture
+def file_association_service(db):
+    """Create FileAssociationService instance for tests."""
+    from app.domains.file.file_association_service import FileAssociationService
+
+    return FileAssociationService(db)
+
+
+@pytest.fixture
+def university_service(db):
+    """Create UniversityService instance for tests."""
+    from app.domains.university.university_service import UniversityService
+
+    return UniversityService(db)
+
+
+@pytest.fixture
+def user_repository(db):
+    """Create UserRepository instance for tests."""
+    from app.domains.user.user_repository import UserRepository
+
+    return UserRepository(db)
+
+
+@pytest.fixture
+def file_repository(db):
+    """Create FileRepository instance for tests."""
+    from app.domains.file.file_repository import FileRepository
+
+    return FileRepository(db)
+
+
+@pytest.fixture
+def file_association_repository(db):
+    """Create FileAssociationRepository instance for tests."""
+    from app.domains.file.file_association_repository import FileAssociationRepository
+
+    return FileAssociationRepository(db)
+
+
+@pytest.fixture
+def channel_repository(db):
+    """Create ChannelRepository instance for tests."""
+    from app.domains.channel.channel_repository import ChannelRepository
+
+    return ChannelRepository(db)
+
+
+@pytest.fixture
+def message_repository(db):
+    """Create MessageRepository instance for tests."""
+    from app.domains.channel.message_repository import MessageRepository
+
+    return MessageRepository(db)
+
+
+@pytest.fixture
+def conversation_repository(db):
+    """Create ConversationRepository instance for tests."""
+    from app.domains.housing.conversation_repository import ConversationRepository
+
+    return ConversationRepository(db)
+
+
+@pytest.fixture
+def housing_offer_repository(db):
+    """Create HousingOfferRepository instance for tests."""
+    from app.domains.housing.offer_repository import HousingOfferRepository
+
+    return HousingOfferRepository(db)
+
+
+@pytest.fixture
+def housing_amenity_repository(db):
+    """Create HousingAmenityRepository instance for tests."""
+    from app.domains.housing.amenity_repository import HousingAmenityRepository
+
+    return HousingAmenityRepository(db)
+
+
+@pytest.fixture
+def housing_category_repository(db):
+    """Create HousingCategoryRepository instance for tests."""
+    from app.domains.housing.category_repository import HousingCategoryRepository
+
+    return HousingCategoryRepository(db)
+
+
+@pytest.fixture
+def interest_repository(db):
+    """Create InterestRepository instance for tests."""
+    from app.domains.user.interest_repository import InterestRepository
+
+    return InterestRepository(db)
+
+
+@pytest.fixture
+def user_like_repository(db):
+    """Create UserLikeRepository instance for tests."""
+    from app.domains.user.like_repository import UserLikeRepository
+
+    return UserLikeRepository(db)
+
+
+@pytest.fixture
+def university_repository(db):
+    """Create UniversityRepository instance for tests."""
+    from app.domains.university.university_repository import UniversityRepository
+
+    return UniversityRepository(db)
+
+
+@pytest.fixture
+def auth_headers(client, db, auth_service):
     """Generate authentication headers for basic_user."""
     user = db.query(User).filter_by(username="basic_user").first()
-    token = authenticate_user(db, LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
+    token = auth_service.authenticate_user(LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
     return {"Authorization": f"Bearer {token.access_token}"}
 
 

@@ -1,18 +1,22 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, status
+from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
 from app.core.dependencies import get_current_user
 from app.core.types import TokenData
-from app.crud.user_like import UserLikeCRUD
+from app.domains.user.like_service import UserLikeService
 from app.literals.like_status import LikeTargetType
-from app.models import User
-from app.schemas import UserLikeRead
+from app.schemas.user_like import UserLikeRead
 
 router = APIRouter()
+
+
+def get_like_service(db: Session = Depends(get_db)) -> UserLikeService:
+    """Dependency to inject UserLikeService."""
+    return UserLikeService(db)
 
 
 @router.post(
@@ -24,29 +28,22 @@ router = APIRouter()
 )
 def like_target(
     target_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
     target_type: LikeTargetType = LikeTargetType.HOUSING_OFFER,
+    service: UserLikeService = Depends(get_like_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Like a target object (e.g., a housing offer).
 
     - If a like already exists and is inactive → reactivates it.
     - If no like exists → creates a new one.
+    - If like is already active → returns existing like.
     """
-    try:
-        like = UserLikeCRUD.like_offer(
-            db=db,
-            user_id=current_user.id,
-            target_id=target_id,
-            target_type=target_type,
-        )
-        db.commit()
-        db.refresh(like)
-        return like
-    except Exception as e:
-        db.rollback()
-        raise HTTPException(status_code=400, detail=f"Failed to like target: {e}")
+    return service.like_target(
+        user_id=current_user.id,
+        target_id=target_id,
+        target_type=target_type,
+    )
 
 
 @router.delete(
@@ -56,28 +53,24 @@ def like_target(
 )
 def unlike_target(
     target_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: User = Depends(get_current_user),
     target_type: LikeTargetType = LikeTargetType.HOUSING_OFFER,
+    service: UserLikeService = Depends(get_like_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Unlike (deactivate) a previously liked object.
 
     - Allowed only for the owner or admin.
-    - Does *not* delete the like immediately (it’s marked as inactive).
+    - Does *not* delete the like immediately (it's marked as inactive).
     """
-    success = UserLikeCRUD.unlike_offer(
-        db=db,
+    service.unlike_target(
         user_id=current_user.id,
         target_id=target_id,
-        current_user=current_user,
         target_type=target_type,
+        current_user_id=current_user.id,
+        is_admin=current_user.role.lower() == "admin",
     )
 
-    if not success:
-        raise HTTPException(status_code=404, detail="Like not found or already inactive.")
-
-    db.commit()
     return {"detail": "Like deactivated successfully."}
 
 
@@ -89,22 +82,21 @@ def unlike_target(
     response_description="Returns all active likes for the current user.",
 )
 def get_my_likes(
-    db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
     only_active: bool = True,
     target_type: LikeTargetType = LikeTargetType.HOUSING_OFFER,
+    service: UserLikeService = Depends(get_like_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Get all (or only active) likes of the current user.
     """
-    likes = UserLikeCRUD.get_user_likes(
-        db=db,
+    return service.get_user_likes(
         user_id=current_user.id,
-        current_user=current_user,
         target_type=target_type,
+        current_user_id=current_user.id,
+        is_admin=current_user.role.lower() == "admin",
         only_active=only_active,
     )
-    return likes
 
 
 @router.get(
@@ -115,15 +107,14 @@ def get_my_likes(
 )
 def check_like_status(
     target_id: uuid.UUID,
-    db: Session = Depends(get_db),
-    current_user: TokenData = Depends(get_current_user),
     target_type: LikeTargetType = LikeTargetType.HOUSING_OFFER,
+    service: UserLikeService = Depends(get_like_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Check whether the current user has liked the given target.
     """
-    liked = UserLikeCRUD.is_liked(
-        db=db,
+    liked = service.check_like_status(
         user_id=current_user.id,
         target_id=target_id,
         target_type=target_type,
