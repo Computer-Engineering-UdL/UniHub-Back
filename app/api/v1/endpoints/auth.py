@@ -35,7 +35,25 @@ async def login(form_data: OAuth2PasswordRequestForm = Depends(), db: Session = 
     return authenticate_user(db, login_request)
 
 
-@router.get("/login/{provider}", response_class=RedirectResponse, include_in_schema=True)
+@router.get("/me", response_model=TokenData)
+def get_me(current_user: TokenData = Depends(get_current_user)):
+    """Get current user info"""
+    return current_user
+
+
+@router.post("/refresh", response_model=Token)
+async def refresh(refresh_token: str = Body(..., embed=True), db: Session = Depends(get_db)):
+    payload = verify_token(refresh_token, expected_type="refresh")
+    db_user = UserCRUD.get_by_id(db, uuid.UUID(payload.get("sub")))
+    if not db_user:
+        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
+    data = create_payload_from_user(db_user)
+    token = create_access_token(data=data)
+    new_refresh_token = create_refresh_token(data=data)
+    return Token(access_token=token, refresh_token=new_refresh_token, token_type="bearer")
+
+
+@router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)
 async def login_oauth(provider: OAuthProvider, request: Request, oauth: OAuth = Depends(get_oauth)):
     provider_str = provider.value
     redirect_uri = request.url_for("auth_callback", provider=provider_str)
@@ -79,21 +97,3 @@ async def auth_callback(
     refresh_token = create_refresh_token(data=data)
 
     return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
-
-
-@router.post("/refresh", response_model=Token)
-async def refresh(refresh_token: str = Body(..., embed=True), db: Session = Depends(get_db)):
-    payload = verify_token(refresh_token, expected_type="refresh")
-    db_user = UserCRUD.get_by_id(db, uuid.UUID(payload.get("sub")))
-    if not db_user:
-        raise HTTPException(status_code=status.HTTP_401_UNAUTHORIZED, detail="Invalid token payload")
-    data = create_payload_from_user(db_user)
-    token = create_access_token(data=data)
-    new_refresh_token = create_refresh_token(data=data)
-    return Token(access_token=token, refresh_token=new_refresh_token, token_type="bearer")
-
-
-@router.get("/me", response_model=TokenData)
-def get_me(current_user: TokenData = Depends(get_current_user)):
-    """Get current user info"""
-    return current_user
