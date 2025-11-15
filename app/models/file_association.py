@@ -10,6 +10,7 @@ from sqlalchemy import ForeignKey, Index
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
+from app.core.config import settings
 
 if TYPE_CHECKING:
     from app.models import File
@@ -42,6 +43,11 @@ class FileAssociation(Base):
         Index("ix_file_association_entity", "entity_type", "entity_id"),
         Index("ix_file_association_file", "file_id"),
     )
+
+    @property
+    def url(self) -> str:
+        """Construct the public URL for this file."""
+        return f"{settings.API_VERSION}/files/public/{self.file_id}"
 
     def __repr__(self) -> str:
         return "<FileAssociation(id={}, entity_type='{}', entity_id='{}', file_id='{}')>".format(
