@@ -1,9 +1,10 @@
 import uuid
 from typing import List, Optional
 
-from fastapi import HTTPException
+from fastapi import HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
+from app.core.types import TokenData
 from app.domains.housing.offer_repository import HousingOfferRepository
 from app.schemas import (
     HousingOfferCreate,
@@ -164,3 +165,45 @@ class HousingOfferService:
             return HousingOfferRead.model_validate(updated_offer)
         except Exception as e:
             raise HTTPException(status_code=400, detail=f"Failed to remove amenity: {e}")
+
+    async def create_offer_with_photos(
+        self,
+        offer_in: HousingOfferCreate,
+        photos: List[UploadFile],
+        cover_photo_index: int,
+        current_user: TokenData,
+    ) -> HousingOfferRead:
+        """
+        Create a new housing offer with uploaded photos.
+        """
+        from app.domains.file.file_service import FileService
+
+        if photos and (cover_photo_index < 0 or cover_photo_index >= len(photos)):
+            raise HTTPException(
+                status_code=400, detail=f"Invalid cover_photo_index. Must be between 0 and {len(photos) - 1}"
+            )
+
+        photo_ids = []
+        file_service = FileService(self.db)
+
+        try:
+            for idx, photo in enumerate(photos):
+                uploaded_file = await file_service.upload_file(
+                    file=photo,
+                    is_public=True,
+                    current_user=current_user,
+                )
+                photo_ids.append(uploaded_file.id)
+
+            if photo_ids and cover_photo_index != 0:
+                cover_id = photo_ids.pop(cover_photo_index)
+                photo_ids.insert(0, cover_id)
+
+            offer_in.photo_ids = photo_ids
+
+            return self.create_offer(offer_in)
+
+        except HTTPException:
+            raise
+        except Exception as e:
+            raise HTTPException(status_code=400, detail=f"Failed to create offer with photos: {str(e)}")
