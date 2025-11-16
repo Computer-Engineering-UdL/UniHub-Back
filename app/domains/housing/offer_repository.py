@@ -114,7 +114,7 @@ class HousingOfferRepository(BaseRepository[HousingOfferTableModel]):
         """Get all housing offers by a user."""
         stmt = (
             select(HousingOfferTableModel)
-            .options(joinedload(HousingOfferTableModel.photos))
+            .options(joinedload(HousingOfferTableModel.file_associations))
             .filter(HousingOfferTableModel.user_id == user_id)
             .order_by(HousingOfferTableModel.posted_date.desc())
             .offset(skip)
