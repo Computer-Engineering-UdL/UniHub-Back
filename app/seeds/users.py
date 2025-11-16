@@ -154,7 +154,7 @@ def seed_users(db: Session) -> List[User]:
             room_number="808",
             provider="local",
             role=Role.SELLER,
-            is_active=False,
+            is_active=True,
             is_verified=False,
         ),
         make_user(
