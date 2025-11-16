@@ -133,12 +133,6 @@ class HousingOfferDetail(HousingOfferRead):
         """Filter file_associations for photos only."""
         return [assoc for assoc in self.file_associations if assoc.category in ("photo", None)]
 
-    @computed_field
-    @property
-    def photos(self) -> list[FileAssociationWithFile]:
-        """Filter file_associations for photos only."""
-        return [assoc for assoc in self.file_associations if assoc.category in ("photo", None)]
-
 
 __all__ = [
     "HousingOfferBase",
