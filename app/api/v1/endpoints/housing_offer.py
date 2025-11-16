@@ -1,7 +1,8 @@
+import json
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.core.database import get_db
@@ -44,6 +45,35 @@ def create_offer(
     """
     offer_in.user_id = current_user.id
     return service.create_offer(offer_in)
+
+
+@router.post(
+    "/with-photos",
+    response_model=HousingOfferRead,
+    status_code=status.HTTP_201_CREATED,
+    summary="Create a new housing offer with photos",
+    response_description="Returns the created housing offer.",
+)
+async def create_offer_with_photos(
+    offer_data: str = Form(...),
+    photos: List[UploadFile] = File(default=[]),
+    cover_photo_index: int = Form(0),
+    service: HousingOfferService = Depends(get_housing_offer_service),
+    current_user: TokenData = Depends(get_current_user),
+):
+    """
+    Create a new housing offer with photos.
+    """
+    offer_dict = json.loads(offer_data)
+    offer_in = HousingOfferCreate(**offer_dict)
+    offer_in.user_id = current_user.id
+
+    return await service.create_offer_with_photos(
+        offer_in=offer_in,
+        photos=photos,
+        cover_photo_index=cover_photo_index,
+        current_user=current_user,
+    )
 
 
 @router.get(

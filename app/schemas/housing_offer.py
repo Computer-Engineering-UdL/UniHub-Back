@@ -6,7 +6,7 @@ from decimal import ROUND_HALF_UP, Decimal
 from typing import TYPE_CHECKING, List, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
 
 if TYPE_CHECKING:
     from .file_association import FileAssociationWithFile
@@ -114,7 +114,7 @@ class HousingOfferList(BaseModel):
     user_id: UUID
 
     city: str
-    base_image: str | None = None # First photo URL if available
+    base_image: str | None = None  # First photo URL if available
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -123,9 +123,15 @@ class HousingOfferList(BaseModel):
 class HousingOfferDetail(HousingOfferRead):
     """Detailed schema with related objects."""
 
-    photos: list[FileAssociationWithFile] = []
     category: "HousingCategoryRead"
     amenities: List["HousingAmenityRead"] = []
+    file_associations: list[FileAssociationWithFile] = []
+
+    @computed_field
+    @property
+    def photos(self) -> list[FileAssociationWithFile]:
+        """Filter file_associations for photos only."""
+        return [assoc for assoc in self.file_associations if assoc.category in ("photo", None)]
 
 
 __all__ = [
