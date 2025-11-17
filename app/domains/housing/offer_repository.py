@@ -5,6 +5,7 @@ from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
 from sqlalchemy.orm import Session, joinedload
 
+from app.core.logger import logger
 from app.models import HousingAmenityTableModel, HousingCategoryTableModel, HousingOfferTableModel
 from app.repositories.base import BaseRepository
 from app.schemas import FileAssociationCreate
@@ -40,7 +41,12 @@ class HousingOfferRepository(BaseRepository[HousingOfferTableModel]):
             self.db.commit()
             self.db.refresh(offer)
 
-            if photo_ids and file_association_service:
+            if photo_ids:
+                if file_association_service is None:
+                    from app.domains.file.file_association_service import FileAssociationService
+
+                    file_association_service = FileAssociationService(self.db)
+
                 associations = [
                     FileAssociationCreate(
                         file_id=file_id,
@@ -51,10 +57,19 @@ class HousingOfferRepository(BaseRepository[HousingOfferTableModel]):
                     )
                     for index, file_id in enumerate(photo_ids)
                 ]
-                file_association_service.create_associations_bulk(associations, current_user=None)
+
+                try:
+                    file_association_service.create_associations_bulk(associations, current_user=None)
+                    self.db.refresh(offer)
+                except Exception as e:
+                    logger.error(f"Warning: Failed to create photo associations: {e}")
 
             return offer
-        except IntegrityError:
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise ValueError(f"Database integrity error: {str(e)}")
+        except Exception:
             self.db.rollback()
             raise
 
