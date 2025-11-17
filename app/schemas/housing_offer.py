@@ -41,10 +41,36 @@ class HousingOfferBase(BaseModel):
     gender_preference: GenderPreferences | None = None
     status: OfferStatus = Field(default="active")
 
-    @field_validator("price")
-    def round_price(cls, v: Decimal) -> Decimal:
+    # Boolean fields
+    furnished: bool = Field(default=False)
+    utilities_included: bool = Field(default=False)
+    internet_included: bool = Field(default=False)
+
+    # Additional fields
+    floor: int | None = Field(default=None, ge=0)
+    floor_number: int | None = Field(default=None, ge=0)
+    distance_from_campus: str | None = Field(default=None, max_length=100)
+    utilities_cost: Decimal | None = Field(default=None, ge=0)
+    utilities_description: str | None = Field(default=None, max_length=1000)
+    contract_type: str | None = Field(default=None, max_length=50)
+    latitude: Decimal | None = Field(default=None, ge=-90, le=90)
+    longitude: Decimal | None = Field(default=None, ge=-180, le=180)
+
+    @field_validator("price", "utilities_cost")
+    @classmethod
+    def round_price(cls, v: Decimal | None) -> Decimal | None:
         """Round price to 2 decimal places."""
+        if v is None:
+            return v
         return v.quantize(Decimal("0.01"), rounding=ROUND_HALF_UP)
+
+    @field_validator("latitude", "longitude")
+    @classmethod
+    def round_coordinates(cls, v: Decimal | None) -> Decimal | None:
+        """Round coordinates to 7 decimal places (~1cm precision)."""
+        if v is None:
+            return v
+        return v.quantize(Decimal("0.0000001"), rounding=ROUND_HALF_UP)
 
     @field_validator("end_date")
     @classmethod
@@ -84,6 +110,21 @@ class HousingOfferUpdate(BaseModel):
     city: str | None = Field(None, min_length=1, max_length=100)
     address: str | None = Field(None, min_length=1, max_length=255)
 
+    # Boolean fields
+    furnished: bool | None = None
+    utilities_included: bool | None = None
+    internet_included: bool | None = None
+
+    # Additional fields
+    floor: int | None = Field(None, ge=0)
+    floor_number: int | None = Field(None, ge=0)
+    distance_from_campus: str | None = Field(None, max_length=100)
+    utilities_cost: Decimal | None = Field(None, ge=0)
+    utilities_description: str | None = Field(None, max_length=1000)
+    contract_type: str | None = Field(None, max_length=50)
+    latitude: Decimal | None = Field(None, ge=-90, le=90)
+    longitude: Decimal | None = Field(None, ge=-180, le=180)
+
     amenities: list[int] | None = Field(default=None, description="Optional list of amenity codes to update")
 
     model_config = ConfigDict(from_attributes=True)
@@ -115,6 +156,13 @@ class HousingOfferList(BaseModel):
 
     city: str
     base_image: str | None = None  # First photo URL if available
+
+    # Additional fields for list view
+    num_rooms: int | None = None
+    num_bathrooms: int | None = None
+    furnished: bool = False
+    utilities_included: bool = False
+    internet_included: bool = False
 
     model_config = ConfigDict(from_attributes=True)
 

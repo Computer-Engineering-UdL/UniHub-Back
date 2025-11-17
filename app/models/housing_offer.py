@@ -55,6 +55,21 @@ class HousingOfferTableModel(Base):
     gender_preference: Mapped[GenderPreferences | None] = mapped_column(sa.String(10))
     status: Mapped[OfferStatus] = mapped_column(sa.String(20), default="active", nullable=False)
 
+    # ----- BOOLEAN FIELDS -----
+    furnished: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
+    utilities_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
+    internet_included: Mapped[bool] = mapped_column(sa.Boolean, default=False, nullable=False)
+
+    # ----- ADDITIONAL FIELDS -----
+    floor: Mapped[int | None] = mapped_column(sa.Integer)
+    floor_number: Mapped[int | None] = mapped_column(sa.Integer)
+    distance_from_campus: Mapped[str | None] = mapped_column(sa.String(100))
+    utilities_cost: Mapped[float | None] = mapped_column(sa.Numeric)
+    utilities_description: Mapped[str | None] = mapped_column(sa.Text)
+    contract_type: Mapped[str | None] = mapped_column(sa.String(50))
+    latitude: Mapped[float | None] = mapped_column(sa.Numeric(precision=10, scale=7))
+    longitude: Mapped[float | None] = mapped_column(sa.Numeric(precision=10, scale=7))
+
     # ----- DATES -----
     posted_date: Mapped[datetime.datetime] = mapped_column(
         sa.DateTime, default=datetime.datetime.now(datetime.UTC), nullable=False
