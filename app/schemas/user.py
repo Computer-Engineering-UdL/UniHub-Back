@@ -166,6 +166,20 @@ class UserDetail(UserRead):
     housing_search_count: int = 0
     listings_active: int = 0
 
+# ==========================================
+# Register Schema (for sign-up endpoint)
+# ==========================================
+class UserRegister(BaseModel):
+    """Schema used for public user registration."""
+
+    username: str = Field(min_length=1, max_length=50)
+    email: EmailStr
+    first_name: str = Field(min_length=1, max_length=100)
+    last_name: str = Field(min_length=1, max_length=100)
+    password: str = Field(min_length=8, max_length=255)
+
+    model_config = ConfigDict(from_attributes=True)
+
 
 __all__ = [
     "UserBase",
@@ -179,4 +193,5 @@ __all__ = [
     "UserDetail",
     "UserPublic",
     "UserSimplified",
+    "UserRegister"
 ]
