@@ -4,7 +4,7 @@ from typing import List
 from sqlalchemy.orm import Session
 
 from app.domains.channel import ChannelRepository
-from app.literals.channels import ChannelRole
+from app.literals.channels import ChannelCategory, ChannelRole
 from app.literals.users import Role
 from app.models import Channel, User
 
@@ -18,82 +18,91 @@ def seed_channels(db: Session, users: List[User]) -> List[Channel]:
             "name": "📢 Campus Announcements",
             "description": "Official university announcements, events, and important notices",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/announcements.jpg",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "🏠 Housing & Accommodation",
             "description": "Room rentals, roommate search, housing tips and accommodation offers",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/housing.jpg",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "📚 Study Resources",
             "description": "Share notes, study materials, textbooks, and academic resources",
             "channel_type": "public",
+            "category": ChannelCategory.SCIENCES,
         },
         {
             "name": "💼 Jobs & Internships",
             "description": "Job offers, internship opportunities, and career advice for students",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/jobs.jpg",
+            "category": ChannelCategory.BUSINESS,
         },
         {
             "name": "🎉 Events & Activities",
             "description": "Campus events, parties, cultural activities, and social gatherings",
             "channel_type": "public",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "🛍️ Buy & Sell",
             "description": "Marketplace for students: books, furniture, electronics, and more",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/marketplace.jpg",
+            "category": ChannelCategory.BUSINESS,
         },
         {
             "name": "🏋️ Sports & Wellness",
             "description": "Sports teams, gym buddies, wellness activities, and fitness events",
             "channel_type": "public",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "🎨 Arts & Culture",
             "description": "Art exhibitions, theater, music, cinema, and cultural initiatives",
             "channel_type": "public",
+            "category": ChannelCategory.ARTS,
         },
         {
             "name": "🌍 International Students",
             "description": "Support and information for international students and exchange programs",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/international.jpg",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "💻 Tech & Innovation",
             "description": "Hackathons, tech talks, programming workshops, and innovation projects",
             "channel_type": "public",
+            "category": ChannelCategory.ENGINEERING,
         },
         {
             "name": "🍕 Food & Restaurants",
             "description": "Restaurant recommendations, food deals, recipes, and dining tips",
             "channel_type": "public",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "🚗 Ride Sharing",
             "description": "Share rides, carpooling for commutes, weekend trips, and travel",
             "channel_type": "public",
+            "category": ChannelCategory.GENERAL,
         },
         {
             "name": "🔬 Research & Projects",
             "description": "Research opportunities, academic projects, and collaboration calls",
             "channel_type": "public",
+            "category": ChannelCategory.SCIENCES,
         },
         {
             "name": "🌱 Sustainability",
             "description": "Environmental initiatives, recycling, sustainable living, and eco-projects",
             "channel_type": "public",
-            "channel_logo": "https://api.example.com/channels/sustainability.jpg",
+            "category": ChannelCategory.SCIENCES,
         },
         {
             "name": "🎓 Alumni Network",
             "description": "Connect with alumni, mentorship opportunities, and career networking",
             "channel_type": "public",
+            "category": ChannelCategory.GENERAL,
         },
     ]
 
