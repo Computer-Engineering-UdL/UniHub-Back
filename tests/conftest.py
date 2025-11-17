@@ -26,6 +26,7 @@ from app.core.valkey import valkey_client
 from app.models import User
 from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds.category import seed_housing_categories
 from app.seeds.messages import seed_messages
 
 
@@ -34,6 +35,7 @@ def seed_database_test(db: Session):
     users = seed_users(db)
     channels = seed_channels(db, users)
     seed_messages(db, users, channels)
+    seed_housing_categories(db)
     seed_housing_data(db, users)
     seed_interests(db)
 
