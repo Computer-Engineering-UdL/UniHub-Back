@@ -7,7 +7,6 @@ from tests.factories.offer_factory import sample_offer_payload
 
 
 class TestHousingOfferEndpoints:
-
     def test_create_offer_success(self, client, user_token, auth_headers, db):
         user_data = get_payload(user_token)
         user_id = user_data["sub"]
@@ -17,6 +16,50 @@ class TestHousingOfferEndpoints:
         payload = sample_offer_payload(user_id=user_id, category_id=str(category.id))
         resp = client.post("/offers/", json=payload, headers=auth_headers)
         assert resp.status_code == 201
+
+        # Verify new fields are in response
+        data = resp.json()
+        assert "furnished" in data
+        assert "utilities_included" in data
+        assert "internet_included" in data
+
+    def test_create_offer_with_all_fields(self, client, user_token, auth_headers, db):
+        """Test creating an offer with all optional fields populated."""
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None, "Category not found in test database!"
+
+        payload = sample_offer_payload(
+            user_id=user_id,
+            category_id=str(category.id),
+            furnished=True,
+            utilities_included=True,
+            internet_included=True,
+            floor=3,
+            floor_number=3,
+            distance_from_campus="1.5 km",
+            utilities_cost=75.50,
+            utilities_description="Water and electricity included, gas separate",
+            contract_type="semester",
+            latitude=41.6175,
+            longitude=0.6200,
+        )
+
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        print("Response JSON:", resp.json())
+        assert resp.status_code == 201
+
+        data = resp.json()
+        assert data["furnished"] is True
+        assert data["utilities_included"] is True
+        assert data["internet_included"] is True
+        assert data["floor"] == 3
+        assert data["distance_from_campus"] == "1.5 km"
+        assert float(data["utilities_cost"]) == 75.50
+        assert data["contract_type"] == "semester"
+        assert float(data["latitude"]) == 41.6175
+        assert float(data["longitude"]) == 0.6200
 
     def test_create_offer_with_amenities(self, client, user_token, auth_headers, db):
         user_data = get_payload(user_token)
@@ -35,9 +78,7 @@ class TestHousingOfferEndpoints:
         offer_id = data["id"]
 
         linked_amenities = (
-            db.query(HousingOfferAmenity)
-            .filter(HousingOfferAmenity.offer_id == uuid.UUID(offer_id))
-            .all()
+            db.query(HousingOfferAmenity).filter(HousingOfferAmenity.offer_id == uuid.UUID(offer_id)).all()
         )
         assert len(linked_amenities) == len(amenities), (
             f"Expected {len(amenities)} amenities, found {len(linked_amenities)} in DB"
@@ -52,19 +93,66 @@ class TestHousingOfferEndpoints:
         category = db.query(HousingCategoryTableModel).first()
         assert category is not None, "Category not found in test database!"
 
-        amenities = [999, 1234] #nonexistent
+        amenities = [999, 1234]  # nonexistent
 
-        payload = sample_offer_payload(
-            user_id=user_id,
-            category_id=str(category.id),
-            amenities=amenities
-        )
+        payload = sample_offer_payload(user_id=user_id, category_id=str(category.id), amenities=amenities)
 
         resp = client.post("/offers/", json=payload, headers=auth_headers)
         data = resp.json()
 
         assert resp.status_code == 400
         assert "Amenities not found" in data["detail"]
+
+    def test_create_offer_with_coordinates(self, client, user_token, auth_headers, db):
+        """Test creating an offer with GPS coordinates."""
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None
+
+        payload = sample_offer_payload(
+            user_id=user_id,
+            category_id=str(category.id),
+            latitude=41.6175123,
+            longitude=0.6200456,
+        )
+
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        assert resp.status_code == 201
+
+        data = resp.json()
+        # Coordinates should be rounded to 7 decimal places
+        assert float(data["latitude"]) == 41.6175123
+        assert float(data["longitude"]) == 0.6200456
+
+    def test_create_offer_with_invalid_coordinates(self, client, user_token, auth_headers, db):
+        """Test that invalid coordinates are rejected."""
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None
+
+        # Test invalid latitude (> 90)
+        payload = sample_offer_payload(
+            user_id=user_id,
+            category_id=str(category.id),
+            latitude=95.0,
+            longitude=0.0,
+        )
+
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        assert resp.status_code == 422
+
+        # Test invalid longitude (> 180)
+        payload = sample_offer_payload(
+            user_id=user_id,
+            category_id=str(category.id),
+            latitude=45.0,
+            longitude=185.0,
+        )
+
+        resp = client.post("/offers/", json=payload, headers=auth_headers)
+        assert resp.status_code == 422
 
     def test_get_offer_includes_amenities(self, client, auth_headers, db):
         offer = db.query(HousingOfferTableModel).first()
@@ -77,6 +165,37 @@ class TestHousingOfferEndpoints:
         assert "amenities" in data
         assert isinstance(data["amenities"], list)
         assert all("code" in a for a in data["amenities"])
+
+        # Verify new fields are present
+        assert "furnished" in data
+        assert "utilities_included" in data
+        assert "internet_included" in data
+
+    def test_get_offer_includes_all_new_fields(self, client, auth_headers, db):
+        """Test that GET returns all new fields."""
+        offer = db.query(HousingOfferTableModel).first()
+        assert offer is not None
+
+        resp = client.get(f"/offers/{offer.id}", headers=auth_headers)
+        assert resp.status_code == 200
+
+        data = resp.json()
+        # Check all new fields exist in response
+        new_fields = [
+            "furnished",
+            "utilities_included",
+            "internet_included",
+            "floor",
+            "floor_number",
+            "distance_from_campus",
+            "utilities_cost",
+            "utilities_description",
+            "contract_type",
+            "latitude",
+            "longitude",
+        ]
+        for field in new_fields:
+            assert field in data
 
     def test_create_offer_without_auth(self, client, db):
         category = db.query(HousingCategoryTableModel).first()
@@ -94,7 +213,6 @@ class TestHousingOfferEndpoints:
 
     def test_create_offer_wrong_type(self, client, auth_headers, db):
         """Send wrong type for 'price', expect 422 validation error."""
-        # Pick valid user and category
         category = db.query(HousingCategoryTableModel).first()
         assert category is not None
 
@@ -123,7 +241,6 @@ class TestHousingOfferEndpoints:
 
     def test_get_offer_success(self, client, db):
         """Should return details of an existing offer."""
-        # Select an existing offer from the test database
         offer = db.query(HousingOfferTableModel).first()
         assert offer is not None, "No offer found in the test database."
 
@@ -161,7 +278,6 @@ class TestHousingOfferEndpoints:
 
     def test_list_offers_success(self, client, db):
         """Should return a list of housing offers."""
-        # Ensure there are offers in the database
         offers = db.query(HousingOfferTableModel).all()
         assert len(offers) > 0, "No offers found in the test database."
 
@@ -175,8 +291,14 @@ class TestHousingOfferEndpoints:
 
         # Verify required fields in the first item
         sample = data[0]
-        for field in ["id", "title", "price", "area", "status", "posted_date", "city", "user_id"]:
+        required_fields = ["id", "title", "price", "area", "status", "posted_date", "city", "user_id"]
+        for field in required_fields:
             assert field in sample
+
+        # Verify new boolean fields are in list view
+        assert "furnished" in sample
+        assert "utilities_included" in sample
+        assert "internet_included" in sample
 
     def test_list_offers_with_city_filter(self, client):
         """Should return only offers matching the given city name."""
@@ -190,6 +312,18 @@ class TestHousingOfferEndpoints:
         for offer in data:
             assert "madrid" in offer["city"].lower()
 
+    def test_list_offers_lleida(self, client):
+        """Should return offers from Lleida."""
+        resp = client.get("/offers/?city=Lleida")
+        print("Response JSON:", resp.json())
+
+        assert resp.status_code == 200
+        data = resp.json()
+        assert isinstance(data, list)
+
+        if len(data) > 0:
+            for offer in data:
+                assert "lleida" in offer["city"].lower()
 
     class TestListHousingOffers:
         def test_list_offers_with_category_filter(self, client, db):
@@ -252,7 +386,6 @@ class TestHousingOfferEndpoints:
 
     def test_list_offers_empty_result(self, client):
         """Should return an empty list when no offers match filters."""
-        # Use a city name that does not exist in test data
         resp = client.get("/offers/?city=NonExistentCity")
         print("Response JSON:", resp.json())
 
@@ -260,7 +393,6 @@ class TestHousingOfferEndpoints:
         data = resp.json()
         assert isinstance(data, list)
         assert len(data) == 0
-
 
     def test_update_offer_as_owner(self, client, user_token, auth_headers, db):
         """Should allow the offer owner to update their own offer."""
@@ -288,6 +420,45 @@ class TestHousingOfferEndpoints:
         assert updated_offer is not None
         assert updated_offer.title == "Updated offer title"
         assert str(updated_offer.user_id) == user_id
+
+    def test_update_offer_new_fields(self, client, user_token, auth_headers, db):
+        """Should allow updating new boolean and optional fields."""
+        user_data = get_payload(user_token)
+        user_id = user_data["sub"]
+
+        category = db.query(HousingCategoryTableModel).first()
+        assert category is not None
+
+        # Create offer
+        create_payload = sample_offer_payload(user_id=user_id, category_id=str(category.id))
+        create_resp = client.post("/offers/", json=create_payload, headers=auth_headers)
+        assert create_resp.status_code == 201
+        offer_id = create_resp.json()["id"]
+
+        # Update with new fields
+        update_payload = {
+            "furnished": True,
+            "utilities_included": True,
+            "internet_included": False,
+            "floor": 5,
+            "distance_from_campus": "2 km",
+            "utilities_cost": 85.00,
+            "contract_type": "annual",
+            "latitude": 41.6200,
+            "longitude": 0.6300,
+        }
+        patch_resp = client.patch(f"/offers/{offer_id}", json=update_payload, headers=auth_headers)
+        print("Patch response JSON:", patch_resp.json())
+
+        assert patch_resp.status_code == 200
+        data = patch_resp.json()
+        assert data["furnished"] is True
+        assert data["utilities_included"] is True
+        assert data["internet_included"] is False
+        assert data["floor"] == 5
+        assert data["distance_from_campus"] == "2 km"
+        assert float(data["utilities_cost"]) == 85.00
+        assert data["contract_type"] == "annual"
 
     def test_update_offer_as_admin(self, client, admin_auth_headers, user_token, db):
         """Should allow an admin to update any user's offer."""
@@ -351,7 +522,6 @@ class TestHousingOfferEndpoints:
 
     def test_update_offer_invalid_payload(self, client, admin_auth_headers, db):
         """Should return 422 when payload contains invalid data."""
-        # Pick an existing offer
         offer = db.query(HousingOfferTableModel).first()
         assert offer is not None
 
@@ -438,4 +608,3 @@ class TestHousingOfferEndpoints:
 
         assert delete_resp.status_code == 404
         assert delete_resp.json()["detail"] == "Offer not found."
-
