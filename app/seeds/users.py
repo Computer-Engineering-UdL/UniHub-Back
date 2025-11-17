@@ -219,6 +219,6 @@ def seed_users(db: Session) -> List[User]:
     print(f"- Admin: {users[0].email} / {settings.DEFAULT_PASSWORD}")
     print(f"- User 1: {users[1].email} / {settings.DEFAULT_PASSWORD}")
     print(f"- User 2: {users[2].email} / {settings.DEFAULT_PASSWORD}")
-    print(f"> Total users added: {len(users)}")
+    print(f"  → {len(users)} users created")
 
     return users
