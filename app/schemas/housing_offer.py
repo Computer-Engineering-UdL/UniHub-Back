@@ -3,10 +3,10 @@ from __future__ import annotations
 import uuid
 from datetime import date, datetime
 from decimal import ROUND_HALF_UP, Decimal
-from typing import TYPE_CHECKING, List, Literal
+from typing import TYPE_CHECKING, Any, List, Literal
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator
+from pydantic import BaseModel, ConfigDict, Field, computed_field, field_validator, model_validator
 
 if TYPE_CHECKING:
     from .file_association import FileAssociationWithFile
@@ -117,6 +117,21 @@ class HousingOfferList(BaseModel):
     base_image: str | None = None  # First photo URL if available
 
     model_config = ConfigDict(from_attributes=True)
+
+    @model_validator(mode="before")
+    @classmethod
+    def extract_base_image(cls, data: Any) -> Any:
+        """Extract the first photo URL from the ORM model."""
+        if hasattr(data, "photos") and data.photos:
+            if hasattr(data, "__dict__"):
+                data_dict = {**data.__dict__}
+            else:
+                data_dict = data
+
+            data_dict["base_image"] = data.photos[0].url if data.photos else None
+            return data_dict
+
+        return data
 
 
 # Detail Schema (For GET with relationships)
