@@ -14,7 +14,13 @@ class UniversityRepository(BaseRepository[University]):
         super().__init__(University, db)
         self.model = self.model_class
 
+    def get_all_simple(self) -> List[University]:
+        stmt = select(University)
+        return list(self.db.scalars(stmt).all())
+    
     def get_all_with_faculties(self) -> List[University]:
         """Retrieve all universities with their faculties loaded."""
         stmt = select(University).options(selectinload(University.faculties))
         return list(self.db.scalars(stmt).all())
+
+

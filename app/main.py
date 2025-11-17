@@ -19,6 +19,7 @@ from app.api.v1.endpoints import (
     interest,
     members,
     messages,
+    university,
     user,
     user_like,
 )
@@ -111,6 +112,7 @@ app.include_router(files.router, prefix=f"{settings.API_VERSION}/files", tags=["
 app.include_router(
     file_association.router, prefix=f"{settings.API_VERSION}/file-associations", tags=["file associations"]
 )
+app.include_router(university.router, prefix=f"{settings.API_VERSION}/universities", tags=["universities"])
 
 
 @app.get("/")
