@@ -43,6 +43,15 @@ class FileAssociation(Base):
         Index("ix_file_association_file", "file_id"),
     )
 
+    @property
+    def url(self) -> str | None:
+        """Get the URL for the associated file if it's public."""
+        if self.file and self.file.is_public:
+            from app.core.config import settings
+
+            return f"{settings.API_VERSION}/files/public/{self.file.id}"
+        return None
+
     def __repr__(self) -> str:
         return "<FileAssociation(id={}, entity_type='{}', entity_id='{}', file_id='{}')>".format(
             self.id, self.entity_type, self.entity_id, self.file_id
