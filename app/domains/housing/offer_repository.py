@@ -120,7 +120,7 @@ class HousingOfferRepository(BaseRepository[HousingOfferTableModel]):
             .offset(skip)
             .limit(limit)
         )
-        return list(self.db.scalars(stmt).all())
+        return list(self.db.scalars(stmt).unique().all())
 
     def update(self, offer_id: uuid.UUID, update_data: dict) -> Optional[HousingOfferTableModel]:
         """Update a housing offer."""
