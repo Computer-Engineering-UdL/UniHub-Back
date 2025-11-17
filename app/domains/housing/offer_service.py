@@ -25,11 +25,17 @@ class HousingOfferService:
     def create_offer(self, offer_in: HousingOfferCreate) -> HousingOfferRead:
         """Create a new housing offer."""
         try:
+            from app.domains.file.file_association_service import FileAssociationService
+
             photo_ids = offer_in.photo_ids
             amenity_codes = offer_in.amenities
             offer_data = offer_in.model_dump(exclude={"amenities", "photo_ids"}, exclude_none=True)
 
-            offer = self.repository.create(offer_data, amenity_codes, photo_ids)
+            file_association_service = FileAssociationService(self.db)
+
+            offer = self.repository.create(
+                offer_data, amenity_codes, photo_ids, file_association_service=file_association_service
+            )
             return HousingOfferRead.model_validate(offer)
         except ValueError as e:
             raise HTTPException(status_code=400, detail=str(e))
