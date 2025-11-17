@@ -2,15 +2,21 @@ from authlib.integrations.starlette_client import OAuth
 from fastapi import APIRouter, Body, Depends
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
+from starlette import status
 from starlette.requests import Request
 from starlette.responses import RedirectResponse
 
+from app.api.v1.endpoints.user import get_user_service
+from app.core import create_access_token
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_oauth
+from app.core.security import create_refresh_token
 from app.core.types import TokenData
+from app.domains import UserService
 from app.domains.auth.auth_service import AuthService
 from app.literals.auth import OAuthProvider
-from app.schemas import LoginRequest, Token
+from app.models import create_payload_from_user
+from app.schemas import LoginRequest, Token, UserRegister
 
 router = APIRouter()
 
@@ -66,3 +72,22 @@ async def auth_callback(
     oauth: OAuth = Depends(get_oauth),
 ):
     return await service.oauth_callback(provider, request, oauth)
+
+@router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
+async def signup(
+    data: UserRegister,
+    user_service: UserService = Depends(get_user_service),
+):
+    # Create user (returns UserRead)
+    user = user_service.register(data)
+
+    # Fetch ORM instance to build correct JWT payload
+    user_orm = user_service.repository.get_by_id(user.id)
+
+    payload = create_payload_from_user(user_orm)
+
+    return Token(
+        access_token=create_access_token(payload),
+        refresh_token=create_refresh_token(payload),
+        token_type="bearer",
+    )

@@ -9,12 +9,14 @@ from starlette import status
 from app.core.security import hash_password, verify_password
 from app.core.utils import extract_constraint_info
 from app.domains.user.user_repository import UserRepository
+from app.literals.users import Role
 from app.schemas.user import (
     UserCreate,
     UserDetail,
     UserPasswordChange,
     UserPublic,
     UserRead,
+    UserRegister,
     UserUpdate,
 )
 
@@ -197,3 +199,33 @@ class UserService:
             )
 
         self.repository.delete(user)
+
+    def register(self, data: UserRegister) -> UserRead:
+        """
+        Public user registration (signup).
+        """
+        # Validate email uniqueness
+        if self.repository.get_by_email(str(data.email)):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Email already registered",
+            )
+
+        # Validate username uniqueness
+        if self.repository.get_by_username(data.username):
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail="Username already taken",
+            )
+
+        # Convert to UserCreate with forced safe fields
+        user_data = UserCreate(
+            **data.model_dump(),
+            role=Role.BASIC,
+            provider="local",
+            is_verified=False,
+        )
+
+        # Reuse existing method (handles IntegrityError)
+        return self.create_user(user_data)
+
