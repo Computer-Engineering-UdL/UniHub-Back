@@ -173,9 +173,11 @@ class UserRegister(BaseModel):
     """Schema used for public user registration."""
 
     username: str = Field(min_length=1, max_length=50)
-    email: EmailStr
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
+    email: EmailStr
+    phone: Optional[str] = Field(None, max_length=20)
+    faculty_id: Optional[uuid.UUID] = None
     password: str = Field(min_length=8, max_length=255)
 
     model_config = ConfigDict(from_attributes=True)
