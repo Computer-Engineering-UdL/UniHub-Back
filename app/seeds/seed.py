@@ -3,10 +3,9 @@
 from sqlalchemy.orm import Session
 
 from app.core import Base, engine
-from app.seeds import seed_housing_data
+from app.seeds.amenities import seed_amenities
 from app.seeds.category import seed_housing_categories
 from app.seeds.channels import seed_channels
-from app.seeds.conversations import seed_conversations
 from app.seeds.interests import seed_interests
 from app.seeds.messages import seed_messages
 from app.seeds.university import seed_universities
@@ -43,11 +42,13 @@ def seed_database(nuke: bool = False):
         seed_housing_categories(db)
         print("- Categories seeded")
 
-        seed_housing_data(db, users)
-        print("- Housing data seeded")
+        seed_amenities(db)
+        print("- Amenities seeded")
+        # seed_housing_data(db, users)
+        # print("- Housing data seeded")
 
-        seed_conversations(db)
-        print("- Conversations seeded")
+        # seed_conversations(db)
+        # print("- Conversations seeded")
 
         db.commit()
         print("\nDatabase seeded successfully!\n")
