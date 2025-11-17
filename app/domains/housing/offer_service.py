@@ -66,7 +66,7 @@ class HousingOfferService:
             skip=skip,
             limit=limit,
         )
-        return [HousingOfferList.model_validate(o) for o in offers]
+        return offers
 
     def list_offers_by_user(
         self,
@@ -76,10 +76,7 @@ class HousingOfferService:
     ) -> List[HousingOfferList]:
         """List all offers by a specific user."""
         offers = self.repository.get_by_user(user_id, skip, limit)
-        return [
-            HousingOfferList.model_validate({**o.__dict__, "base_image": o.photos[0].url if o.photos else None})
-            for o in offers
-        ]
+        return offers
 
     def update_offer(
         self,

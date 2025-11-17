@@ -3,7 +3,6 @@
 from sqlalchemy.orm import Session
 
 from app.core import Base, engine
-from app.seeds import seed_housing_data
 from app.seeds.channels import seed_channels
 from app.seeds.conversations import seed_conversations
 from app.seeds.interests import seed_interests
@@ -39,8 +38,8 @@ def seed_database(nuke: bool = False):
         seed_messages(db, users, channels)
         print("- Messages seeded")
 
-        seed_housing_data(db, users)
-        print("- Housing data seeded")
+        # seed_housing_data(db, users)
+        # print("- Housing data seeded")
 
         seed_conversations(db)
         print("- Conversations seeded")
