@@ -9,7 +9,6 @@ from app.domains.file.file_association_repository import FileAssociationReposito
 from app.domains.file.file_repository import FileRepository
 from app.domains.housing import HousingAmenityRepository, HousingCategoryRepository, HousingOfferRepository
 from app.models import HousingCategoryTableModel, HousingOfferTableModel, User
-from app.schemas import FileAssociationCreate
 
 
 def seed_housing_data(db: Session, users: List[User]) -> None:
@@ -30,11 +29,11 @@ def seed_housing_data(db: Session, users: List[User]) -> None:
     categories = category_repo.get_all()
     if not categories:
         categories_data = [
-            {"id": uuid.uuid4(), "name": "Room"},
-            {"id": uuid.uuid4(), "name": "Flat"},
-            {"id": uuid.uuid4(), "name": "Detached House"},
-            {"id": uuid.uuid4(), "name": "Studio"},
-            {"id": uuid.uuid4(), "name": "Loft"},
+            {"name": "Room"},
+            {"name": "Flat"},
+            {"name": "Detached House"},
+            {"name": "Studio"},
+            {"name": "Loft"},
         ]
         for cat_data in categories_data:
             category = HousingCategoryTableModel(**cat_data)
@@ -448,7 +447,6 @@ def seed_housing_data(db: Session, users: List[User]) -> None:
 
         offer_data = {
             **data,
-            "id": uuid.uuid4(),
             "offer_valid_until": datetime.date(2025, 12, 31),
             "start_date": datetime.date(2025, 10, 17),
             "user_id": user.id,
@@ -460,21 +458,21 @@ def seed_housing_data(db: Session, users: List[User]) -> None:
         offer = offer_repo.create(
             offer_data,
             amenity_codes=amenity_codes,
-            photo_ids=photo_ids,
+            photo_ids=None,
         )
 
         if photo_ids:
             associations = [
-                FileAssociationCreate(
-                    file_id=file_id,
-                    entity_type="housing_offer",
-                    entity_id=offer.id,
-                    order=idx,
-                    category="photo",
-                )
+                {
+                    "file_id": file_id,
+                    "entity_type": "housing_offer",
+                    "entity_id": offer.id,
+                    "order": idx,
+                    "category": "photo",
+                }
                 for idx, file_id in enumerate(photo_ids)
             ]
-            file_assoc_repo.bulk_create([assoc.model_dump() for assoc in associations])
+            file_assoc_repo.bulk_create(associations)
             added_photos += len(photo_ids)
 
         created_offers.append(offer)
@@ -509,7 +507,6 @@ def _process_offer_photos(
             content_type = "image/jpeg" if file_name.lower().endswith((".jpg", ".jpeg")) else "image/png"
 
             file_data = {
-                "id": uuid.uuid4(),
                 "filename": file_name,
                 "content_type": content_type,
                 "file_data": file_content,
