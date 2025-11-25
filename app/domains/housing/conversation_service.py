@@ -6,6 +6,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.domains.housing.conversation_repository import ConversationRepository
+from app.domains.websocket.websocket_service import ws_service
 from app.schemas import (
     ConversationCreate,
     ConversationDetail,
@@ -95,7 +96,7 @@ class ConversationService:
         self.repository.mark_messages_as_read(conversation_id, user_id)
         return ConversationDetail.model_validate(conversation)
 
-    def send_message(
+    async def send_message(
         self,
         conversation_id: uuid.UUID,
         user_id: uuid.UUID,
@@ -110,6 +111,16 @@ class ConversationService:
             )
 
         message_obj = self.repository.send_message(conversation_id, user_id, message.content)
+
+        recipient_id = conversation.user2_id if conversation.user1_id == user_id else conversation.user1_id
+
+        await ws_service.send_message_notification(
+            conversation_id=conversation_id,
+            recipient_id=recipient_id,
+            sender_id=user_id,
+            content=message.content,
+        )
+
         return ConversationMessageRead.model_validate(message_obj)
 
     def get_conversation_messages(

@@ -18,14 +18,14 @@ from app.schemas import MessageAnswer, MessageCreate, MessageRead, MessageUpdate
 router = APIRouter()
 
 
-def get_message_service(db: Session = Depends(get_db)) -> MessageService:
-    """Dependency to inject MessageService."""
+async def get_message_service(db: Session = Depends(get_db)) -> MessageService:
+    """Dependency to inject Messageawait service."""
     return MessageService(db)
 
 
 @router.post("/{channel_id}/messages", response_model=MessageRead)
 @handle_api_errors()
-def send_message(
+async def send_message(
     channel_id: uuid.UUID,
     message: MessageCreate,
     service: MessageService = Depends(get_message_service),
@@ -37,7 +37,8 @@ def send_message(
     """
     message.channel_id = channel_id
     message.user_id = user.id
-    return service.send_message(message, user.role)
+    new_message = await service.send_message(message, user.role)
+    return new_message
 
 
 @router.get("/{channel_id}/messages", response_model=List[MessageRead])
@@ -79,7 +80,7 @@ def fetch_message(
 
 @router.put("/{channel_id}/messages/{message_id}", response_model=MessageRead)
 @handle_api_errors()
-def update_message(
+async def update_message(
     channel_id: uuid.UUID,
     message_id: uuid.UUID,
     message_update: MessageUpdate,
@@ -91,13 +92,13 @@ def update_message(
     """
 
     service.verify_message_in_channel(message_id, channel_id)
-
-    return service.update_message(message_id, message_update)
+    update = await service.update_message(message_id, message_update)
+    return update
 
 
 @router.delete("/{channel_id}/messages/{message_id}", status_code=status.HTTP_204_NO_CONTENT)
 @handle_api_errors()
-def delete_message(
+async def delete_message(
     channel_id: uuid.UUID,
     message_id: uuid.UUID,
     service: MessageService = Depends(get_message_service),
@@ -109,12 +110,12 @@ def delete_message(
 
     service.verify_message_in_channel(message_id, channel_id)
 
-    service.delete_message(message_id)
+    await service.delete_message(message_id)
 
 
 @router.post("/{channel_id}/messages/{message_id}/reply", response_model=MessageRead)
 @handle_api_errors()
-def post_reply(
+async def post_reply(
     channel_id: uuid.UUID,
     message_id: uuid.UUID,
     reply: MessageAnswer,
@@ -133,5 +134,5 @@ def post_reply(
         "channel_id": channel_id,
         "user_id": user.id,
     }
-
-    return service.reply_to_message(message_id, reply_data, user.role)
+    reply = await service.reply_to_message(message_id, reply_data, user.role)
+    return reply

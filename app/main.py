@@ -22,6 +22,7 @@ from app.api.v1.endpoints import (
     university,
     user,
     user_like,
+    websocket,
 )
 from app.core import Base, engine
 from app.core.config import settings
@@ -113,6 +114,7 @@ app.include_router(
     file_association.router, prefix=f"{settings.API_VERSION}/file-associations", tags=["file associations"]
 )
 app.include_router(university.router, prefix=f"{settings.API_VERSION}/universities", tags=["universities"])
+app.include_router(websocket.router, tags=["websocket"])
 
 
 @app.get("/")
