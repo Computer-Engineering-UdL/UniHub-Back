@@ -25,8 +25,8 @@ from app.schemas import (
 router = APIRouter()
 
 
-def get_channel_service(db: Session = Depends(get_db)) -> ChannelService:
-    """Dependency to inject ChannelService."""
+async def get_channel_service(db: Session = Depends(get_db)) -> ChannelService:
+    """Dependency to inject Channelawait service."""
     return ChannelService(db)
 
 
@@ -71,33 +71,33 @@ def fetch_channel(
 
 @router.post("/", response_model=ChannelRead)
 @handle_api_errors()
-def create_channel(
+async def create_channel(
     channel: ChannelCreate,
     service: ChannelService = Depends(get_channel_service),
     user: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """Create a new channel. Site Admin only. Creator becomes channel admin."""
-    return service.create_channel(channel, user.id)
+    return await service.create_channel(channel, user.id)
 
 
 @router.patch("/{channel_id}", response_model=ChannelRead)
 @handle_api_errors()
-def update_channel(
+async def update_channel(
     channel_id: uuid.UUID,
     channel: ChannelUpdate,
     service: ChannelService = Depends(get_channel_service),
     _: ChannelMember = Depends(get_channel_permission(ChannelRole.ADMIN)),
 ):
     """Update a channel. Requires channel admin role."""
-    return service.update_channel(channel_id, channel)
+    return await service.update_channel(channel_id, channel)
 
 
 @router.delete("/{channel_id}", response_model=bool)
 @handle_api_errors()
-def delete_channel(
+async def delete_channel(
     channel_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),
 ):
     """Delete a channel. Requires site admin role."""
-    return service.delete_channel(channel_id)
+    return await service.delete_channel(channel_id)

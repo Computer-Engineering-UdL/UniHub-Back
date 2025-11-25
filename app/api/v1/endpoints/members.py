@@ -20,38 +20,38 @@ from app.schemas import BanCreate, BanRead, MemberRoleUpdate, MembershipRead, Un
 router = APIRouter()
 
 
-def get_channel_service(db: Session = Depends(get_db)) -> ChannelService:
-    """Dependency to inject ChannelService."""
+async def get_channel_service(db: Session = Depends(get_db)) -> ChannelService:
+    """Dependency to inject Channelawait service."""
     return ChannelService(db)
 
 
 @router.post("/{channel_id}/add_member/{member_id}", response_model=MembershipRead)
 @handle_api_errors()
-def add_member(
+async def add_member(
     channel_id: uuid.UUID,
     member_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     _: ChannelMember = Depends(get_channel_permission(ChannelRole.ADMIN)),
 ):
     """Add a member to a channel. Requires channel admin role."""
-    return service.add_member(channel_id, member_id)
+    return await service.add_member(channel_id, member_id)
 
 
 @router.post("/{channel_id}/remove_member/{member_id}", response_model=MembershipRead)
 @handle_api_errors()
-def remove_member(
+async def remove_member(
     channel_id: uuid.UUID,
     member_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     _: ChannelMember = Depends(get_channel_permission(ChannelRole.MODERATOR)),
 ):
     """Remove a member from a channel. Requires moderator role or above."""
-    return service.remove_member(channel_id, member_id)
+    return await service.remove_member(channel_id, member_id)
 
 
 @router.post("/{channel_id}/set_role", response_model=MembershipRead)
 @handle_api_errors()
-def set_member_role(
+async def set_member_role(
     channel_id: uuid.UUID,
     role_update: MemberRoleUpdate,
     service: ChannelService = Depends(get_channel_service),
@@ -61,34 +61,34 @@ def set_member_role(
     Set a member's role in a channel (e.g., promote to Moderator).
     Requires site admin role.
     """
-    return service.update_member_role(channel_id, role_update.user_id, role_update.new_role)
+    return await service.update_member_role(channel_id, role_update.user_id, role_update.new_role)
 
 
 @router.post("/{channel_id}/join", response_model=MembershipRead)
 @handle_api_errors()
-def join_channel(
+async def join_channel(
     channel_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     user: TokenData = Depends(get_current_user),
 ):
     """Join a channel. Requires registered user."""
-    return service.join_channel(channel_id, user.id, user.role)
+    return await service.join_channel(channel_id, user.id, user.role)
 
 
 @router.post("/{channel_id}/leave", status_code=status.HTTP_204_NO_CONTENT)
 @handle_api_errors()
-def leave_channel(
+async def leave_channel(
     channel_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     user: TokenData = Depends(get_current_user),
 ):
     """Leave a channel. Requires registered user."""
-    service.leave_channel(channel_id, user.id)
+    await service.leave_channel(channel_id, user.id)
 
 
 @router.post("/{channel_id}/ban", response_model=BanRead)
 @handle_api_errors()
-def ban_member(
+async def ban_member(
     channel_id: uuid.UUID,
     ban_req: BanCreate,
     service: ChannelService = Depends(get_channel_service),
@@ -98,7 +98,7 @@ def ban_member(
     """Ban a member from a channel. Requires moderator role or above."""
     duration = datetime.timedelta(days=ban_req.duration_days)
 
-    return service.ban_member(
+    return await service.ban_member(
         channel_id=channel_id,
         user_id=ban_req.user_id,
         motive=ban_req.motive,
@@ -109,7 +109,7 @@ def ban_member(
 
 @router.post("/{channel_id}/unban", response_model=UnbanRead)
 @handle_api_errors()
-def unban_member(
+async def unban_member(
     channel_id: uuid.UUID,
     unban_req: UnbanCreate,
     service: ChannelService = Depends(get_channel_service),
@@ -117,7 +117,7 @@ def unban_member(
     _: ChannelMember = Depends(get_channel_permission(ChannelRole.MODERATOR)),
 ):
     """Unban a member from a channel. Requires moderator role or above."""
-    return service.unban_member(
+    return await service.unban_member(
         channel_id=channel_id,
         user_id=unban_req.user_id,
         motive=unban_req.motive,
@@ -126,14 +126,14 @@ def unban_member(
 
 
 @router.get("/{channel_id}/member/{user_id}/", response_model=MembershipRead)
-def get_member(
+async def get_member(
     channel_id: uuid.UUID,
     user_id: uuid.UUID,
     service: ChannelService = Depends(get_channel_service),
     _: ChannelMember = Depends(is_channel_member),
 ):
     """Get a specific member's info. Must be a channel member."""
-    return service.get_member(channel_id, user_id)
+    return await service.get_member(channel_id, user_id)
 
 
 @router.get("/{channel_id}/members", response_model=List[MembershipRead])

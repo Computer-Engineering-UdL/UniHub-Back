@@ -21,14 +21,14 @@ from app.schemas import (
 router = APIRouter()
 
 
-def get_conversation_service(db: Session = Depends(get_db)) -> ConversationService:
+async def get_conversation_service(db: Session = Depends(get_db)) -> ConversationService:
     """Dependency to inject ConversationService."""
     return ConversationService(db)
 
 
 @router.post("/", response_model=ConversationRead, status_code=status.HTTP_201_CREATED)
 @handle_api_errors()
-def create_conversation(
+async def create_conversation(
     conversation: ConversationCreate,
     service: ConversationService = Depends(get_conversation_service),
     user: TokenData = Depends(get_current_user),
@@ -42,7 +42,7 @@ def create_conversation(
 
 @router.get("/", response_model=List[ConversationRead])
 @handle_api_errors()
-def get_my_conversations(
+async def get_my_conversations(
     skip: int = Query(0, ge=0),
     limit: int = Query(50, ge=1, le=100),
     service: ConversationService = Depends(get_conversation_service),
@@ -57,7 +57,7 @@ def get_my_conversations(
 
 @router.get("/{conversation_id}", response_model=ConversationDetail)
 @handle_api_errors()
-def get_conversation(
+async def get_conversation(
     conversation_id: uuid.UUID,
     service: ConversationService = Depends(get_conversation_service),
     user: TokenData = Depends(get_current_user),
@@ -71,7 +71,7 @@ def get_conversation(
 
 @router.post("/{conversation_id}/messages", response_model=ConversationMessageRead)
 @handle_api_errors()
-def send_message(
+async def send_message(
     conversation_id: uuid.UUID,
     message: ConversationMessageCreate,
     service: ConversationService = Depends(get_conversation_service),
@@ -81,12 +81,12 @@ def send_message(
     Send a message in a conversation.
     User must be a participant.
     """
-    return service.send_message(conversation_id, user.id, message)
+    return await service.send_message(conversation_id, user.id, message)
 
 
 @router.get("/{conversation_id}/messages", response_model=List[ConversationMessageRead])
 @handle_api_errors()
-def get_conversation_messages(
+async def get_conversation_messages(
     conversation_id: uuid.UUID,
     skip: int = Query(0, ge=0),
     limit: int = Query(100, ge=1, le=100),
@@ -102,7 +102,7 @@ def get_conversation_messages(
 
 @router.post("/{conversation_id}/mark-read", status_code=status.HTTP_204_NO_CONTENT)
 @handle_api_errors()
-def mark_conversation_read(
+async def mark_conversation_read(
     conversation_id: uuid.UUID,
     service: ConversationService = Depends(get_conversation_service),
     user: TokenData = Depends(get_current_user),
@@ -116,7 +116,7 @@ def mark_conversation_read(
 
 @router.delete("/{conversation_id}", status_code=status.HTTP_204_NO_CONTENT)
 @handle_api_errors()
-def delete_conversation(
+async def delete_conversation(
     conversation_id: uuid.UUID,
     service: ConversationService = Depends(get_conversation_service),
     user: TokenData = Depends(get_current_user),

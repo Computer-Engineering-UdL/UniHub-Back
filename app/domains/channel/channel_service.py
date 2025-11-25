@@ -8,6 +8,7 @@ from sqlalchemy.orm import Session
 from starlette import status
 
 from app.domains.channel import ChannelRepository
+from app.domains.websocket.websocket_service import ws_service
 from app.literals.channels import ChannelRole
 from app.literals.users import ROLE_HIERARCHY, Role
 from app.schemas.channel import (
@@ -29,15 +30,17 @@ class ChannelService:
         self.db = db
         self.repository = ChannelRepository(db)
 
-    def create_channel(self, channel_in: ChannelCreate, creator_id: uuid.UUID) -> ChannelRead:
-        """
-        Create a new channel and add creator as admin.
-        """
+    async def create_channel(self, channel_in: ChannelCreate, creator_id: uuid.UUID) -> ChannelRead:
+        """Create a new channel and add creator as admin."""
         try:
             channel_data = channel_in.model_dump()
             channel = self.repository.create(channel_data)
-
             self.repository.add_member(channel.id, creator_id, role=ChannelRole.ADMIN)
+
+            await ws_service.send_channel_created(
+                channel_id=channel.id,
+                channel_name=channel.name,
+            )
 
             return ChannelRead.model_validate(channel)
         except IntegrityError:
@@ -63,10 +66,7 @@ class ChannelService:
         skip: int = 0,
         limit: int = 100,
     ) -> List[ChannelReadWithCount]:
-        """
-        List all channels visible to the user.
-        Admins see all channels, others see based on permission level.
-        """
+        """List all channels visible to the user."""
         if is_admin:
             channels = self.repository.get_all(skip=skip, limit=limit)
         else:
@@ -75,7 +75,7 @@ class ChannelService:
 
         return [ChannelReadWithCount.model_validate(ch) for ch in channels]
 
-    def update_channel(self, channel_id: uuid.UUID, channel_in: ChannelUpdate) -> ChannelRead:
+    async def update_channel(self, channel_id: uuid.UUID, channel_in: ChannelUpdate) -> ChannelRead:
         """Update a channel."""
         update_data = channel_in.model_dump(exclude_unset=True)
         channel = self.repository.update(channel_id, update_data)
@@ -86,9 +86,14 @@ class ChannelService:
                 detail="Channel not found",
             )
 
+        await ws_service.send_channel_updated(
+            channel_id=channel_id,
+            updated_fields=update_data,
+        )
+
         return ChannelRead.model_validate(channel)
 
-    def delete_channel(self, channel_id: uuid.UUID) -> bool:
+    async def delete_channel(self, channel_id: uuid.UUID) -> bool:
         """Delete a channel."""
         channel = self.repository.get_by_id(channel_id)
         if not channel:
@@ -97,10 +102,12 @@ class ChannelService:
                 detail="Channel not found",
             )
 
+        await ws_service.send_channel_deleted(channel_id=channel_id)
+
         self.repository.delete(channel)
         return True
 
-    def add_member(
+    async def add_member(
         self, channel_id: uuid.UUID, user_id: uuid.UUID, role: ChannelRole = ChannelRole.USER
     ) -> MembershipRead:
         """Add a member to a channel."""
@@ -110,9 +117,15 @@ class ChannelService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Channel not found",
             )
+
+        await ws_service.send_member_joined(
+            channel_id=channel_id,
+            user_id=user_id,
+        )
+
         return MembershipRead.model_validate(membership)
 
-    def remove_member(self, channel_id: uuid.UUID, user_id: uuid.UUID) -> MembershipRead:
+    async def remove_member(self, channel_id: uuid.UUID, user_id: uuid.UUID) -> MembershipRead:
         """Remove a member from a channel."""
         membership = self.repository.remove_member(channel_id, user_id)
         if not membership:
@@ -120,9 +133,17 @@ class ChannelService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Member not found",
             )
+
+        await ws_service.send_user_kicked(
+            channel_id=channel_id,
+            user_id=user_id,
+        )
+
         return MembershipRead.model_validate(membership)
 
-    def update_member_role(self, channel_id: uuid.UUID, user_id: uuid.UUID, new_role: ChannelRole) -> MembershipRead:
+    async def update_member_role(
+        self, channel_id: uuid.UUID, user_id: uuid.UUID, new_role: ChannelRole
+    ) -> MembershipRead:
         """Update a member's role in a channel."""
         membership = self.repository.update_member_role(channel_id, user_id, new_role)
         if not membership:
@@ -130,6 +151,13 @@ class ChannelService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found in this channel",
             )
+
+        await ws_service.send_member_role_updated(
+            channel_id=channel_id,
+            user_id=user_id,
+            new_role=new_role.value,
+        )
+
         return MembershipRead.model_validate(membership)
 
     def get_member(self, channel_id: uuid.UUID, user_id: uuid.UUID) -> MembershipRead:
@@ -152,12 +180,8 @@ class ChannelService:
             )
         return [MembershipRead.model_validate(m) for m in members]
 
-    def join_channel(self, channel_id: uuid.UUID, user_id: uuid.UUID, user_role: Role) -> MembershipRead:
-        """
-        Join a channel as a user.
-        Validates permissions and ban status.
-        """
-
+    async def join_channel(self, channel_id: uuid.UUID, user_id: uuid.UUID, user_role: Role) -> MembershipRead:
+        """Join a channel as a user."""
         channel = self.repository.get_by_id(channel_id)
         if not channel:
             raise HTTPException(
@@ -184,9 +208,15 @@ class ChannelService:
             return MembershipRead.model_validate(existing)
 
         membership = self.repository.add_member(channel_id, user_id, ChannelRole.USER)
+
+        await ws_service.send_member_joined(
+            channel_id=channel_id,
+            user_id=user_id,
+        )
+
         return MembershipRead.model_validate(membership)
 
-    def leave_channel(self, channel_id: uuid.UUID, user_id: uuid.UUID) -> None:
+    async def leave_channel(self, channel_id: uuid.UUID, user_id: uuid.UUID) -> None:
         """Leave a channel."""
         membership = self.repository.remove_member(channel_id, user_id)
         if not membership:
@@ -195,7 +225,12 @@ class ChannelService:
                 detail="You are not a member of this channel",
             )
 
-    def ban_member(
+        await ws_service.send_member_left(
+            channel_id=channel_id,
+            user_id=user_id,
+        )
+
+    async def ban_member(
         self, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, duration: datetime.timedelta, banned_by: uuid.UUID
     ) -> BanRead:
         """Ban a member from a channel."""
@@ -213,9 +248,17 @@ class ChannelService:
                 detail="Channel or member not found",
             )
 
+        await ws_service.send_user_banned(
+            channel_id=channel_id,
+            user_id=user_id,
+            motive=motive,
+        )
+
         return BanRead.model_validate(ban)
 
-    def unban_member(self, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, unbanned_by: uuid.UUID) -> UnbanRead:
+    async def unban_member(
+        self, channel_id: uuid.UUID, user_id: uuid.UUID, motive: str, unbanned_by: uuid.UUID
+    ) -> UnbanRead:
         """Unban a member from a channel."""
         unban = self.repository.unban_member(
             channel_id=channel_id,
@@ -229,6 +272,12 @@ class ChannelService:
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="Channel not found",
             )
+
+        await ws_service.send_user_unbanned(
+            channel_id=channel_id,
+            user_id=user_id,
+            motive=motive,
+        )
 
         return UnbanRead.model_validate(unban)
 
