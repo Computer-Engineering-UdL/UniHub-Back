@@ -13,6 +13,7 @@ from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.conversation import router as conversation_router
 from app.api.v1.endpoints.file_association import router as file_association_router
 from app.api.v1.endpoints.files import router as file_router
+from app.api.v1.endpoints.housing_category import router as category_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.members import router as members_router
@@ -154,6 +155,13 @@ def university_service(db):
 
     return UniversityService(db)
 
+@pytest.fixture
+def category_service(db):
+    """Create CategoryService instance for tests."""
+    from app.domains.housing.category_service import HousingCategoryService
+
+    return HousingCategoryService(db)
+
 
 @pytest.fixture
 def user_repository(db):
@@ -281,6 +289,7 @@ def app(db):
     app.include_router(file_router, prefix="/files")
     app.include_router(file_association_router, prefix="/file-associations")
     app.include_router(websocket_router)
+    app.include_router(category_router, prefix = "/categories")
 
     def override_get_db():
         yield db

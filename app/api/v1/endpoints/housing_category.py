@@ -16,10 +16,7 @@ from app.schemas import (
     HousingCategoryUpdate,
 )
 
-router = APIRouter(
-    prefix="/categories",
-    tags=["housing categories"],
-)
+router = APIRouter()
 
 
 def get_category_service(db: Session = Depends(get_db)) -> HousingCategoryService:
