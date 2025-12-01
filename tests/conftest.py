@@ -6,7 +6,7 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
@@ -55,9 +55,8 @@ def seed_database_test(db: Session):
 
 @pytest.fixture(scope="session")
 def engine():
-    """Create a temporary SQLite database engine for the entire test session."""
+    """Create a SQLite engine for the test session and seed database once."""
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
-
     try:
         _engine = create_engine(
             f"sqlite:///{db_path}",
@@ -72,19 +71,15 @@ def engine():
 
         Base.metadata.create_all(bind=_engine)
 
-        SessionLocal = sessionmaker(bind=_engine)
-        db_session = SessionLocal()
-
+        # Seed database ONCE per test session
+        db_session = Session(bind=_engine)
         seed_database_test(db_session)
-
         db_session.commit()
-
         db_session.close()
 
         yield _engine
 
         _engine.dispose()
-
     finally:
         try:
             os.close(db_fd)
@@ -100,20 +95,34 @@ def engine():
 
 
 @pytest.fixture(scope='function')
-def db(engine):
+def db(request, engine):
+    """
+    Provide a SQLAlchemy session per test with full isolation.
+
+    Features:
+    - Starts a transaction and nested SAVEPOINT for rollback.
+    - By default, uses the session-level seeded database.
+    - If the test is marked with @pytest.mark.no_seed:
+        - optionally clean relevant tables for a fresh empty DB.
+    """
     connection = engine.connect()
     transaction = connection.begin()
-
     session = Session(bind=connection)
 
-    # nested transaction (SAVEPOINT)
+    # Nested transaction for test isolation
     nested = connection.begin_nested()
-
     @event.listens_for(session, "after_transaction_end")
     def restart_savepoint(sess, trans):
         nonlocal nested
         if trans.nested and not trans._parent.nested:
             nested = connection.begin_nested()
+
+    # Check marker to skip seed (i.e., empty DB for this test)
+    if request.node.get_closest_marker("no_seed"):
+        # nested rollback is enough since seed is session-level
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
 
     yield session
 
