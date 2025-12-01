@@ -5,7 +5,6 @@ from sqlalchemy.exc import IntegrityError
 
 from app.models.housing_category import HousingCategoryTableModel
 from app.schemas.housing_category import HousingCategoryCreate, HousingCategoryRead
-from tests.conftest import housing_category_repository
 
 
 class TestHousingCategoryRepository:

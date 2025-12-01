@@ -99,21 +99,28 @@ def engine():
                     time.sleep(0.1)
 
 
-@pytest.fixture(scope="function")
+@pytest.fixture(scope='function')
 def db(engine):
-    """
-    Create a new database session for a test, wrapped in a transaction.
-    The transaction is rolled back after the test completes.
-    """
     connection = engine.connect()
     transaction = connection.begin()
-    db_session = Session(bind=connection)
 
-    yield db_session
+    session = Session(bind=connection)
 
+    # nested transaction (SAVEPOINT)
+    nested = connection.begin_nested()
+
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(sess, trans):
+        nonlocal nested
+        if trans.nested and not trans._parent.nested:
+            nested = connection.begin_nested()
+
+    yield session
+
+    session.close()
     transaction.rollback()
-    db_session.close()
     connection.close()
+
 
 
 @pytest.fixture
@@ -280,9 +287,6 @@ def app(db):
     app.include_router(user_router, prefix="/users")
     app.include_router(auth_router, prefix="/auth")
     app.include_router(interest_router, prefix="/interest")
-    app.include_router(channel_router, prefix="/channels")
-    app.include_router(members_router, prefix="/channels")
-    app.include_router(messages_router, prefix="/channels")
     app.include_router(housing_offer_router, prefix="/offers")
     app.include_router(conversation_router, prefix="/conversations")
     app.include_router(user_like_router, prefix="/user-likes")
@@ -290,6 +294,8 @@ def app(db):
     app.include_router(file_association_router, prefix="/file-associations")
     app.include_router(websocket_router)
     app.include_router(category_router, prefix = "/categories")
+    for router in (channel_router, members_router, messages_router):
+        app.include_router(router, prefix="/channels")
 
     def override_get_db():
         yield db
@@ -323,42 +329,35 @@ async def setup_valkey():
 
     await valkey_client.disconnect()
 
-
 @pytest.fixture
-def admin_token(client):
-    """Get admin access token."""
-    response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
-    return response.json()["access_token"]
-
-
-@pytest.fixture
-def seller_token(client):
-    """Get seller user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def get_token(client):
+    def _get_token(username):
+        response = client.post(
+            "/auth/login",
+            data={"username": username, "password": settings.DEFAULT_PASSWORD},
+        )
+        return response.json()["access_token"]
+    return _get_token
 
 
 @pytest.fixture
-def user_token(client):
-    """Get regular user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "basic_user", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def admin_token(get_token):
+    return get_token("admin")
 
 
 @pytest.fixture
-def user2_token(client):
-    """Get second regular user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def seller_token(get_token):
+    return get_token("jane_smith")
+
+
+@pytest.fixture
+def user_token(get_token):
+    return get_token("basic_user")
+
+
+@pytest.fixture
+def user2_token(get_token):
+    return get_token("jane_smith")
 
 
 @pytest.fixture(scope="session", autouse=True)
