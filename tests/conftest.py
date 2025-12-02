@@ -11,6 +11,7 @@ from sqlalchemy.orm import Session
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.conversation import router as conversation_router
+from app.api.v1.endpoints.dashboard import router as dashboard_router
 from app.api.v1.endpoints.file_association import router as file_association_router
 from app.api.v1.endpoints.files import router as file_router
 from app.api.v1.endpoints.housing_category import router as category_router
@@ -94,7 +95,7 @@ def engine():
                     time.sleep(0.1)
 
 
-@pytest.fixture(scope='function')
+@pytest.fixture(scope="function")
 def db(request, engine):
     """
     Provide a SQLAlchemy session per test with full isolation.
@@ -111,6 +112,7 @@ def db(request, engine):
 
     # Nested transaction for test isolation
     nested = connection.begin_nested()
+
     @event.listens_for(session, "after_transaction_end")
     def restart_savepoint(sess, trans):
         nonlocal nested
@@ -129,7 +131,6 @@ def db(request, engine):
     session.close()
     transaction.rollback()
     connection.close()
-
 
 
 @pytest.fixture
@@ -170,6 +171,7 @@ def university_service(db):
     from app.domains.university.university_service import UniversityService
 
     return UniversityService(db)
+
 
 @pytest.fixture
 def category_service(db):
@@ -302,7 +304,8 @@ def app(db):
     app.include_router(file_router, prefix="/files")
     app.include_router(file_association_router, prefix="/file-associations")
     app.include_router(websocket_router)
-    app.include_router(category_router, prefix = "/categories")
+    app.include_router(category_router, prefix="/categories")
+    app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
@@ -338,6 +341,7 @@ async def setup_valkey():
 
     await valkey_client.disconnect()
 
+
 @pytest.fixture
 def get_token(client):
     def _get_token(username):
@@ -346,6 +350,7 @@ def get_token(client):
             data={"username": username, "password": settings.DEFAULT_PASSWORD},
         )
         return response.json()["access_token"]
+
     return _get_token
 
 
