@@ -2,7 +2,6 @@ import json
 from typing import Any, Optional
 
 import redis.asyncio as redis
-from pydantic import BaseModel
 
 from app.core.config import settings
 

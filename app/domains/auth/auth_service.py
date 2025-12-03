@@ -10,7 +10,7 @@ from starlette.requests import Request
 
 from app.core.config import settings
 from app.core.security import create_access_token, create_refresh_token, verify_password
-from app.core.valkey import ValkeyClient, valkey_client
+from app.core.valkey import valkey_client
 from app.domains import UserRepository
 from app.literals.auth import OAuthProvider
 from app.models import create_payload_from_user
