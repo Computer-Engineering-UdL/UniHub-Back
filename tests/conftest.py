@@ -6,13 +6,15 @@ import pytest
 from fastapi import FastAPI
 from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
-from sqlalchemy.orm import Session, sessionmaker
+from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
 from app.api.v1.endpoints.conversation import router as conversation_router
+from app.api.v1.endpoints.dashboard import router as dashboard_router
 from app.api.v1.endpoints.file_association import router as file_association_router
 from app.api.v1.endpoints.files import router as file_router
+from app.api.v1.endpoints.housing_category import router as category_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.members import router as members_router
@@ -54,9 +56,8 @@ def seed_database_test(db: Session):
 
 @pytest.fixture(scope="session")
 def engine():
-    """Create a temporary SQLite database engine for the entire test session."""
+    """Create a SQLite engine for the test session and seed database once."""
     db_fd, db_path = tempfile.mkstemp(suffix=".db")
-
     try:
         _engine = create_engine(
             f"sqlite:///{db_path}",
@@ -71,19 +72,15 @@ def engine():
 
         Base.metadata.create_all(bind=_engine)
 
-        SessionLocal = sessionmaker(bind=_engine)
-        db_session = SessionLocal()
-
+        # Seed database ONCE per test session
+        db_session = Session(bind=_engine)
         seed_database_test(db_session)
-
         db_session.commit()
-
         db_session.close()
 
         yield _engine
 
         _engine.dispose()
-
     finally:
         try:
             os.close(db_fd)
@@ -99,19 +96,40 @@ def engine():
 
 
 @pytest.fixture(scope="function")
-def db(engine):
+def db(request, engine):
     """
-    Create a new database session for a test, wrapped in a transaction.
-    The transaction is rolled back after the test completes.
+    Provide a SQLAlchemy session per test with full isolation.
+
+    Features:
+    - Starts a transaction and nested SAVEPOINT for rollback.
+    - By default, uses the session-level seeded database.
+    - If the test is marked with @pytest.mark.no_seed:
+        - optionally clean relevant tables for a fresh empty DB.
     """
     connection = engine.connect()
     transaction = connection.begin()
-    db_session = Session(bind=connection)
+    session = Session(bind=connection)
 
-    yield db_session
+    # Nested transaction for test isolation
+    nested = connection.begin_nested()
 
+    @event.listens_for(session, "after_transaction_end")
+    def restart_savepoint(sess, trans):
+        nonlocal nested
+        if trans.nested and not trans._parent.nested:
+            nested = connection.begin_nested()
+
+    # Check marker to skip seed (i.e., empty DB for this test)
+    if request.node.get_closest_marker("no_seed"):
+        # nested rollback is enough since seed is session-level
+        for table in reversed(Base.metadata.sorted_tables):
+            session.execute(table.delete())
+        session.commit()
+
+    yield session
+
+    session.close()
     transaction.rollback()
-    db_session.close()
     connection.close()
 
 
@@ -153,6 +171,14 @@ def university_service(db):
     from app.domains.university.university_service import UniversityService
 
     return UniversityService(db)
+
+
+@pytest.fixture
+def category_service(db):
+    """Create CategoryService instance for tests."""
+    from app.domains.housing.category_service import HousingCategoryService
+
+    return HousingCategoryService(db)
 
 
 @pytest.fixture
@@ -252,10 +278,12 @@ def university_repository(db):
 
 
 @pytest.fixture
-def auth_headers(client, db, auth_service):
+async def auth_headers(client, db, auth_service):
     """Generate authentication headers for basic_user."""
     user = db.query(User).filter_by(username="basic_user").first()
-    token = auth_service.authenticate_user(LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
+    token = await auth_service.authenticate_user(
+        LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD)
+    )
     return {"Authorization": f"Bearer {token.access_token}"}
 
 
@@ -272,15 +300,16 @@ def app(db):
     app.include_router(user_router, prefix="/users")
     app.include_router(auth_router, prefix="/auth")
     app.include_router(interest_router, prefix="/interest")
-    app.include_router(channel_router, prefix="/channels")
-    app.include_router(members_router, prefix="/channels")
-    app.include_router(messages_router, prefix="/channels")
     app.include_router(housing_offer_router, prefix="/offers")
     app.include_router(conversation_router, prefix="/conversations")
     app.include_router(user_like_router, prefix="/user-likes")
     app.include_router(file_router, prefix="/files")
     app.include_router(file_association_router, prefix="/file-associations")
     app.include_router(websocket_router)
+    app.include_router(category_router, prefix="/categories")
+    app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
+    for router in (channel_router, members_router, messages_router):
+        app.include_router(router, prefix="/channels")
 
     def override_get_db():
         yield db
@@ -316,40 +345,35 @@ async def setup_valkey():
 
 
 @pytest.fixture
-def admin_token(client):
-    """Get admin access token."""
-    response = client.post("/auth/login", data={"username": "admin", "password": settings.DEFAULT_PASSWORD})
-    return response.json()["access_token"]
+def get_token(client):
+    def _get_token(username):
+        response = client.post(
+            "/auth/login",
+            data={"username": username, "password": settings.DEFAULT_PASSWORD},
+        )
+        return response.json()["access_token"]
+
+    return _get_token
 
 
 @pytest.fixture
-def seller_token(client):
-    """Get seller user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def admin_token(get_token):
+    return get_token("admin")
 
 
 @pytest.fixture
-def user_token(client):
-    """Get regular user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "basic_user", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def seller_token(get_token):
+    return get_token("jane_smith")
 
 
 @pytest.fixture
-def user2_token(client):
-    """Get second regular user access token."""
-    response = client.post(
-        "/auth/login",
-        data={"username": "jane_smith", "password": settings.DEFAULT_PASSWORD},
-    )
-    return response.json()["access_token"]
+def user_token(get_token):
+    return get_token("basic_user")
+
+
+@pytest.fixture
+def user2_token(get_token):
+    return get_token("jane_smith")
 
 
 @pytest.fixture(scope="session", autouse=True)

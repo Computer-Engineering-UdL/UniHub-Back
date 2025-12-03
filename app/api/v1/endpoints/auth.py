@@ -9,7 +9,7 @@ from starlette.responses import RedirectResponse
 from app.api.v1.endpoints.user import get_user_service
 from app.core import create_access_token
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_oauth
+from app.core.dependencies import get_current_user, get_oauth, oauth2_scheme
 from app.core.security import create_refresh_token
 from app.core.types import TokenData
 from app.domains import UserService
@@ -36,7 +36,7 @@ async def login(
     Form data expects 'username' and 'password' fields.
     """
     login_request = LoginRequest(username=form_data.username, password=form_data.password)
-    return service.authenticate_user(login_request)
+    return await service.authenticate_user(login_request)
 
 
 @router.post("/refresh", response_model=Token)
@@ -44,7 +44,7 @@ async def refresh(
     refresh_token: str = Body(..., embed=True),
     service: AuthService = Depends(get_auth_service),
 ):
-    return service.refresh_token(refresh_token)
+    return await service.refresh_token(refresh_token)
 
 
 @router.get("/me", response_model=TokenData)
@@ -52,26 +52,19 @@ def get_me(current_user: TokenData = Depends(get_current_user)):
     """Get current user info"""
     return current_user
 
-
-@router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)
-async def login_oauth(
-    provider: OAuthProvider,
-    request: Request,
-    oauth: OAuth = Depends(get_oauth),
+@router.get("/logout", status_code=status.HTTP_205_RESET_CONTENT)
+async def logout(
+        auth_service: AuthService = Depends(get_auth_service),
+        token: str = Depends(oauth2_scheme)
 ):
-    provider_str = provider.value
-    redirect_uri = request.url_for("auth_callback", provider=provider_str)
-    return await oauth.create_client(provider_str).authorize_redirect(request, redirect_uri)
+    await auth_service.invalidate_token(token)
 
-
-@router.get("/{provider}/callback", response_model=Token)
-async def auth_callback(
-    provider: OAuthProvider,
-    request: Request,
-    service: AuthService = Depends(get_auth_service),
-    oauth: OAuth = Depends(get_oauth),
+@router.get("/logout_all", status_code=status.HTTP_205_RESET_CONTENT)
+async def logout_all(
+        auth_service: AuthService = Depends(get_auth_service),
+        token: str = Depends(oauth2_scheme)
 ):
-    return await service.oauth_callback(provider, request, oauth)
+    await auth_service.invalidate_tokens(token)
 
 @router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def signup(
@@ -91,3 +84,27 @@ async def signup(
         refresh_token=create_refresh_token(payload),
         token_type="bearer",
     )
+
+
+####################################################
+# Those two should be the last methods on the file #
+####################################################
+
+@router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)
+async def login_oauth(
+    provider: OAuthProvider,
+    request: Request,
+    oauth: OAuth = Depends(get_oauth),
+):
+    provider_str = provider.value
+    redirect_uri = request.url_for("auth_callback", provider=provider_str)
+    return await oauth.create_client(provider_str).authorize_redirect(request, redirect_uri)
+
+@router.get("/{provider}/callback", response_model=Token)
+async def auth_callback(
+    provider: OAuthProvider,
+    request: Request,
+    service: AuthService = Depends(get_auth_service),
+    oauth: OAuth = Depends(get_oauth),
+):
+    return await service.oauth_callback(provider, request, oauth)

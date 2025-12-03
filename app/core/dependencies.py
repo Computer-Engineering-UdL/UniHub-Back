@@ -18,6 +18,7 @@ from app.literals.users import ROLE_HIERARCHY, Role
 from .config import settings
 from .rate_limiter import CooldownManager, RateLimiter, RateLimitStrategy
 from .types import TokenData
+from .valkey import valkey_client
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
 
@@ -48,7 +49,7 @@ def get_oauth() -> OAuth:
     return oauth
 
 
-def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
+async def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
     """Validate JWT token and return current user"""
 
     try:
@@ -63,6 +64,11 @@ def get_current_user(token: str = Depends(oauth2_scheme)) -> TokenData:
         raise HTTPException(
             status_code=status.HTTP_401_UNAUTHORIZED,
             detail="Could not validate credentials",
+        )
+    if not await valkey_client.has(str(user_id)):
+        raise HTTPException(
+            status_code=status.HTTP_401_UNAUTHORIZED,
+            detail="Invalid or expired token",
         )
     return token_data
 

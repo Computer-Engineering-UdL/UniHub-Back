@@ -11,6 +11,7 @@ from app.api.v1.endpoints import (
     auth,
     channel,
     conversation,
+    dashboard,
     file_association,
     files,
     housing_amenity,
@@ -90,6 +91,8 @@ app.include_router(members.router, prefix=f"{settings.API_VERSION}/channel", tag
 app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channel", tags=["channel messages"])
 
 app.include_router(conversation.router, prefix=f"{settings.API_VERSION}/conversation", tags=["conversation"])
+
+app.include_router(dashboard.router, prefix=f"{settings.API_VERSION}/dashboard", tags=["dashboard"])
 
 app.include_router(
     housing_offer.router,

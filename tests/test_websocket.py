@@ -1,4 +1,3 @@
-import asyncio
 import uuid
 
 import pytest
@@ -36,12 +35,12 @@ def test_websocket_connect_invalid_token(client):
             websocket.receive_json()
 
 
-def test_websocket_receive_notification(client, user_token, db):
+async def test_websocket_receive_notification(client, user_token, db):
     """
     Test that the WebSocket receives a message published to Redis via ws_service.
     """
 
-    payload = verify_token(user_token)
+    payload = await verify_token(user_token)
     user_id = uuid.UUID(payload.get("sub"))
 
     with client.websocket_connect(f"/ws?token={user_token}") as websocket:
@@ -52,7 +51,7 @@ def test_websocket_receive_notification(client, user_token, db):
                 user_id=user_id, title=notification_data["title"], message=notification_data["message"]
             )
 
-        asyncio.get_event_loop().run_until_complete(send_notif())
+        await send_notif()
 
         data = websocket.receive_json()
 
@@ -61,13 +60,13 @@ def test_websocket_receive_notification(client, user_token, db):
         assert data["data"]["message"] == "Hello World"
 
 
-def test_websocket_channel_subscription(client, user_token, db):
+async def test_websocket_channel_subscription(client, user_token, db):
     """
     Test that the user automatically subscribes to channels they are a member of.
     Uses seeded data.
     """
 
-    payload = verify_token(user_token)
+    payload = await verify_token(user_token)
     user_id = uuid.UUID(payload.get("sub"))
 
     member_record = db.query(ChannelMember).filter(ChannelMember.user_id == user_id).first()
@@ -85,7 +84,7 @@ def test_websocket_channel_subscription(client, user_token, db):
                 channel_id=channel_id, message_id=msg_id, user_id=user_id, content=content, username="tester"
             )
 
-        asyncio.get_event_loop().run_until_complete(send_channel_msg())
+        await send_channel_msg()
 
         data = websocket.receive_json()
 
@@ -94,13 +93,13 @@ def test_websocket_channel_subscription(client, user_token, db):
         assert data["data"]["channel_id"] == str(channel_id)
 
 
-def test_websocket_typing_indicator(client, user_token, db):
+async def test_websocket_typing_indicator(client, user_token, db):
     """
     Test sending a typing event from the client and receiving broadcast.
     Uses seeded data.
     """
 
-    payload = verify_token(user_token)
+    payload = await verify_token(user_token)
     user_id = uuid.UUID(payload.get("sub"))
 
     member_record = db.query(ChannelMember).filter(ChannelMember.user_id == user_id).first()
@@ -121,12 +120,12 @@ def test_websocket_typing_indicator(client, user_token, db):
         assert response["data"]["is_typing"] is True
 
 
-def test_websocket_disconnect_cleanup(client, user_token):
+async def test_websocket_disconnect_cleanup(client, user_token):
     """
     Test that disconnecting cleans up the WebSocketManager state.
     """
 
-    payload = verify_token(user_token)
+    payload = await verify_token(user_token)
     user_id_str = payload.get("sub")
 
     with client.websocket_connect(f"/ws?token={user_token}"):
