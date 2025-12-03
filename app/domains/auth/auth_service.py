@@ -1,5 +1,6 @@
 import re
 import uuid
+from typing import Optional
 
 from authlib.integrations.starlette_client import OAuth
 from fastapi import HTTPException, status
@@ -9,6 +10,7 @@ from starlette.requests import Request
 
 from app.core.config import settings
 from app.core.security import create_access_token, create_refresh_token, verify_password
+from app.core.valkey import ValkeyClient, valkey_client
 from app.domains import UserRepository
 from app.literals.auth import OAuthProvider
 from app.models import create_payload_from_user
@@ -22,7 +24,7 @@ class AuthService:
         self.db = db
         self.user_repository = UserRepository(db)
 
-    def authenticate_user(self, login_request: LoginRequest) -> Token:
+    async def authenticate_user(self, login_request: LoginRequest) -> Token:
         """Authenticate a user and return tokens."""
         email_pattern = r"^[\w\.-]+@[\w\.-]+\.\w+$"
 
@@ -46,12 +48,43 @@ class AuthService:
         data = create_payload_from_user(user)
         access_token = create_access_token(data=data)
         refresh_token = create_refresh_token(data=data)
+        token = Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+        token_store = await valkey_client.get(str(user.id))
+        if token_store is None:
+            token_store = list()
+        token_store.append(token)
+        await valkey_client.set(str(user.id), token_store)
+        return token
 
-        return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
+    async def invalidate_tokens(self, token: str) -> bool:
+        """Invalidate all tokens for a given user"""
+        token_payload = await self._verify_token(token)
+        user_id: str = token_payload["sub"]
+        if not await valkey_client.has(user_id):
+            return False
+        await valkey_client.unset(user_id)
+        return True
 
-    def refresh_token(self, refresh_token: str) -> Token:
+    async def invalidate_token(self, token: str) -> bool:
+        """Invalidate the given token and its refresh for a user"""
+        token_payload = await self._verify_token(token)
+        user_id: str = token_payload["sub"]
+        token_store: Optional[list] = await valkey_client.get(user_id)
+        if not token_store:
+            return False
+        try:
+            token_store = [v for v in token_store if v['access_token'] != token]
+        except ValueError:
+            return False
+        if not len(token_store):
+            await valkey_client.unset(user_id)
+        else:
+            await valkey_client.set(user_id, token_store)
+        return True
+
+    async def refresh_token(self, refresh_token: str) -> Token:
         """Refresh access token using a valid refresh token."""
-        payload = self._verify_token(refresh_token, expected_type="refresh")
+        payload = await self._verify_token(refresh_token, expected_type="refresh")
         user = self.user_repository.get_by_id(uuid.UUID(payload.get("sub")))
         if not user:
             raise HTTPException(
@@ -66,10 +99,10 @@ class AuthService:
         return Token(access_token=access_token, refresh_token=new_refresh_token, token_type="bearer")
 
     async def oauth_callback(
-        self,
-        provider: OAuthProvider,
-        request: Request,
-        oauth: OAuth,
+            self,
+            provider: OAuthProvider,
+            request: Request,
+            oauth: OAuth,
     ) -> Token:
         """Handle OAuth callback and authenticate user."""
         provider_str = provider.value
@@ -107,7 +140,7 @@ class AuthService:
         return Token(access_token=access_token, refresh_token=refresh_token, token_type="bearer")
 
     @staticmethod
-    def _verify_token(token: str, expected_type: str = None) -> dict:
+    async def _verify_token(token: str, expected_type: str = None) -> dict:
         """Verify and decode a JWT token."""
         try:
             payload = jwt.decode(token, settings.SECRET_KEY, algorithms=[settings.ALGORITHM])
@@ -129,6 +162,17 @@ class AuthService:
                     detail=f"Expected {expected_type} token",
                 )
 
+            if token_type == "refresh":
+                auth_info: list[Token] = await valkey_client.get(user_id)
+                refresh_token = next(
+                    auth["refresh_token"] for auth in auth_info if auth["refresh_token"] == token
+                )
+                if not auth_info or refresh_token != token:
+                    raise HTTPException(
+                        status_code=status.HTTP_401_UNAUTHORIZED,
+                        detail="Invalid or expired refresh token",
+                    )
+
             return payload
         except JWTError:
             raise HTTPException(
@@ -137,9 +181,9 @@ class AuthService:
             )
 
 
-def verify_token(token: str, expected_type: str = None) -> dict:
+async def verify_token(token: str, expected_type: str = None) -> dict:
     """Standalone function for token verification (for backwards compatibility)."""
-    return AuthService._verify_token(token, expected_type)
+    return await AuthService._verify_token(token, expected_type)
 
 
 __all__ = ["AuthService", "verify_token"]
