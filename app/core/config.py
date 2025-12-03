@@ -31,6 +31,7 @@ class Settings(BaseSettings):
     VALKEY_PORT_NUMBER: str = "6379"
     VALKEY_HOST: str = "localhost"
     VALKEY_PASSWORD: str = "supersecret"
+    VALKEY_TTL: int = 3600
     USE_FAKE_VALKEY: bool = False
 
     NUKE_COOLDOWN_SECONDS: int = 30

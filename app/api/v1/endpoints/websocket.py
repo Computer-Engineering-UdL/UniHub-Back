@@ -51,7 +51,7 @@ async def websocket_endpoint(websocket: WebSocket, token: str = Query(...), db: 
     listener_task = None
 
     try:
-        payload = verify_token(token)
+        payload = await verify_token(token)
         user_id = uuid.UUID(payload.get("sub"))
 
         await ws_manager.connect(websocket, user_id, connection_id)
