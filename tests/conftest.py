@@ -281,7 +281,9 @@ def university_repository(db):
 async def auth_headers(client, db, auth_service):
     """Generate authentication headers for basic_user."""
     user = db.query(User).filter_by(username="basic_user").first()
-    token = await auth_service.authenticate_user(LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD))
+    token = await auth_service.authenticate_user(
+        LoginRequest(username=user.username, password=settings.DEFAULT_PASSWORD)
+    )
     return {"Authorization": f"Bearer {token.access_token}"}
 
 
