@@ -1,5 +1,5 @@
-import datetime
 import uuid
+from datetime import datetime
 from typing import TYPE_CHECKING
 
 import sqlalchemy as sa
@@ -20,7 +20,7 @@ class UserTermsAcceptanceTableModel(Base):
     user_id = Column(sa.UUID, ForeignKey("user.id"), nullable=False)
     terms_id = Column(sa.UUID, ForeignKey("terms.id"), nullable=False)
 
-    accepted_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
+    accepted_at = Column(sa.DateTime, nullable=False, default=datetime.utcnow)
 
     user: Mapped["User"] = relationship("User", back_populates="accepted_terms")
     terms: Mapped["TermsTableModel"] = relationship("TermsTableModel")

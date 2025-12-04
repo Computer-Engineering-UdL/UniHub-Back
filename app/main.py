@@ -19,9 +19,11 @@ from app.api.v1.endpoints import (
     interest,
     members,
     messages,
+    terms,
     university,
     user,
     user_like,
+    user_terms,
     websocket,
 )
 from app.core import Base, engine
@@ -115,7 +117,8 @@ app.include_router(
 )
 app.include_router(university.router, prefix=f"{settings.API_VERSION}/universities", tags=["universities"])
 app.include_router(websocket.router, tags=["websocket"])
-
+app.include_router(terms.router, prefix=f"{settings.API_VERSION}/terms", tags=["terms"])
+app.include_router(user_terms.router, prefix=f"{settings.API_VERSION}/user_terms", tags=["user_terms"])
 
 @app.get("/")
 def read_root():

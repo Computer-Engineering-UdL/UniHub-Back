@@ -12,6 +12,7 @@ from app.schemas.housing_category import *  # noqa
 from app.schemas.housing_offer import *  # noqa
 from app.schemas.interest import *  # noqa
 from app.schemas.message import *  # noqa
+from app.schemas.terms import *  # noqa
 from app.schemas.user import *  # noqa
 from app.schemas.user_like import *  # noqa
 
@@ -26,6 +27,7 @@ from . import (
     housing_offer,
     interest,
     message,
+    terms,
     user,
     user_like,
 )
@@ -65,4 +67,5 @@ __all__ = (
     + user_like.__all__
     + files.__all__
     + file_association.__all__
+    + terms.__all__
 )

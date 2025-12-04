@@ -1,5 +1,5 @@
-import datetime
 import uuid
+from datetime import datetime
 
 import sqlalchemy as sa
 from sqlalchemy import Column
@@ -13,4 +13,4 @@ class TermsTableModel(Base):
     id = Column(sa.UUID, primary_key=True, default=uuid.uuid4)
     version = Column(sa.String(20), unique=True, nullable=False)
     content = Column(sa.Text, nullable=False)
-    created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
+    created_at = Column(sa.DateTime, nullable=False, default=datetime.utcnow)
