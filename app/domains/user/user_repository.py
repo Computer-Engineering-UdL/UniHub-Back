@@ -115,3 +115,6 @@ class UserRepository(BaseRepository[User]):
         """Check if a user with the given username exists."""
         stmt = select(User.id).where(User.username == username)
         return self.db.scalar(stmt) is not None
+
+    def get_by_referral_code(self, code):
+        pass

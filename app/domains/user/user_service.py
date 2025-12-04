@@ -1,3 +1,5 @@
+import random
+import string
 import uuid
 from typing import List
 
@@ -229,3 +231,9 @@ class UserService:
         # Reuse existing method (handles IntegrityError)
         return self.create_user(user_data)
 
+    def _generate_referral_code(self, length=5) -> str:
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+            # check DB for uniqueness
+            if not self.repository.get_by_referral_code(code):
+                return code

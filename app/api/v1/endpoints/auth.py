@@ -53,6 +53,25 @@ def get_me(current_user: TokenData = Depends(get_current_user)):
     return current_user
 
 
+@router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
+async def signup(
+    data: UserRegister,
+    user_service: UserService = Depends(get_user_service),
+):
+    # Create user (returns UserRead)
+    user = user_service.register(data)
+
+    # Fetch ORM instance to build correct JWT payload
+    user_orm = user_service.repository.get_by_id(user.id)
+
+    payload = create_payload_from_user(user_orm)
+
+    return Token(
+        access_token=create_access_token(payload),
+        refresh_token=create_refresh_token(payload),
+        token_type="bearer",
+    )
+
 @router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)
 async def login_oauth(
     provider: OAuthProvider,
@@ -72,22 +91,3 @@ async def auth_callback(
     oauth: OAuth = Depends(get_oauth),
 ):
     return await service.oauth_callback(provider, request, oauth)
-
-@router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
-async def signup(
-    data: UserRegister,
-    user_service: UserService = Depends(get_user_service),
-):
-    # Create user (returns UserRead)
-    user = user_service.register(data)
-
-    # Fetch ORM instance to build correct JWT payload
-    user_orm = user_service.repository.get_by_id(user.id)
-
-    payload = create_payload_from_user(user_orm)
-
-    return Token(
-        access_token=create_access_token(payload),
-        refresh_token=create_refresh_token(payload),
-        token_type="bearer",
-    )
