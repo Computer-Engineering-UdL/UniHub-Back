@@ -85,3 +85,37 @@ class TestAuthEndpoints:
         assert "access_token" in new_tokens
         assert "refresh_token" in new_tokens
         assert new_tokens["access_token"] != token
+
+    def test_logout(self, client):
+        response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
+        data = response.json()
+        token = data["access_token"]
+        response = client.get("/auth/logout", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 205
+
+    def test_logout_all(self, client):
+        response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
+        data = response.json()
+        token = data["access_token"]
+        response = client.post(
+            "/auth/login",
+            data={"username": "admin", "password": settings.DEFAULT_PASSWORD},
+        )
+        data = response.json()
+        second_token = response.json()["access_token"]
+        response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 200
+        response = client.get("/auth/me", headers={"Authorization": f"Bearer {second_token}"})
+        assert response.status_code == 200
+        response = client.get("/auth/logout_all", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 205
+        response = client.get("/auth/me", headers={"Authorization": f"Bearer {token}"})
+        assert response.status_code == 401
+        response = client.get("/auth/me", headers={"Authorization": f"Bearer {second_token}"})
+        assert response.status_code == 401

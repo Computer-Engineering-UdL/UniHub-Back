@@ -38,12 +38,25 @@ class ValkeyClient:
         payload = json.dumps(message) if isinstance(message, dict) else message
         return await self.client.publish(channel, payload)
 
-    async def set(self, key: str, value: Any, ttl: int = 3600):
-        await self.client.setex(key, ttl, json.dumps(value))
+    async def set(self, key: str, value: Any, ttl: int = settings.VALKEY_TTL):
+        if hasattr(value, "model_dump_json"):
+            await self.client.setex(key, ttl, value.model_dump_json())
+        else:
+            await self.client.setex(
+                key,
+                ttl,
+                json.dumps(value, default=lambda o: o.__dict__)
+            )
+
+    async def unset(self, key: str):
+        await self.client.delete(key)
 
     async def get(self, key: str) -> Optional[Any]:
         val = await self.client.get(key)
         return json.loads(val) if val else None
+
+    async def has(self, key: str) -> bool:
+        return await self.client.exists(key)
 
     def raw(self):
         return self.client
