@@ -10,6 +10,7 @@ from app.api.v1.endpoints.user import get_user_service
 from app.core import create_access_token
 from app.core.database import get_db
 from app.core.dependencies import get_current_user, get_oauth, oauth2_scheme
+from app.core.middleware import get_client_ip
 from app.core.security import create_refresh_token
 from app.core.types import TokenData
 from app.domains import UserService
@@ -68,14 +69,24 @@ async def logout_all(
 
 @router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
 async def signup(
+    request: Request,
     data: UserRegister,
     user_service: UserService = Depends(get_user_service),
 ):
-    # Create user (returns UserRead)
-    user = user_service.register(data)
+    """
+    Register a new user
+    Captures IP and User-Agent for audit logs.
+    """
+    client_ip = get_client_ip(request)
+    user_agent = request.headers.get("User-Agent", "Unknown")
 
-    # Fetch ORM instance to build correct JWT payload
-    user_orm = user_service.repository.get_by_id(user.id)
+    user_read = user_service.register(
+        data=data,
+        ip_address=client_ip,
+        user_agent=user_agent
+    )
+
+    user_orm = user_service.repository.get_by_id(user_read.id)
 
     payload = create_payload_from_user(user_orm)
 

@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import tempfile
 import time
 
@@ -400,6 +402,9 @@ def recruiter_token(client, db):
     from app.literals.users import Role
     from app.models import User
 
+    def gen_referral():
+        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
     unique_username = f"recruiter_global_{uuid.uuid4()}"
     user = User(
         username=unique_username,
@@ -410,6 +415,7 @@ def recruiter_token(client, db):
         role=Role.RECRUITER,
         provider="local",
         is_verified=True,
+        referral_code=gen_referral(),
     )
     db.add(user)
     db.commit()

@@ -21,6 +21,7 @@ class TestUsersAPI:
             "password": "VerySecure123!",
             "provider": "local",
             "role": "Basic",
+            "referral_code": "TEST1",
         }
 
         # Admin creates the user
@@ -142,6 +143,7 @@ class TestUsersAPI:
             "password": "TempPass123!",
             "provider": "local",
             "role": "Basic",
+            "referral_code": "TEST2",
         }
         created = client.post("/users/", json=body, headers=_auth(admin_token))
         assert created.status_code == 201

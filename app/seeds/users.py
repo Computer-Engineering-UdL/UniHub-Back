@@ -1,5 +1,6 @@
 import datetime
 import random
+import string
 import uuid
 from typing import List
 
@@ -11,6 +12,15 @@ from app.literals.users import Role
 from app.models import Interest, User
 from app.models.university import Faculty, University
 
+used_referral_codes = set()  # container for used codes
+
+def random_referral_code(length=5) -> str:
+    """Generates 5-digit unique code."""
+    while True:
+        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+        if code not in used_referral_codes:
+            used_referral_codes.add(code)
+            return code
 
 def seed_users(db: Session) -> List[User]:
     """Create default users and return them."""
@@ -56,6 +66,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.ADMIN,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="basic_user",
@@ -70,6 +81,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.BASIC,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="jane_smith",
@@ -84,6 +96,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.SELLER,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="carlos_mendez",
@@ -100,6 +113,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.BASIC,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="lucia_rodriguez",
@@ -114,6 +128,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.SELLER,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="marc_torres",
@@ -128,6 +143,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.BASIC,
             is_active=True,
             is_verified=False,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="sofia_martinez",
@@ -142,6 +158,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.BASIC,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="andreu_vila",
@@ -156,6 +173,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.SELLER,
             is_active=True,
             is_verified=False,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="paula_hernandez",
@@ -170,6 +188,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.ADMIN,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="david_pons",
@@ -184,6 +203,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.BASIC,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
         make_user(
             username="elena_costa",
@@ -198,6 +218,7 @@ def seed_users(db: Session) -> List[User]:
             role=Role.SELLER,
             is_active=True,
             is_verified=True,
+            referral_code=random_referral_code(),
         ),
     ]
 

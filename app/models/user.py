@@ -14,11 +14,13 @@ from app.literals.users import Role
 if TYPE_CHECKING:
     from app.models.channel import Channel
     from app.models.channel_member import ChannelMember
+    from app.models.connection import ConnectionTableModel
     from app.models.housing_offer import HousingOfferTableModel
     from app.models.interest import Interest, UserInterest
     from app.models.message import Message
     from app.models.university import Faculty
     from app.models.user_like import UserLike
+    from app.models.user_terms_acceptance import UserTermsAcceptanceTableModel
 
 
 class User(Base):
@@ -39,9 +41,18 @@ class User(Base):
     role = Column(sa.String(50), nullable=False, default=Role.BASIC)
     is_active = Column(sa.Boolean, nullable=False, default=True)
     is_verified = Column(sa.Boolean, nullable=False, default=False)
+
     created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
 
-    faculty: Mapped["Faculty"] = relationship("Faculty", back_populates="users")
+    created_ip = Column(sa.String(45), nullable=True)
+    user_agent = Column(sa.String(255), nullable=True)
+
+    referral_code = Column(sa.String(5), unique=True, nullable=False)
+    referred_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
+
+
+
+    faculty: Mapped[Faculty] = relationship("Faculty", back_populates="users")
 
     # Use string references for relationships
     channel_memberships: Mapped[List[ChannelMember]] = relationship(
@@ -71,6 +82,13 @@ class User(Base):
         back_populates="user",
     )
 
+    accepted_terms: Mapped[UserTermsAcceptanceTableModel] = relationship(
+        "UserTermsAcceptanceTableModel", back_populates="user"
+    )
+
+    connections: Mapped[List[ConnectionTableModel]] = relationship(
+        "ConnectionTableModel", back_populates="user", cascade="all, delete-orphan"
+    )
     @property
     def is_admin(self) -> bool:
         """Returns True if the user has admin role."""
