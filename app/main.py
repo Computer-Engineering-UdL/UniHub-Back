@@ -18,6 +18,7 @@ from app.api.v1.endpoints import (
     housing_category,
     housing_offer,
     interest,
+    job_offer,
     members,
     messages,
     university,
@@ -118,6 +119,8 @@ app.include_router(
 )
 app.include_router(university.router, prefix=f"{settings.API_VERSION}/universities", tags=["universities"])
 app.include_router(websocket.router, tags=["websocket"])
+
+app.include_router(job_offer.router, prefix=f"{settings.API_VERSION}/jobs", tags=["jobs"])
 
 
 @app.get("/")

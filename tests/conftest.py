@@ -17,6 +17,7 @@ from app.api.v1.endpoints.files import router as file_router
 from app.api.v1.endpoints.housing_category import router as category_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
+from app.api.v1.endpoints.job_offer import router as job_offer_router
 from app.api.v1.endpoints.members import router as members_router
 from app.api.v1.endpoints.messages import router as messages_router
 from app.api.v1.endpoints.user import router as user_router
@@ -308,6 +309,7 @@ def app(db):
     app.include_router(websocket_router)
     app.include_router(category_router, prefix="/categories")
     app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
+    app.include_router(job_offer_router, prefix=f"{settings.API_VERSION}/jobs")
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
@@ -387,3 +389,32 @@ def configure_test_settings():
     yield
 
     settings.TESTING = False
+
+
+@pytest.fixture
+def recruiter_token(client, db):
+    """Create user Recruiter global and return her token."""
+    import uuid
+
+    from app.core.security import hash_password
+    from app.literals.users import Role
+    from app.models import User
+
+    unique_username = f"recruiter_global_{uuid.uuid4()}"
+    user = User(
+        username=unique_username,
+        email=f"{unique_username}@example.com",
+        password=hash_password(settings.DEFAULT_PASSWORD),
+        first_name="Recruiter",
+        last_name="Global",
+        role=Role.RECRUITER,
+        provider="local",
+        is_verified=True,
+    )
+    db.add(user)
+    db.commit()
+    response = client.post(
+        "/auth/login",
+        data={"username": unique_username, "password": settings.DEFAULT_PASSWORD},
+    )
+    return response.json()["access_token"]
