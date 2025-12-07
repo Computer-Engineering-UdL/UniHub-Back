@@ -19,7 +19,6 @@ from app.api.v1.endpoints import (
     housing_category,
     housing_offer,
     interest,
-    job_offer,
     members,
     messages,
     terms,
