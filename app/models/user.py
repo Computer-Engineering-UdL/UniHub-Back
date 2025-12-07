@@ -41,8 +41,16 @@ class User(Base):
     role = Column(sa.String(50), nullable=False, default=Role.BASIC)
     is_active = Column(sa.Boolean, nullable=False, default=True)
     is_verified = Column(sa.Boolean, nullable=False, default=False)
+
     created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
+
+    created_ip = Column(sa.String(45), nullable=True)
+    user_agent = Column(sa.String(255), nullable=True)
+
     referral_code = Column(sa.String(5), unique=True, nullable=False)
+    referred_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
+
+
 
     faculty: Mapped[Faculty] = relationship("Faculty", back_populates="users")
 
@@ -81,7 +89,6 @@ class User(Base):
     connections: Mapped[List[ConnectionTableModel]] = relationship(
         "ConnectionTableModel", back_populates="user", cascade="all, delete-orphan"
     )
-
     @property
     def is_admin(self) -> bool:
         """Returns True if the user has admin role."""

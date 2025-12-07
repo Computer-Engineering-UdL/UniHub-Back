@@ -29,7 +29,7 @@ from app.api.v1.endpoints import (
 )
 from app.core import Base, engine
 from app.core.config import settings
-from app.core.middleware import AutoLoggingMiddleware, global_exception_handler
+from app.core.middleware import AutoLoggingMiddleware, EndpointRateLimitMiddleware, global_exception_handler
 from app.core.valkey import valkey_client
 from app.seeds.seed import seed_database
 
@@ -59,6 +59,13 @@ async def lifespan(app: FastAPI):
 app = FastAPI(title=settings.APP_NAME, lifespan=lifespan)
 
 app.add_middleware(AutoLoggingMiddleware)
+
+api_prefix = settings.API_VERSION
+endpoint_limits = {
+    # Signup: 5 tries per 1 hour from one IP address
+    f"{api_prefix}/auth/signup": (5, 3600),
+}
+app.add_middleware(EndpointRateLimitMiddleware, endpoint_limits=endpoint_limits)
 
 app.exception_handler(Exception)(global_exception_handler)
 

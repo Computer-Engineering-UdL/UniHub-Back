@@ -173,14 +173,21 @@ class UserRegister(BaseModel):
     """Schema used for public user registration."""
 
     username: str = Field(min_length=1, max_length=50)
+    email: EmailStr
+    password: str = Field(min_length=8, max_length=255)
     first_name: str = Field(min_length=1, max_length=100)
     last_name: str = Field(min_length=1, max_length=100)
-    email: EmailStr
     phone: Optional[str] = Field(None, max_length=20)
-    faculty_id: Optional[uuid.UUID] = None
-    password: str = Field(min_length=8, max_length=255)
+
+    referral_code: Optional[str] = Field(None, min_length=5, max_length=5)
+    accepted_terms_version: str = Field(..., min_length=1, max_length=20)
 
     model_config = ConfigDict(from_attributes=True)
+
+    @field_validator('email')
+    @classmethod
+    def email_to_lower(cls, v: str) -> str:
+        return v.lower()
 
 class UserSignUp(BaseModel):
     """Schema used for public sign up."""
@@ -203,5 +210,6 @@ __all__ = [
     "UserDetail",
     "UserPublic",
     "UserSimplified",
-    "UserRegister"
+    "UserRegister",
+    "UserSignUp"
 ]
