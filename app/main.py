@@ -10,6 +10,7 @@ from app.api.v1.endpoints import (
     admin,
     auth,
     channel,
+    connection,
     conversation,
     file_association,
     files,
@@ -119,6 +120,7 @@ app.include_router(university.router, prefix=f"{settings.API_VERSION}/universiti
 app.include_router(websocket.router, tags=["websocket"])
 app.include_router(terms.router, prefix=f"{settings.API_VERSION}/terms", tags=["terms"])
 app.include_router(user_terms.router, prefix=f"{settings.API_VERSION}/user_terms", tags=["user_terms"])
+app.include_router(connection.router,prefix=f"{settings.API_VERSION}/connection", tags=["connection"])
 
 @app.get("/")
 def read_root():

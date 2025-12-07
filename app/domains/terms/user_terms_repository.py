@@ -3,7 +3,7 @@ from typing import List, Optional
 
 from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError
-from sqlalchemy.orm import Session
+from sqlalchemy.orm import Session, selectinload
 
 from app.models import UserTermsAcceptanceTableModel
 from app.repositories.base import BaseRepository
@@ -51,9 +51,11 @@ class UserTermsAcceptanceRepository(BaseRepository[UserTermsAcceptanceTableModel
         stmt = (
             select(self.model)
             .filter(self.model.user_id == user_id)
+            .options(selectinload(self.model.terms))
             .order_by(self.model.accepted_at.desc())
         )
         return list(self.db.scalars(stmt).all())
+
 
     def get_last_by_user(self, user_id: uuid.UUID) -> Optional[UserTermsAcceptanceTableModel]:
         stmt = (

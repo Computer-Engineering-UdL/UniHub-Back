@@ -19,6 +19,7 @@ class UserTermsAcceptanceRead(UserTermsAcceptanceBase):
     """Full schema for reading acceptance."""
 
     id: UUID
+    version: str
     accepted_at: datetime
 
     model_config = ConfigDict(from_attributes=True)
