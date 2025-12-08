@@ -1,0 +1,22 @@
+{% extends "base.html" %}
+
+{% block title %}Verify your Email - UniHub{% endblock %}
+
+{% block content %}
+<h2>Hello, {{ username }}!</h2>
+<p>Welcome to UniHub. We're excited to have you on board!</p>
+<p>Please confirm your account by clicking the button below:</p>
+
+<div class="button-container">
+    <a href="{{ verification_link }}" class="button">Verify Email Address</a>
+</div>
+
+<p>This link will expire in {{ expire_hours }} hours.</p>
+<p style="margin-top: 30px; font-size: 14px; color: #9ca3af;">
+    If the button above doesn't work, verify by copying and pasting this link into your browser:<br>
+    <span class="link-text">{{ verification_link }}</span>
+</p>
+<p style="font-size: 14px; color: #9ca3af; margin-top: 20px;">
+    If you didn't create an account, you can safely ignore this email.
+</p>
+{% endblock %}

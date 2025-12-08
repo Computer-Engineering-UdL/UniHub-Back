@@ -5,9 +5,9 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from starlette import status
 
+from app.api.dependencies import get_current_user, require_verified_email
 from app.api.utils import handle_api_errors
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.housing.conversation_service import ConversationService
 from app.schemas import (
@@ -31,7 +31,7 @@ async def get_conversation_service(db: Session = Depends(get_db)) -> Conversatio
 async def create_conversation(
     conversation: ConversationCreate,
     service: ConversationService = Depends(get_conversation_service),
-    user: TokenData = Depends(get_current_user),
+    user: TokenData = Depends(require_verified_email),
 ):
     """
     Create a new conversation or get existing one.
@@ -75,7 +75,7 @@ async def send_message(
     conversation_id: uuid.UUID,
     message: ConversationMessageCreate,
     service: ConversationService = Depends(get_conversation_service),
-    user: TokenData = Depends(get_current_user),
+    user: TokenData = Depends(require_verified_email),
 ):
     """
     Send a message in a conversation.

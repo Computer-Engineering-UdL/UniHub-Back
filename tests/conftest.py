@@ -33,6 +33,7 @@ from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
 from app.seeds.category import seed_housing_categories
 from app.seeds.messages import seed_messages
+from app.seeds.terms import seed_terms
 
 try:
     from app.seeds import seed_universities
@@ -49,6 +50,7 @@ def seed_database_test(db: Session):
     if seed_universities:
         seed_universities(db)
 
+    seed_terms(db)
     users = seed_users(db)
     channels = seed_channels(db, users)
     seed_messages(db, users, channels)
@@ -403,7 +405,7 @@ def recruiter_token(client, db):
     from app.models import User
 
     def gen_referral():
-        return ''.join(random.choices(string.ascii_uppercase + string.digits, k=5))
+        return "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
 
     unique_username = f"recruiter_global_{uuid.uuid4()}"
     user = User(

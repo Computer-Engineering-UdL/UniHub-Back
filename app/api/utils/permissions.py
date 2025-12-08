@@ -5,8 +5,8 @@ from sqlalchemy.orm import Session
 from starlette import status
 from starlette.exceptions import HTTPException
 
+from app.api.dependencies import get_current_user
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.literals.channels import CHANNEL_ROLE_HIERARCHY, ChannelRole
 from app.literals.users import Role

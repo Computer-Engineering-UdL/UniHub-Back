@@ -11,6 +11,7 @@ from app.models.housing_category import HousingCategoryTableModel
 from app.models.housing_offer import HousingOfferTableModel, OfferStatus
 from app.models.interest import Interest, InterestCategory, UserInterest
 from app.models.message import Message
+from app.models.password_history import PasswordHistory
 from app.models.terms import TermsTableModel
 from app.models.user import User, create_payload_from_user
 from app.models.user_like import UserLike
@@ -40,6 +41,6 @@ __all__ = [
     "FileAssociation",
     "TermsTableModel",
     "UserTermsAcceptanceTableModel",
-    "ConnectionTableModel"
-
+    "ConnectionTableModel",
+    "PasswordHistory",
 ]

@@ -2,7 +2,7 @@ from __future__ import annotations
 
 from typing import TYPE_CHECKING
 
-from pydantic import BaseModel, field_validator
+from pydantic import BaseModel, EmailStr, Field, field_validator
 
 from app.literals.auth import TokenType
 
@@ -33,8 +33,80 @@ class AuthResponse(BaseModel):
     user: UserRead
 
 
+class VerificationSendRequest(BaseModel):
+    """Request to send a verification email."""
+
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def email_to_lower(cls, v: str) -> str:
+        return v.lower()
+
+
+class VerificationConfirmRequest(BaseModel):
+    """Request to confirm email verification."""
+
+    token: str = Field(..., min_length=1)
+
+
+# Password Reset Schemas
+class PasswordForgotRequest(BaseModel):
+    """Request to initiate password reset."""
+
+    email: EmailStr
+
+    @field_validator("email")
+    @classmethod
+    def email_to_lower(cls, v: str) -> str:
+        return v.lower()
+
+
+class PasswordResetRequest(BaseModel):
+    """Request to reset password with token."""
+
+    token: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=255)
+    confirm_password: str = Field(..., min_length=8)
+
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v, info):
+        if "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
+
+
+class PasswordChangeRequest(BaseModel):
+    """Request to change password (authenticated user)."""
+
+    current_password: str = Field(..., min_length=1)
+    new_password: str = Field(..., min_length=8, max_length=255)
+    confirm_password: str = Field(..., min_length=8)
+
+    @field_validator("confirm_password")
+    @classmethod
+    def passwords_match(cls, v, info):
+        if "new_password" in info.data and v != info.data["new_password"]:
+            raise ValueError("Passwords do not match")
+        return v
+
+
+# Generic Response
+class MessageResponse(BaseModel):
+    """Generic message response."""
+
+    message: str
+
+
 __all__ = [
     "LoginRequest",
     "Token",
     "AuthResponse",
+    "VerificationSendRequest",
+    "VerificationConfirmRequest",
+    "PasswordForgotRequest",
+    "PasswordResetRequest",
+    "PasswordChangeRequest",
+    "MessageResponse",
 ]

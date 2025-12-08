@@ -1,3 +1,4 @@
+import uuid
 from datetime import datetime
 from enum import Enum
 from typing import Tuple
@@ -182,7 +183,7 @@ class CooldownManager:
     """Simplified cooldown manager for specific actions"""
 
     @staticmethod
-    async def check_cooldown(user_id: int, action: str, cooldown_seconds: int) -> Tuple[bool, int]:
+    async def check_cooldown(user_id: uuid.UUID, action: str, cooldown_seconds: int) -> Tuple[bool, int]:
         """
         Check if action is on cooldown
 
@@ -202,13 +203,13 @@ class CooldownManager:
         return True, 0
 
     @staticmethod
-    async def reset_cooldown(user_id: int, action: str):
+    async def reset_cooldown(user_id: uuid.UUID, action: str):
         """Reset cooldown for a user action"""
         key = f"cooldown:{action}:{user_id}"
         await valkey_client.client.delete(key)
 
     @staticmethod
-    async def get_remaining_cooldown(user_id: int, action: str) -> int:
+    async def get_remaining_cooldown(user_id: uuid.UUID, action: str) -> int:
         """Get remaining cooldown time in seconds"""
         key = f"cooldown:{action}:{user_id}"
         ttl = await valkey_client.client.ttl(key)

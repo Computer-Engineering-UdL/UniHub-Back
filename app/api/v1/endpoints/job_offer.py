@@ -4,8 +4,8 @@ from uuid import UUID
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user, get_optional_current_user, require_verified_email
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_optional_current_user
 from app.domains.job.job_service import JobService
 from app.literals.job import JobCategory, JobType
 from app.models.user import User
@@ -17,7 +17,7 @@ router = APIRouter()
 @router.post("/", response_model=JobOfferRead, status_code=201)
 def create_job_offer(
     offer_in: JobOfferCreate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """(SELLER Only) Create a new job offer."""
@@ -40,7 +40,7 @@ def list_job_offers(
 
 @router.get("/saved", response_model=List[JobOfferRead])
 def list_my_saved_jobs(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """List jobs saved by the current user."""
@@ -50,7 +50,7 @@ def list_my_saved_jobs(
 
 @router.get("/applied", response_model=List[JobOfferRead])
 def list_my_applications(
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """List jobs the current user has applied to."""
@@ -73,7 +73,7 @@ def get_job_offer(
 def update_job_offer(
     job_id: UUID,
     offer_update: JobOfferUpdate,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """(SELLER/ADMIN) Update a job offer."""
@@ -84,7 +84,7 @@ def update_job_offer(
 @router.delete("/{job_id}", status_code=204)
 def delete_job_offer(
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """(SELLER/ADMIN) Delete a job offer."""
@@ -95,7 +95,7 @@ def delete_job_offer(
 @router.post("/{job_id}/apply", status_code=200)
 def apply_to_job(
     job_id: UUID,
-    current_user: User = Depends(get_current_user),
+    current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
     """(BASIC Only) Apply to a job."""

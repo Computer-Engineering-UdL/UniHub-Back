@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.terms.terms_service import TermsService
 from app.domains.terms.user_terms_service import UserTermsAcceptanceService
