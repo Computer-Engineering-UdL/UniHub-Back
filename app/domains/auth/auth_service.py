@@ -1,4 +1,6 @@
+import datetime
 import re
+import secrets
 import uuid
 from typing import Optional
 
@@ -9,9 +11,11 @@ from sqlalchemy.orm import Session
 from starlette.requests import Request
 
 from app.core.config import settings
-from app.core.security import create_access_token, create_refresh_token, verify_password
+from app.core.email_service import email_service
+from app.core.security import create_access_token, create_refresh_token, hash_password, verify_password
 from app.core.valkey import valkey_client
 from app.domains import UserRepository
+from app.domains.auth.password_validator import PasswordValidator
 from app.literals.auth import OAuthProvider
 from app.models import create_payload_from_user
 from app.schemas import LoginRequest, Token
@@ -20,9 +24,13 @@ from app.schemas import LoginRequest, Token
 class AuthService:
     """Service layer for authentication-related business logic."""
 
+    VERIFICATION_TOKEN_PREFIX = "verify_email:"
+    PASSWORD_RESET_TOKEN_PREFIX = "password_reset:"
+
     def __init__(self, db: Session):
         self.db = db
         self.user_repository = UserRepository(db)
+        self.password_validator = PasswordValidator(db)
 
     async def authenticate_user(self, login_request: LoginRequest) -> Token:
         """Authenticate a user and return tokens."""
@@ -73,7 +81,7 @@ class AuthService:
         if not token_store:
             return False
         try:
-            token_store = [v for v in token_store if v['access_token'] != token]
+            token_store = [v for v in token_store if v["access_token"] != token]
         except ValueError:
             return False
         if not len(token_store):
@@ -98,11 +106,173 @@ class AuthService:
 
         return Token(access_token=access_token, refresh_token=new_refresh_token, token_type="bearer")
 
+    async def send_verification_email(self, email: str) -> bool:
+        """
+        Send a verification email to the user.
+        """
+        user = self.user_repository.get_by_email(email)
+
+        if not user:
+            return True
+
+        if user.is_verified:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Email is already verified",
+            )
+
+        token = secrets.token_urlsafe(32)
+
+        key = f"{self.VERIFICATION_TOKEN_PREFIX}{token}"
+        await valkey_client.client.setex(
+            key,
+            settings.VERIFICATION_TOKEN_EXPIRE_HOURS * 3600,
+            str(user.id),
+        )
+
+        email_service.send_verification_email(
+            to_email=user.email,
+            token=token,
+            username=user.username,
+        )
+
+        return True
+
+    async def confirm_email_verification(self, token: str) -> bool:
+        """Confirm email verification using the token."""
+        key = f"{self.VERIFICATION_TOKEN_PREFIX}{token}"
+        user_id_str = await valkey_client.client.get(key)
+
+        if not user_id_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired verification token",
+            )
+
+        if isinstance(user_id_str, bytes):
+            user_id_str = user_id_str.decode("utf-8")
+
+        user = self.user_repository.get_by_id(uuid.UUID(user_id_str))
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User not found",
+            )
+
+        if user.is_verified:
+            await valkey_client.client.delete(key)
+            return True
+
+        user.is_verified = True
+        user.verified_at = datetime.datetime.now(datetime.UTC)
+        self.db.commit()
+
+        await valkey_client.client.delete(key)
+
+        return True
+
+    async def send_password_reset(self, email: str, client_ip: str) -> bool:
+        """
+        Send a password reset email.
+        """
+        user = self.user_repository.get_by_email(email)
+
+        if not user:
+            return True
+
+        if not user.is_active:
+            return True
+
+        token = secrets.token_urlsafe(32)
+
+        key = f"{self.PASSWORD_RESET_TOKEN_PREFIX}{token}"
+        await valkey_client.client.setex(
+            key,
+            settings.PASSWORD_RESET_TOKEN_EXPIRE_HOURS * 3600,
+            str(user.id),
+        )
+
+        email_service.send_password_reset_email(
+            to_email=user.email,
+            token=token,
+            username=user.username,
+        )
+
+        return True
+
+    async def reset_password(self, token: str, new_password: str) -> bool:
+        """Reset password using a valid reset token."""
+        key = f"{self.PASSWORD_RESET_TOKEN_PREFIX}{token}"
+        user_id_str = await valkey_client.client.get(key)
+
+        if not user_id_str:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="Invalid or expired password reset token",
+            )
+
+        if isinstance(user_id_str, bytes):
+            user_id_str = user_id_str.decode("utf-8")
+
+        user_id = uuid.UUID(user_id_str)
+        user = self.user_repository.get_by_id(user_id)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail="User not found",
+            )
+
+        self.password_validator.validate_and_check_history(user_id, new_password)
+
+        hashed = hash_password(new_password)
+
+        self.password_validator.add_to_history(user_id, user.password)
+
+        user.password = hashed
+        self.db.commit()
+
+        await valkey_client.client.delete(key)
+
+        await valkey_client.unset(str(user_id))
+
+        return True
+
+    async def change_password(self, user_id: uuid.UUID, current_password: str, new_password: str) -> bool:
+        """
+        Change password for an authenticated user.
+        """
+        user = self.user_repository.get_by_id(user_id)
+
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail="User not found",
+            )
+
+        if not verify_password(current_password, user.password):
+            raise HTTPException(
+                status_code=status.HTTP_401_UNAUTHORIZED,
+                detail="Current password is incorrect",
+            )
+
+        self.password_validator.validate_and_check_history(user_id, new_password)
+
+        hashed = hash_password(new_password)
+
+        self.password_validator.add_to_history(user_id, user.password)
+
+        user.password = hashed
+        self.db.commit()
+
+        return True
+
     async def oauth_callback(
-            self,
-            provider: OAuthProvider,
-            request: Request,
-            oauth: OAuth,
+        self,
+        provider: OAuthProvider,
+        request: Request,
+        oauth: OAuth,
     ) -> Token:
         """Handle OAuth callback and authenticate user."""
         provider_str = provider.value
@@ -164,9 +334,7 @@ class AuthService:
 
             if token_type == "refresh":
                 auth_info: list[Token] = await valkey_client.get(user_id)
-                refresh_token = next(
-                    auth["refresh_token"] for auth in auth_info if auth["refresh_token"] == token
-                )
+                refresh_token = next(auth["refresh_token"] for auth in auth_info if auth["refresh_token"] == token)
                 if not auth_info or refresh_token != token:
                     raise HTTPException(
                         status_code=status.HTTP_401_UNAUTHORIZED,

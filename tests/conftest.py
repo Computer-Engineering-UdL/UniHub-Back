@@ -1,4 +1,6 @@
 import os
+import random
+import string
 import tempfile
 import time
 
@@ -17,6 +19,7 @@ from app.api.v1.endpoints.files import router as file_router
 from app.api.v1.endpoints.housing_category import router as category_router
 from app.api.v1.endpoints.housing_offer import router as housing_offer_router
 from app.api.v1.endpoints.interest import router as interest_router
+from app.api.v1.endpoints.job_offer import router as job_offer_router
 from app.api.v1.endpoints.members import router as members_router
 from app.api.v1.endpoints.messages import router as messages_router
 from app.api.v1.endpoints.user import router as user_router
@@ -30,6 +33,7 @@ from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
 from app.seeds.category import seed_housing_categories
 from app.seeds.messages import seed_messages
+from app.seeds.terms import seed_terms
 
 try:
     from app.seeds import seed_universities
@@ -46,6 +50,7 @@ def seed_database_test(db: Session):
     if seed_universities:
         seed_universities(db)
 
+    seed_terms(db)
     users = seed_users(db)
     channels = seed_channels(db, users)
     seed_messages(db, users, channels)
@@ -308,6 +313,7 @@ def app(db):
     app.include_router(websocket_router)
     app.include_router(category_router, prefix="/categories")
     app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
+    app.include_router(job_offer_router, prefix=f"{settings.API_VERSION}/jobs")
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
@@ -387,3 +393,36 @@ def configure_test_settings():
     yield
 
     settings.TESTING = False
+
+
+@pytest.fixture
+def recruiter_token(client, db):
+    """Create user Recruiter global and return her token."""
+    import uuid
+
+    from app.core.security import hash_password
+    from app.literals.users import Role
+    from app.models import User
+
+    def gen_referral():
+        return "".join(random.choices(string.ascii_uppercase + string.digits, k=5))
+
+    unique_username = f"recruiter_global_{uuid.uuid4()}"
+    user = User(
+        username=unique_username,
+        email=f"{unique_username}@example.com",
+        password=hash_password(settings.DEFAULT_PASSWORD),
+        first_name="Recruiter",
+        last_name="Global",
+        role=Role.RECRUITER,
+        provider="local",
+        is_verified=True,
+        referral_code=gen_referral(),
+    )
+    db.add(user)
+    db.commit()
+    response = client.post(
+        "/auth/login",
+        data={"username": unique_username, "password": settings.DEFAULT_PASSWORD},
+    )
+    return response.json()["access_token"]

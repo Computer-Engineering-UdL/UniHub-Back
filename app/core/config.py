@@ -20,6 +20,7 @@ class Settings(BaseSettings):
     SECRET_KEY: str = "secret"
     ALGORITHM: str = "HS256"
     ENVIRONMENT: str = "dev"
+    PROD_URL: str = "https://computer-engineering-udl.github.io/UniHub-Front"
     TEMPORARY_DB: bool = False
     DEFAULT_PASSWORD: str = "supersecret"
 
@@ -36,7 +37,7 @@ class Settings(BaseSettings):
 
     NUKE_COOLDOWN_SECONDS: int = 30
 
-    MAX_FILE_SIZE: int = 10 * 1024 * 1024  # 10 MB
+    MAX_FILE_SIZE: int = 10 * 1024 * 1024
     ALLOWED_FILE_TYPES: list[str] = [
         "image/jpeg",
         "image/png",
@@ -45,6 +46,22 @@ class Settings(BaseSettings):
     ]
 
     TESTING: bool = False
+
+    VERIFICATION_TOKEN_EXPIRE_HOURS: int = 24
+    VERIFICATION_SEND_COOLDOWN_SECONDS: int = 60
+
+    PASSWORD_RESET_TOKEN_EXPIRE_HOURS: int = 1
+    PASSWORD_RESET_RATE_LIMIT_REQUESTS: int = 3
+    PASSWORD_RESET_RATE_LIMIT_WINDOW: int = 3600
+
+    PASSWORD_HISTORY_COUNT: int = 5
+    PASSWORD_MIN_LENGTH: int = 8
+
+    SMTP_HOST: str = ""
+    SMTP_PORT: int = 587
+    SMTP_USER: str = ""
+    SMTP_PASSWORD: str = ""
+    SMTP_FROM_EMAIL: str = "noreply@uniroom.com"
 
     MINIO_ENDPOINT: str = "localhost:9000"
     MINIO_ACCESS_KEY: str = "minioadmin"
@@ -55,6 +72,7 @@ class Settings(BaseSettings):
     model_config = SettingsConfigDict(
         env_file=f"{Path(__file__).parent.parent.parent}/.env",
         env_file_encoding="utf-8",
+        extra="ignore",
     )
 
     @computed_field
@@ -72,6 +90,11 @@ class Settings(BaseSettings):
     @property
     def VALKEY_URL(self) -> str:
         return f"redis://:{self.VALKEY_PASSWORD}@{self.VALKEY_HOST}:{self.VALKEY_PORT_NUMBER}"
+
+    @computed_field
+    @property
+    def FRONTEND_URL(self) -> str:
+        return "http://localhost:3200" if self.ENVIRONMENT == "dev" else settings.PROD_URL
 
 
 settings = Settings()

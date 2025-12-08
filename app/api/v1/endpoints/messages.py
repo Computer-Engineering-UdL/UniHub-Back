@@ -5,10 +5,10 @@ from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 from starlette import status
 
+from app.api.dependencies import get_optional_current_user, require_verified_email
 from app.api.utils import handle_api_errors
 from app.api.utils.permissions import get_channel_permission
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, get_optional_current_user
 from app.core.types import TokenData
 from app.domains.channel.message_service import MessageService
 from app.literals.channels import ChannelRole
@@ -29,7 +29,7 @@ async def send_message(
     channel_id: uuid.UUID,
     message: MessageCreate,
     service: MessageService = Depends(get_message_service),
-    user: TokenData = Depends(get_current_user),
+    user: TokenData = Depends(require_verified_email),
 ):
     """
     Send a new message to a channel.
@@ -120,7 +120,7 @@ async def post_reply(
     message_id: uuid.UUID,
     reply: MessageAnswer,
     service: MessageService = Depends(get_message_service),
-    user: TokenData = Depends(get_current_user),
+    user: TokenData = Depends(require_verified_email),
 ):
     """
     Reply to a message.

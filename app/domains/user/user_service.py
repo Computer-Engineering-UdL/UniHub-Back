@@ -1,7 +1,10 @@
+import random
+import string
 import uuid
 from typing import List
 
 from fastapi import HTTPException
+from sqlalchemy import select
 from sqlalchemy.exc import IntegrityError, NoResultFound
 from sqlalchemy.orm import Session
 from starlette import status
@@ -10,6 +13,7 @@ from app.core.security import hash_password, verify_password
 from app.core.utils import extract_constraint_info
 from app.domains.user.user_repository import UserRepository
 from app.literals.users import Role
+from app.models import ConnectionTableModel, TermsTableModel, User, UserTermsAcceptanceTableModel
 from app.schemas.user import (
     UserCreate,
     UserDetail,
@@ -200,32 +204,118 @@ class UserService:
 
         self.repository.delete(user)
 
-    def register(self, data: UserRegister) -> UserRead:
+    def _generate_referral_code(self, length=5) -> str:
+        while True:
+            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+            # check DB for uniqueness
+            if not self.repository.get_by_referral_code(code):
+                return code
+
+    def register(
+            self,
+            data: UserRegister,
+            ip_address: str,
+            user_agent: str
+    ) -> UserRead:
         """
         Public user registration (signup).
+        Performs an atomic transaction:
+        1. Validate inputs (Email, Username, Terms, Referral).
+        2. Create User.
+        3. Create UserTermsAcceptance.
+        4. Create Connection log.
+        5. Commit all or rollback.
         """
-        # Validate email uniqueness
-        if self.repository.get_by_email(str(data.email)):
+
+        # Email uniqueness
+        if self.repository.exists_by_email(str(data.email)):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Email already registered",
             )
 
-        # Validate username uniqueness
-        if self.repository.get_by_username(data.username):
+        # Username uniqueness
+        if self.repository.exists_by_username(data.username):
             raise HTTPException(
                 status_code=status.HTTP_409_CONFLICT,
                 detail="Username already taken",
             )
 
-        # Convert to UserCreate with forced safe fields
-        user_data = UserCreate(
-            **data.model_dump(),
-            role=Role.BASIC,
-            provider="local",
-            is_verified=False,
+        # Accepting terms, search by the version
+        terms = self.db.scalar(
+            select(TermsTableModel).where(TermsTableModel.version == data.accepted_terms_version)
         )
+        if not terms:
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Invalid terms version: {data.accepted_terms_version}"
+            )
 
-        # Reuse existing method (handles IntegrityError)
-        return self.create_user(user_data)
+        # Optionally validating provided referral code
+        referrer_id = None
+        if data.referral_code:
+            referrer = self.repository.get_by_referral_code(data.referral_code)
+            if not referrer:
+                raise HTTPException(status_code=400, detail="Invalid referral code.")
+            referrer_id = referrer.id
 
+        new_referral_code = self._generate_referral_code()
+        hashed_pw = hash_password(data.password)
+
+        # atomic transaction
+        try:
+            # A. creating User
+            new_user = User(
+                username=data.username,
+                email=data.email,  #pydantic validator make it lower().
+                password=hashed_pw,
+                first_name=data.first_name,
+                last_name=data.last_name,
+                phone=data.phone,
+                referral_code=new_referral_code,
+                referred_by_id=referrer_id,
+                created_ip=ip_address,
+                user_agent=user_agent,
+                role=Role.BASIC,
+                provider="local",
+                is_active=True,
+                is_verified=False
+            )
+            self.db.add(new_user)
+            self.db.flush()
+
+            # B. Creating record of accepted terms
+            acceptance = UserTermsAcceptanceTableModel(
+                user_id=new_user.id,
+                terms_id=terms.id
+            )
+            self.db.add(acceptance)
+
+            # C. Saving connection log (ip, user)
+            connection = ConnectionTableModel(
+                user_id=new_user.id,
+                ip_address=ip_address
+            )
+            self.db.add(connection)
+
+            # commit
+            self.db.commit()
+            self.db.refresh(new_user)
+
+            return UserRead.model_validate(new_user)
+
+        except IntegrityError as e:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_409_CONFLICT,
+                detail=extract_constraint_info(e),
+            )
+        except ValueError as e:
+            self.db.rollback()
+            raise HTTPException(status_code=400, detail=str(e))
+        except Exception as e:
+            self.db.rollback()
+            raise HTTPException(
+                status_code=status.HTTP_400_BAD_REQUEST,
+                detail=f"Registration failed: {str(e)}"
+            )

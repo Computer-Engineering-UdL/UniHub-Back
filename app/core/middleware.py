@@ -1,4 +1,5 @@
 import asyncio
+import ipaddress
 import time
 from typing import Optional
 from uuid import uuid4
@@ -16,17 +17,37 @@ def get_client_ip(request: Request) -> str:
     """Extract the real client IP from proxy headers or fallback to direct connection."""
     forwarded_for = request.headers.get("X-Forwarded-For")
     if forwarded_for:
-        return forwarded_for.split(",")[0].strip()
+        ip = forwarded_for.split(",")[0].strip()
+        try:
+            ipaddress.ip_address(ip)
+            return ip
+        except ValueError:
+            pass
 
     real_ip = request.headers.get("X-Real-IP")
     if real_ip:
-        return real_ip
+        try:
+            ipaddress.ip_address(real_ip)
+            return real_ip
+        except ValueError:
+            pass
 
     cf_connecting_ip = request.headers.get("CF-Connecting-IP")
     if cf_connecting_ip:
-        return cf_connecting_ip
+        try:
+            ipaddress.ip_address(cf_connecting_ip)
+            return cf_connecting_ip
+        except ValueError:
+            pass
 
-    return request.client.host if request.client else "unknown"
+    if request.client:
+        try:
+            ipaddress.ip_address(request.client.host)
+            return request.client.host
+        except ValueError:
+            pass
+
+    return "127.0.0.1"
 
 
 class AutoLoggingMiddleware(BaseHTTPMiddleware):

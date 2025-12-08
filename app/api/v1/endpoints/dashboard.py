@@ -3,8 +3,8 @@ from typing import List
 from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import require_role
 from app.core.database import get_db
-from app.core.dependencies import require_role
 from app.domains.dashboard.dashboard_service import DashboardService
 from app.literals.users import Role
 from app.schemas.dashboard import (
