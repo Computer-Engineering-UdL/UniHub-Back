@@ -5,8 +5,8 @@ from typing import List
 from fastapi import APIRouter, Depends, File, Form, UploadFile, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import require_verified_email
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.housing.offer_service import HousingOfferService
 from app.literals.users import Role
@@ -36,7 +36,7 @@ def get_housing_offer_service(db: Session = Depends(get_db)) -> HousingOfferServ
 def create_offer(
     offer_in: HousingOfferCreate,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Create a new housing offer.
@@ -59,7 +59,7 @@ async def create_offer_with_photos(
     photos: List[UploadFile] = File(default=[]),
     cover_photo_index: int = Form(0),
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Create a new housing offer with photos.
@@ -141,7 +141,7 @@ def update_offer(
     offer_id: uuid.UUID,
     offer_update: HousingOfferUpdate,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Update an existing housing offer.
@@ -161,7 +161,7 @@ def update_offer(
 def delete_offer(
     offer_id: uuid.UUID,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Delete a specific housing offer.
@@ -203,7 +203,7 @@ def add_amenity_to_offer(
     offer_id: uuid.UUID,
     code: int,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Add an amenity (e.g., WIFI, PARKING) to a specific housing offer.
@@ -225,7 +225,7 @@ def remove_amenity_from_offer(
     offer_id: uuid.UUID,
     code: int,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Remove an existing amenity from a specific housing offer.

@@ -4,8 +4,8 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import require_role
 from app.core.database import get_db
-from app.core.dependencies import require_role
 from app.core.types import TokenData
 from app.domains.housing.category_service import HousingCategoryService
 from app.literals.users import Role

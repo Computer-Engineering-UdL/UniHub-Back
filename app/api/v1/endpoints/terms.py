@@ -4,8 +4,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.terms.terms_service import TermsService
 from app.literals.users import Role
@@ -18,6 +18,7 @@ from app.schemas import (
 )
 
 router = APIRouter()
+
 
 def get_terms_service(db: Session = Depends(get_db)) -> TermsService:
     """Dependency to inject TermsService."""

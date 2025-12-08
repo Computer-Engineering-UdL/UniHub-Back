@@ -39,14 +39,12 @@ class ValkeyClient:
         return await self.client.publish(channel, payload)
 
     async def set(self, key: str, value: Any, ttl: int = settings.VALKEY_TTL):
-        if hasattr(value, "model_dump_json"):
-            await self.client.setex(key, ttl, value.model_dump_json())
-        else:
-            await self.client.setex(
-                key,
-                ttl,
-                json.dumps(value, default=lambda o: o.__dict__)
-            )
+        def serializer(obj):
+            if hasattr(obj, "model_dump"):
+                return obj.model_dump(mode="json")
+            return obj.__dict__
+
+        await self.client.setex(key, ttl, json.dumps(value, default=serializer))
 
     async def unset(self, key: str):
         await self.client.delete(key)

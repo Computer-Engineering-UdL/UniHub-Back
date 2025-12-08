@@ -12,13 +12,14 @@ from jose import JWTError, jwt
 from pydantic import ValidationError
 from starlette.requests import Request
 
+from app.core.config import settings
+from app.core.database import get_db
+from app.core.rate_limiter import CooldownManager, RateLimiter, RateLimitStrategy
+from app.core.types import TokenData
+from app.core.valkey import valkey_client
+from app.domains import UserRepository
 from app.literals.auth import OAuthProvider
 from app.literals.users import ROLE_HIERARCHY, Role
-
-from .config import settings
-from .rate_limiter import CooldownManager, RateLimiter, RateLimitStrategy
-from .types import TokenData
-from .valkey import valkey_client
 
 oauth2_scheme = OAuth2PasswordBearer(tokenUrl=f"{settings.API_VERSION}/auth/login")
 
@@ -108,6 +109,31 @@ def require_role(min_role: Role):
         return user
 
     return role_checker
+
+
+async def require_verified_email(
+    current_user: TokenData = Depends(get_current_user),
+    db=Depends(get_db),
+) -> TokenData:
+    """
+    Require that the user has verified their email address.
+    """
+    user_repo = UserRepository(db)
+    user = user_repo.get_by_id(current_user.id)
+
+    if not user:
+        raise HTTPException(
+            status_code=status.HTTP_404_NOT_FOUND,
+            detail="User not found",
+        )
+
+    if not user.is_verified:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="Email verification required. Please verify your email to access this feature.",
+        )
+
+    return current_user
 
 
 def rate_limit(

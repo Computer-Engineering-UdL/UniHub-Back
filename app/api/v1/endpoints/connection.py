@@ -4,8 +4,8 @@ from typing import List
 from fastapi import APIRouter, Depends, HTTPException, Request, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.connection.connection_service import ConnectionService
 from app.literals.users import Role
@@ -32,10 +32,10 @@ def get_connection_service(db: Session = Depends(get_db)) -> ConnectionService:
     response_description="Returns the created Connection entry.",
 )
 def log_connection(
-        connection_in: ConnectionCreate,
-        request: Request,
-        service: ConnectionService = Depends(get_connection_service),
-        current_user: TokenData = Depends(get_current_user),
+    connection_in: ConnectionCreate,
+    request: Request,
+    service: ConnectionService = Depends(get_connection_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Log a connection entry.
@@ -61,18 +61,14 @@ def log_connection(
     response_description="Returns list of connections for the logged-in user.",
 )
 def get_my_connection_history(
-        skip: int = 0,
-        limit: int = 20,
-        service: ConnectionService = Depends(get_connection_service),
-        current_user: TokenData = Depends(get_current_user),
+    skip: int = 0,
+    limit: int = 20,
+    service: ConnectionService = Depends(get_connection_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """Get connection history for the current user."""
     return service.get_user_connection_history(
-        user_id=current_user.id,
-        skip=skip,
-        limit=limit,
-        current_user_id=current_user.id,
-        is_admin=False
+        user_id=current_user.id, skip=skip, limit=limit, current_user_id=current_user.id, is_admin=False
     )
 
 
@@ -85,11 +81,11 @@ def get_my_connection_history(
     response_description="Returns list of connections for a specific user.",
 )
 def get_connection_history_by_user(
-        user_id: uuid.UUID,
-        skip: int = 0,
-        limit: int = 50,
-        service: ConnectionService = Depends(get_connection_service),
-        current_user: TokenData = Depends(get_current_user),
+    user_id: uuid.UUID,
+    skip: int = 0,
+    limit: int = 50,
+    service: ConnectionService = Depends(get_connection_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     Get connection history for a specific user.
@@ -101,11 +97,7 @@ def get_connection_history_by_user(
     is_admin = current_user.role == Role.ADMIN
 
     return service.get_user_connection_history(
-        user_id=user_id,
-        skip=skip,
-        limit=limit,
-        current_user_id=current_user.id,
-        is_admin=is_admin
+        user_id=user_id, skip=skip, limit=limit, current_user_id=current_user.id, is_admin=is_admin
     )
 
 
@@ -118,11 +110,11 @@ def get_connection_history_by_user(
     response_description="Returns list of connections from a specific IP.",
 )
 def get_connections_by_ip(
-        ip_address: str,
-        skip: int = 0,
-        limit: int = 50,
-        service: ConnectionService = Depends(get_connection_service),
-        current_user: TokenData = Depends(get_current_user),
+    ip_address: str,
+    skip: int = 0,
+    limit: int = 50,
+    service: ConnectionService = Depends(get_connection_service),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
     List all users who connected from a specific IP.
@@ -131,9 +123,4 @@ def get_connections_by_ip(
     if current_user.role != Role.ADMIN:
         raise HTTPException(status_code=403, detail="Admin privileges required.")
 
-    return service.get_connections_by_ip(
-        ip_address=ip_address,
-        skip=skip,
-        limit=limit,
-        is_admin=True
-    )
+    return service.get_connections_by_ip(ip_address=ip_address, skip=skip, limit=limit, is_admin=True)

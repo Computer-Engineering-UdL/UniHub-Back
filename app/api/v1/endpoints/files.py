@@ -1,9 +1,9 @@
 from fastapi import APIRouter, Depends, File, Form, UploadFile
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user, require_verified_email
 from app.api.utils import handle_api_errors
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.file.file_service import FileService
 from app.schemas import FileDetail, FileList, FileUpload, VisibilityUpdate
@@ -22,7 +22,7 @@ async def upload_file(
     file: UploadFile = File(...),
     is_public: bool = Form(False),
     service: FileService = Depends(get_file_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Endpoint to handle file uploads.
@@ -50,7 +50,7 @@ def update_file_visibility(
     file_id: str,
     payload: VisibilityUpdate,
     service: FileService = Depends(get_file_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Update file visibility (public/private).
@@ -106,7 +106,7 @@ def view_file(
 def delete_file(
     file_id: str,
     service: FileService = Depends(get_file_service),
-    current_user: TokenData = Depends(get_current_user),
+    current_user: TokenData = Depends(require_verified_email),
 ):
     """
     Endpoint to delete a file by ID.

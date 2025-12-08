@@ -4,9 +4,9 @@ from typing import List
 from fastapi import APIRouter, Depends, status
 from sqlalchemy.orm import Session
 
+from app.api.dependencies import get_current_user
 from app.api.utils import handle_api_errors
 from app.core.database import get_db
-from app.core.dependencies import get_current_user
 from app.core.types import TokenData
 from app.domains.file.file_association_service import FileAssociationService
 from app.schemas import (

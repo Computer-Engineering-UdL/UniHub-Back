@@ -6,10 +6,10 @@ from fastapi import APIRouter, Depends
 from sqlalchemy.orm import Session
 from starlette import status
 
+from app.api.dependencies import get_current_user, require_role
 from app.api.utils import handle_api_errors
 from app.api.utils.permissions import get_channel_permission, is_channel_member
 from app.core.database import get_db
-from app.core.dependencies import get_current_user, require_role
 from app.core.types import TokenData
 from app.domains.channel import ChannelService
 from app.literals.channels import ChannelRole

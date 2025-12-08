@@ -2,7 +2,7 @@ from fastapi import APIRouter, Depends
 from starlette import status
 from starlette.exceptions import HTTPException
 
-from app.core.dependencies import cooldown, require_role
+from app.api.dependencies import cooldown, require_role
 from app.core.types import TokenData
 from app.literals.users import Role
 from app.seeds.seed import seed_database
