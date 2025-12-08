@@ -8,7 +8,9 @@ from app.seeds.category import seed_housing_categories
 from app.seeds.channels import seed_channels
 from app.seeds.interests import seed_interests
 from app.seeds.messages import seed_messages
+from app.seeds.terms import seed_terms
 from app.seeds.university import seed_universities
+from app.seeds.user_terms import seed_user_acceptances
 from app.seeds.users import seed_users
 
 
@@ -41,6 +43,12 @@ def seed_database(nuke: bool = False):
 
         seed_housing_categories(db)
         print("- Categories seeded")
+
+        terms = seed_terms(db)
+        print("- Terms seeded")
+
+        seed_user_acceptances(db, users, terms)
+        print("- User Terms seeded")
 
         seed_amenities(db)
         print("- Amenities seeded")
