@@ -19,7 +19,6 @@ from app.schemas import (
 
 router = APIRouter()
 
-
 def get_terms_service(db: Session = Depends(get_db)) -> TermsService:
     """Dependency to inject TermsService."""
     return TermsService(db)
@@ -79,7 +78,7 @@ def get_terms_by_version(
     return service.get_terms_by_version(version)
 
 
-# list offers
+# list terms
 @router.get(
     "/",
     response_model=List[TermsList],
