@@ -30,6 +30,7 @@ class UserTermsAcceptanceList(BaseModel):
     id: UUID
     terms_id: UUID
     accepted_at: datetime
+    version: str
 
     model_config = ConfigDict(from_attributes=True)
 

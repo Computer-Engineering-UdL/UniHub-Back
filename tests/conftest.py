@@ -12,6 +12,7 @@ from sqlalchemy.orm import Session
 
 from app.api.v1.endpoints.auth import router as auth_router
 from app.api.v1.endpoints.channel import router as channel_router
+from app.api.v1.endpoints.connection import router as connection_router
 from app.api.v1.endpoints.conversation import router as conversation_router
 from app.api.v1.endpoints.dashboard import router as dashboard_router
 from app.api.v1.endpoints.file_association import router as file_association_router
@@ -22,8 +23,10 @@ from app.api.v1.endpoints.interest import router as interest_router
 from app.api.v1.endpoints.job_offer import router as job_offer_router
 from app.api.v1.endpoints.members import router as members_router
 from app.api.v1.endpoints.messages import router as messages_router
+from app.api.v1.endpoints.terms import router as terms_router
 from app.api.v1.endpoints.user import router as user_router
 from app.api.v1.endpoints.user_like import router as user_like_router
+from app.api.v1.endpoints.user_terms import router as user_terms_router
 from app.api.v1.endpoints.websocket import router as websocket_router
 from app.core import Base, get_db
 from app.core.config import settings
@@ -314,6 +317,9 @@ def app(db):
     app.include_router(category_router, prefix="/categories")
     app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
     app.include_router(job_offer_router, prefix=f"{settings.API_VERSION}/jobs")
+    app.include_router(terms_router, prefix=f"{settings.API_VERSION}/terms")
+    app.include_router(user_terms_router, prefix=f"{settings.API_VERSION}/user_terms")
+    app.include_router(connection_router, prefix=f"{settings.API_VERSION}/connection")
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
