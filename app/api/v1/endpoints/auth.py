@@ -8,16 +8,13 @@ from starlette.responses import RedirectResponse
 
 from app.api.dependencies import get_current_user, get_oauth, oauth2_scheme, rate_limit
 from app.api.v1.endpoints.user import get_user_service
-from app.core import create_access_token
 from app.core.config import settings
 from app.core.database import get_db
 from app.core.middleware import get_client_ip
-from app.core.security import create_refresh_token
 from app.core.types import TokenData
 from app.domains import UserService
 from app.domains.auth.auth_service import AuthService
 from app.literals.auth import OAuthProvider
-from app.models import create_payload_from_user
 from app.schemas import LoginRequest, Token, UserRegister
 from app.schemas.auth import (
     MessageResponse,
@@ -76,38 +73,34 @@ async def logout_all(auth_service: AuthService = Depends(get_auth_service), toke
 
 
 @router.post("/signup", response_model=Token, status_code=status.HTTP_201_CREATED)
-@rate_limit(max_requests=5, window_seconds=3600, per_user=False)
+# rate_limit here may be unnecessary, because it is already limited in main.py,
+# but maybe this is better approach, I dunno
+# @rate_limit(max_requests=5, window_seconds=3600, per_user=False)
 async def signup(
-    request: Request,
-    data: UserRegister,
-    user_service: UserService = Depends(get_user_service),
-    auth_service: AuthService = Depends(get_auth_service),
+        request: Request,
+        data: UserRegister,
+        user_service: UserService = Depends(get_user_service),
+        auth_service: AuthService = Depends(get_auth_service),
 ):
     """
-    Register a new user
-    Captures IP and User-Agent for audit logs.
+    Register a new user, send verification email and auto-login.
     """
     client_ip = get_client_ip(request)
     user_agent = request.headers.get("User-Agent", "Unknown")
 
-    user_read = user_service.register(data=data, ip_address=client_ip, user_agent=user_agent)
-
-    user_orm = user_service.repository.get_by_id(user_read.id)
-
-    payload = create_payload_from_user(user_orm)
-
-    access_token = create_access_token(payload)
-    refresh_token = create_refresh_token(payload)
-
-    token = Token(
-        access_token=access_token,
-        refresh_token=refresh_token,
-        token_type="bearer",
+    user_service.register(
+        data=data,
+        ip_address=client_ip,
+        user_agent=user_agent
     )
-    await auth_service.authenticate_user(data)
     await auth_service.send_verification_email(data.email)
-    return token
+    login_req = LoginRequest(
+        username=data.email,
+        password=data.password
+    )
+    token = await auth_service.authenticate_user(login_req)
 
+    return token
 
 @router.post("/verify/send", response_model=MessageResponse)
 @rate_limit(

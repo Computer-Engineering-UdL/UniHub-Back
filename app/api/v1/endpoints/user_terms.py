@@ -50,6 +50,11 @@ def accept_latest_terms(
     status_code=status.HTTP_200_OK,
     summary="Check whether user accepted the latest Terms",
 )
+@router.get(
+    "/latest-status",
+    status_code=status.HTTP_200_OK,
+    summary="Check whether user accepted the latest Terms",
+)
 def get_terms_status(
     acceptance_service: UserTermsAcceptanceService = Depends(get_user_terms_acceptance_service),
     current_user: TokenData = Depends(get_current_user),
@@ -71,7 +76,7 @@ def get_terms_status(
     return {
         "latest_terms_id": latest.id,
         "latest_version": latest.version,
-        "accepted_latest": user_last and user_last.terms_id == latest.id,
+        "accepted_latest": user_last is not None and user_last.terms_id == latest.id,
         "user_last_accepted_terms_id": user_last.terms_id if user_last else None,
     }
 
