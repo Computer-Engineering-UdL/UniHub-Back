@@ -13,6 +13,7 @@ from app.schemas.housing_category import *  # noqa
 from app.schemas.housing_offer import *  # noqa
 from app.schemas.interest import *  # noqa
 from app.schemas.message import *  # noqa
+from app.schemas.report import *  # noqa
 from app.schemas.terms import *  # noqa
 from app.schemas.user import *  # noqa
 from app.schemas.user_like import *  # noqa
@@ -30,6 +31,7 @@ from . import (
     housing_offer,
     interest,
     message,
+    report,
     terms,
     user,
     user_like,
@@ -52,6 +54,7 @@ for module in (
     terms,
     user_terms_acceptance,
     connection,
+    report,
 ):
     for name in dir(module):
         obj = getattr(module, name)
@@ -77,4 +80,5 @@ __all__ = (
     + terms.__all__
     + user_terms_acceptance.__all__
     + connection.__all__
+    + report.__all__
 )

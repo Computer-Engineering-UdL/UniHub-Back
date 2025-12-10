@@ -1,5 +1,5 @@
 from datetime import datetime, timedelta
-from typing import List
+from typing import List, Set
 
 from sqlalchemy.orm import Session
 
@@ -15,35 +15,47 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
         print("* Skipping message seeding - not enough users or channels")
         return []
 
+    existing_count = db.query(Message).limit(1).count()
+    if existing_count > 0:
+        print("* Messages already seeded")
+        return []
+
     all_created_messages = []
 
-    def is_channel_admin(channel_id, user_id):
+    # Pre-compute admin status for all users/channels to avoid repeated queries
+    site_admin_ids: Set[str] = {str(u.id) for u in users if u.role == Role.ADMIN}
+
+    # Build channel admin lookup: {channel_id: set of user_ids who are admins}
+    channel_admin_map: dict[str, Set[str]] = {}
+    all_memberships = db.query(ChannelMember).filter(ChannelMember.role == ChannelRole.ADMIN).all()
+    for member in all_memberships:
+        ch_id = str(member.channel_id)
+        if ch_id not in channel_admin_map:
+            channel_admin_map[ch_id] = set()
+        channel_admin_map[ch_id].add(str(member.user_id))
+
+    def is_channel_admin(channel_id, user_id) -> bool:
         """Check if user is site admin OR channel admin (only these can post)."""
-        db_user = db.query(User).filter(User.id == user_id).one_or_none()
-        if db_user is None:
-            return False
-
-        if db_user.role == Role.ADMIN:
+        user_id_str = str(user_id)
+        if user_id_str in site_admin_ids:
             return True
+        ch_id_str = str(channel_id)
+        return user_id_str in channel_admin_map.get(ch_id_str, set())
 
-        db_member = db.query(ChannelMember).filter_by(channel_id=channel_id, user_id=user_id).first()
-        return db_member is not None and db_member.role == ChannelRole.ADMIN
+    channel_by_name: dict[str, Channel] = {}
+    for ch in channels:
+        channel_by_name[ch.name] = ch
 
     def get_channel_by_name(name: str):
-        """Helper to find channel by name."""
-        for ch in channels:
-            if name in ch.name:
+        """Helper to find channel by partial name match."""
+        for ch_name, ch in channel_by_name.items():
+            if name in ch_name:
                 return ch
         return None
 
     def create_message(channel, user, content, days_ago=0, hours_ago=0, is_edited=False):
         """Helper to create a message if user is admin."""
         if not is_channel_admin(channel.id, user.id):
-            return None
-
-        existing = db.query(Message).filter_by(channel_id=channel.id, content=content).first()
-
-        if existing:
             return None
 
         created_at = datetime.now() - timedelta(days=days_ago, hours=hours_ago)
@@ -58,7 +70,6 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
             updated_at=updated_at,
         )
         db.add(message)
-        db.flush()
         return message
 
     admin_users = [u for u in users if u.role == Role.ADMIN]
@@ -152,14 +163,12 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
     if jobs:
         msgs = [
             (
-                "Tech startup looking for Software Engineering interns. Summer 2025. "
-                "Apply at: careers@techstartup.com",
+                "Tech startup looking for Software Engineering interns. Summer 2025. Apply at: careers@techstartup.com",
                 7,
                 0,
             ),
             (
-                "Marketing internship opportunity at local agency. Flexible hours, "
-                "great for students. DM for details.",
+                "Marketing internship opportunity at local agency. Flexible hours, great for students. DM for details.",
                 6,
                 0,
             ),
@@ -176,8 +185,7 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
     if events:
         msgs = [
             (
-                "Spring Festival this Saturday at the campus plaza! Live music, food trucks, "
-                "and activities all day!",
+                "Spring Festival this Saturday at the campus plaza! Live music, food trucks, and activities all day!",
                 5,
                 0,
             ),
@@ -218,8 +226,7 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
     if sports:
         msgs = [
             (
-                "Soccer team looking for players! Practice every Tuesday and Thursday 6 PM. "
-                "All skill levels welcome!",
+                "Soccer team looking for players! Practice every Tuesday and Thursday 6 PM. All skill levels welcome!",
                 6,
                 0,
             ),
@@ -239,8 +246,7 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
             ("Theater club presents 'Hamlet' next weekend. Student tickets €5. Shows Fri-Sun at 8 PM.", 7, 0),
             ("Jazz band looking for a drummer. Rehearsals Thursdays 7 PM. Some experience required.", 5, 0),
             (
-                "Photography exhibition: 'Campus Life'. Submit your photos by Friday. "
-                "Winners displayed in main hall.",
+                "Photography exhibition: 'Campus Life'. Submit your photos by Friday. Winners displayed in main hall.",
                 4,
                 0,
             ),
@@ -267,8 +273,7 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
                 0,
             ),
             (
-                "Cultural night this Saturday! Share food, music, and traditions from your country. "
-                "Everyone welcome!",
+                "Cultural night this Saturday! Share food, music, and traditions from your country. Everyone welcome!",
                 3,
                 0,
             ),
@@ -317,8 +322,7 @@ def seed_messages(db: Session, users: List[User], channels: List[Channel]) -> Li
             ("Driving to Barcelona this Friday afternoon. 3 seats available. Split gas costs. DM me!", 5, 0),
             ("Weekend trip to the mountains planned. Looking for 2-3 people to share ride. Saturday morning.", 4, 0),
             (
-                "Daily commute from downtown? Let's carpool! Save money and environment. "
-                "Morning departures 7:30 AM.",
+                "Daily commute from downtown? Let's carpool! Save money and environment. Morning departures 7:30 AM.",
                 3,
                 0,
             ),
