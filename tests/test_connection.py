@@ -1,11 +1,9 @@
 import uuid
 
-from app.core.config import settings
 from app.core.security import get_payload
 
 
 class TestConnectionEndpoints:
-
     def test_log_connection_basic_user(self, client, user_token, auth_headers):
         """
         Basic user logs their own connection.
@@ -13,12 +11,9 @@ class TestConnectionEndpoints:
         user_data = get_payload(user_token)
         user_id = user_data["sub"]
 
-        payload = {
-            "user_id": user_id,
-            "ip_address": "192.168.1.100"
-        }
+        payload = {"user_id": user_id, "ip_address": "192.168.1.100"}
 
-        url = f"{settings.API_VERSION}/connection/"
+        url = "/connection/"
         resp = client.post(url, json=payload, headers=auth_headers)
 
         assert resp.status_code == 201
@@ -38,10 +33,10 @@ class TestConnectionEndpoints:
 
         payload = {
             "user_id": fake_user_id,  # Trying to fake it
-            "ip_address": "10.0.0.5"
+            "ip_address": "10.0.0.5",
         }
 
-        url = f"{settings.API_VERSION}/connection/"
+        url = "/connection/"
         resp = client.post(url, json=payload, headers=auth_headers)
 
         assert resp.status_code == 201
@@ -57,12 +52,9 @@ class TestConnectionEndpoints:
         Admin is allowed to set any user_id.
         """
         target_user_id = str(uuid.uuid4())
-        payload = {
-            "user_id": target_user_id,
-            "ip_address": "8.8.8.8"
-        }
+        payload = {"user_id": target_user_id, "ip_address": "8.8.8.8"}
 
-        url = f"{settings.API_VERSION}/connection/"
+        url = "/connection/"
         resp = client.post(url, json=payload, headers=admin_auth_headers)
 
         assert resp.status_code == 201
@@ -74,12 +66,9 @@ class TestConnectionEndpoints:
         user_data = get_payload(user_token)
         user_id = user_data["sub"]
 
-        payload = {
-            "user_id": user_id,
-            "ip_address": "not-an-ip-address"
-        }
+        payload = {"user_id": user_id, "ip_address": "not-an-ip-address"}
 
-        url = f"{settings.API_VERSION}/connection/"
+        url = "/connection/"
         resp = client.post(url, json=payload, headers=auth_headers)
 
         # Service rzuca ValueError -> HTTPException 400
@@ -92,12 +81,12 @@ class TestConnectionEndpoints:
         user_id = user_data["sub"]
 
         # Log a few connections first
-        url_log = f"{settings.API_VERSION}/connection/"
+        url_log = "/connection/"
         client.post(url_log, json={"user_id": user_id, "ip_address": "1.1.1.1"}, headers=auth_headers)
         client.post(url_log, json={"user_id": user_id, "ip_address": "2.2.2.2"}, headers=auth_headers)
 
         # Get history
-        url_me = f"{settings.API_VERSION}/connection/me"
+        url_me = "/connection/me"
         resp = client.get(url_me, headers=auth_headers)
 
         assert resp.status_code == 200
@@ -116,10 +105,10 @@ class TestConnectionEndpoints:
         target_user_id = user_data["sub"]
 
         # Generate some data
-        url_log = f"{settings.API_VERSION}/connection/"
+        url_log = "/connection/"
         client.post(url_log, json={"user_id": target_user_id, "ip_address": "10.10.10.10"}, headers=auth_headers)
 
-        url_get = f"{settings.API_VERSION}/connection/user/{target_user_id}"
+        url_get = f"/connection/user/{target_user_id}"
         resp = client.get(url_get, headers=admin_auth_headers)
 
         assert resp.status_code == 200
@@ -132,7 +121,7 @@ class TestConnectionEndpoints:
         """Basic user tries to view another user's history."""
         random_user_id = str(uuid.uuid4())
 
-        url_get = f"{settings.API_VERSION}/connection/user/{random_user_id}"
+        url_get = f"/connection/user/{random_user_id}"
         resp = client.get(url_get, headers=auth_headers)
 
         assert resp.status_code == 403
@@ -143,7 +132,7 @@ class TestConnectionEndpoints:
         user_data = get_payload(user_token)
         my_id = user_data["sub"]
 
-        url_get = f"{settings.API_VERSION}/connection/user/{my_id}"
+        url_get = f"/connection/user/{my_id}"
         resp = client.get(url_get, headers=auth_headers)
 
         assert resp.status_code == 200
@@ -155,11 +144,11 @@ class TestConnectionEndpoints:
         user_id = user_data["sub"]
 
         # Log connection
-        url_log = f"{settings.API_VERSION}/connection/"
+        url_log = "/connection/"
         client.post(url_log, json={"user_id": user_id, "ip_address": target_ip}, headers=auth_headers)
 
         # Search
-        url_search = f"{settings.API_VERSION}/connection/ip/{target_ip}"
+        url_search = f"/connection/ip/{target_ip}"
         resp = client.get(url_search, headers=admin_auth_headers)
 
         assert resp.status_code == 200
@@ -170,7 +159,7 @@ class TestConnectionEndpoints:
 
     def test_search_by_ip_forbidden(self, client, auth_headers):
         """Basic user tries to search by IP."""
-        url_search = f"{settings.API_VERSION}/connection/ip/1.1.1.1"
+        url_search = "/connection/ip/1.1.1.1"
         resp = client.get(url_search, headers=auth_headers)
 
         assert resp.status_code == 403

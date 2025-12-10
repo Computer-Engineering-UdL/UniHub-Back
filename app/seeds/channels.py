@@ -13,6 +13,11 @@ def seed_channels(db: Session, users: List[User]) -> List[Channel]:
     """Create university diffusion channels with memberships."""
     repo = ChannelRepository(db)
 
+    existing = db.query(Channel).filter_by(name="📢 Campus Announcements").first()
+    if existing:
+        print("* Channels already seeded")
+        return db.query(Channel).all()
+
     channels_data = [
         {
             "name": "📢 Campus Announcements",
@@ -109,11 +114,6 @@ def seed_channels(db: Session, users: List[User]) -> List[Channel]:
     created_channels = []
 
     for channel_data in channels_data:
-        existing = repo.get_by_id(db.query(Channel).filter_by(name=channel_data["name"]).first())
-        if existing:
-            created_channels.append(existing)
-            continue
-
         channel = repo.create(channel_data)
         created_channels.append(channel)
 

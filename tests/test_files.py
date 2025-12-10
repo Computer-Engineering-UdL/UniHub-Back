@@ -333,7 +333,7 @@ class TestPublicFileUpload:
         assert data["filename"] == "public_test.jpg"
         assert data["is_public"] is True
         assert "public_url" in data
-        assert f"{settings.API_VERSION}/files/public/{data['id']}" in data["public_url"]
+        assert f"/files/public/{data['id']}" in data["public_url"]
 
     def test_upload_private_file_no_public_url(self, client, user_token, sample_file_content):
         """Test private file upload has no public URL."""

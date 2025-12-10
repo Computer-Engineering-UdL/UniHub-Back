@@ -1,27 +1,20 @@
-from app.core.config import settings
-
-
 def create_term(client, admin_headers, version: str) -> str:
     """Helper to create a term and return its ID."""
-    payload = {
-        "version": version,
-        "content": f"Content for {version}"
-    }
-    url = f"{settings.API_VERSION}/terms/"
+    payload = {"version": version, "content": f"Content for {version}"}
+    url = "/terms/"
     resp = client.post(url, json=payload, headers=admin_headers)
     assert resp.status_code == 201
     return resp.json()["id"]
 
 
 class TestUserTermsEndpoints:
-
     def test_accept_latest_terms_success(self, client, auth_headers, admin_auth_headers):
         """User should be able to accept the latest terms."""
         # 1. Admin creates Terms v1
         term_id = create_term(client, admin_auth_headers, "v1.0-ACCEPT")
 
         # 2. User accepts
-        url = f"{settings.API_VERSION}/user_terms/accept"
+        url = "/user_terms/accept"
         resp = client.post(url, headers=auth_headers)
 
         assert resp.status_code == 201
@@ -29,12 +22,11 @@ class TestUserTermsEndpoints:
         assert data["terms_id"] == term_id
         assert "accepted_at" in data
 
-
     def test_accept_terms_idempotency(self, client, auth_headers, admin_auth_headers):
         """Calling accept twice should return the same record (not error)."""
         create_term(client, admin_auth_headers, "v1.0-IDEM")
 
-        url = f"{settings.API_VERSION}/user_terms/accept"
+        url = "/user_terms/accept"
 
         # First call
         resp1 = client.post(url, headers=auth_headers)
@@ -48,7 +40,6 @@ class TestUserTermsEndpoints:
 
         assert id1 == id2  # Should be the same acceptance record
 
-
     def test_get_latest_status_flow(self, client, auth_headers, admin_auth_headers):
         """
         Full flow:
@@ -57,8 +48,8 @@ class TestUserTermsEndpoints:
         3. Create v2 -> Status: False (because v2 is newer)
         4. Accept v2 -> Status: True
         """
-        status_url = f"{settings.API_VERSION}/user_terms/latest-status"
-        accept_url = f"{settings.API_VERSION}/user_terms/accept"
+        status_url = "/user_terms/latest-status"
+        accept_url = "/user_terms/accept"
 
         # 1. Create v1
         v1_id = create_term(client, admin_auth_headers, "v1-FLOW")
@@ -97,11 +88,10 @@ class TestUserTermsEndpoints:
         assert data["accepted_latest"] is True
         assert data["user_last_accepted_terms_id"] == v2_id
 
-
     def test_list_user_acceptances(self, client, auth_headers, admin_auth_headers):
         """Should list all versions accepted by user."""
-        list_url = f"{settings.API_VERSION}/user_terms/user/list"
-        accept_url = f"{settings.API_VERSION}/user_terms/accept"
+        list_url = "/user_terms/user/list"
+        accept_url = "/user_terms/accept"
 
         # Initial check (might be empty or contain seeded terms)
         initial_resp = client.get(list_url, headers=auth_headers)

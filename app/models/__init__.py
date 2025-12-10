@@ -10,8 +10,10 @@ from app.models.housing_amenity import HousingAmenityTableModel, HousingOfferAme
 from app.models.housing_category import HousingCategoryTableModel
 from app.models.housing_offer import HousingOfferTableModel, OfferStatus
 from app.models.interest import Interest, InterestCategory, UserInterest
+from app.models.job import JobApplication, JobOfferTableModel, SavedJob
 from app.models.message import Message
 from app.models.password_history import PasswordHistory
+from app.models.report import Report
 from app.models.terms import TermsTableModel
 from app.models.user import User, create_payload_from_user
 from app.models.user_like import UserLike
@@ -43,4 +45,8 @@ __all__ = [
     "UserTermsAcceptanceTableModel",
     "ConnectionTableModel",
     "PasswordHistory",
+    "Report",
+    "JobOfferTableModel",
+    "JobApplication",
+    "SavedJob",
 ]

@@ -96,16 +96,13 @@ class TestAuthEndpoints:
         assert client.get("/auth/me", headers={"Authorization": f"Bearer {t1}"}).status_code == 401
         assert client.get("/auth/me", headers={"Authorization": f"Bearer {t2}"}).status_code == 401
 
-
     def _create_terms(self, client, admin_headers, version):
         """Helper to ensure terms exist."""
         payload = {"version": version, "content": "Terms content for testing signup."}
-        # Tutaj używamy API_VERSION, bo w conftest.py terms są podpięte z prefixem wersji
-        resp = client.post(f"{settings.API_VERSION}/terms/", json=payload, headers=admin_headers)
+        resp = client.post("/terms/", json=payload, headers=admin_headers)
         if resp.status_code == 201:
             return resp.json()["id"]
         return None
-
 
     def test_signup_success(self, client, db, admin_auth_headers):
         # 1. Prepare Terms
@@ -121,13 +118,10 @@ class TestAuthEndpoints:
             "first_name": "New",
             "last_name": "User",
             "accepted_terms_version": terms_version,
-            "referral_code": None
+            "referral_code": None,
         }
 
-        headers = {
-            "X-Forwarded-For": "10.0.0.99",
-            "User-Agent": "TestClient/1.0"
-        }
+        headers = {"X-Forwarded-For": "10.0.0.99", "User-Agent": "TestClient/1.0"}
 
         url = "/auth/signup"
         response = client.post(url, json=payload, headers=headers)
@@ -160,7 +154,7 @@ class TestAuthEndpoints:
             "password": "password",
             "first_name": "Test",
             "last_name": "Test",
-            "accepted_terms_version": terms_version
+            "accepted_terms_version": terms_version,
         }
 
         response = client.post("/auth/signup", json=payload)
@@ -177,7 +171,7 @@ class TestAuthEndpoints:
             "password": "password",
             "first_name": "Test",
             "last_name": "Test",
-            "accepted_terms_version": terms_version
+            "accepted_terms_version": terms_version,
         }
 
         response = client.post("/auth/signup", json=payload)
@@ -191,7 +185,7 @@ class TestAuthEndpoints:
             "password": "password",
             "first_name": "Test",
             "last_name": "Test",
-            "accepted_terms_version": "v.NON_EXISTENT_999"
+            "accepted_terms_version": "v.NON_EXISTENT_999",
         }
 
         response = client.post("/auth/signup", json=payload)
@@ -209,7 +203,7 @@ class TestAuthEndpoints:
             "first_name": "Test",
             "last_name": "Test",
             "accepted_terms_version": terms_version,
-            "referral_code": "INVLD"
+            "referral_code": "INVLD",
         }
 
         response = client.post("/auth/signup", json=payload)
