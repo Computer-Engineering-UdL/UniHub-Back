@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel
+from pydantic import BaseModel, ConfigDict
 
 from app.literals.job import JobCategory, JobType, JobWorkplace
 
@@ -54,8 +54,7 @@ class JobOfferRead(JobOfferBase):
     is_saved: bool = False
     is_applied: bool = False
 
-    class Config:
-        from_attributes = True
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JobOfferDetail(JobOfferRead):

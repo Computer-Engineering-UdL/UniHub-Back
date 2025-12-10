@@ -14,13 +14,15 @@ from app.models.university import Faculty, University
 
 used_referral_codes = set()  # container for used codes
 
+
 def random_referral_code(length=5) -> str:
     """Generates 5-digit unique code."""
     while True:
-        code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+        code = "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
         if code not in used_referral_codes:
             used_referral_codes.add(code)
             return code
+
 
 def seed_users(db: Session) -> List[User]:
     """Create default users and return them."""
@@ -44,10 +46,12 @@ def seed_users(db: Session) -> List[User]:
         """Returns the Faculty object or None if not found"""
         return faculties_map.get(name)
 
+    hashed_password = hash_password(settings.DEFAULT_PASSWORD)
+
     def make_user(**kwargs) -> User:
         return User(
             id=uuid.uuid4(),
-            password=hash_password(settings.DEFAULT_PASSWORD),
+            password=hashed_password,
             created_at=datetime.datetime.now(datetime.UTC),
             **kwargs,
         )

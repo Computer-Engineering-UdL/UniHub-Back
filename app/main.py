@@ -8,6 +8,7 @@ from starlette.middleware.sessions import SessionMiddleware
 import app.models
 from app.api.v1.endpoints import (
     admin,
+    admin_reports,
     auth,
     channel,
     connection,
@@ -21,6 +22,7 @@ from app.api.v1.endpoints import (
     interest,
     members,
     messages,
+    reports,
     terms,
     university,
     user,
@@ -130,7 +132,10 @@ app.include_router(university.router, prefix=f"{settings.API_VERSION}/universiti
 app.include_router(websocket.router, tags=["websocket"])
 app.include_router(terms.router, prefix=f"{settings.API_VERSION}/terms", tags=["terms"])
 app.include_router(user_terms.router, prefix=f"{settings.API_VERSION}/user_terms", tags=["user_terms"])
-app.include_router(connection.router,prefix=f"{settings.API_VERSION}/connection", tags=["connection"])
+app.include_router(connection.router, prefix=f"{settings.API_VERSION}/connection", tags=["connection"])
+app.include_router(reports.router, prefix=f"{settings.API_VERSION}/reports", tags=["reports"])
+app.include_router(admin_reports.router, prefix=f"{settings.API_VERSION}/admin/reports", tags=["admin reports"])
+
 
 @app.get("/")
 def read_root():

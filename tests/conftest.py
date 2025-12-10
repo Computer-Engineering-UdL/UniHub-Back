@@ -10,27 +10,12 @@ from fastapi.testclient import TestClient
 from sqlalchemy import create_engine, event
 from sqlalchemy.orm import Session
 
-from app.api.v1.endpoints.auth import router as auth_router
-from app.api.v1.endpoints.channel import router as channel_router
-from app.api.v1.endpoints.conversation import router as conversation_router
-from app.api.v1.endpoints.dashboard import router as dashboard_router
-from app.api.v1.endpoints.file_association import router as file_association_router
-from app.api.v1.endpoints.files import router as file_router
-from app.api.v1.endpoints.housing_category import router as category_router
-from app.api.v1.endpoints.housing_offer import router as housing_offer_router
-from app.api.v1.endpoints.interest import router as interest_router
-from app.api.v1.endpoints.job_offer import router as job_offer_router
-from app.api.v1.endpoints.members import router as members_router
-from app.api.v1.endpoints.messages import router as messages_router
-from app.api.v1.endpoints.user import router as user_router
-from app.api.v1.endpoints.user_like import router as user_like_router
-from app.api.v1.endpoints.websocket import router as websocket_router
 from app.core import Base, get_db
 from app.core.config import settings
 from app.core.valkey import valkey_client
 from app.models import User
 from app.schemas import LoginRequest
-from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_users
+from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_reports, seed_users
 from app.seeds.category import seed_housing_categories
 from app.seeds.messages import seed_messages
 from app.seeds.terms import seed_terms
@@ -54,6 +39,7 @@ def seed_database_test(db: Session):
     users = seed_users(db)
     channels = seed_channels(db, users)
     seed_messages(db, users, channels)
+    seed_reports(db, users)
     seed_housing_categories(db)
     seed_housing_data(db, users)
     seed_interests(db)
@@ -128,7 +114,10 @@ def db(request, engine):
     if request.node.get_closest_marker("no_seed"):
         # nested rollback is enough since seed is session-level
         for table in reversed(Base.metadata.sorted_tables):
-            session.execute(table.delete())
+            try:
+                session.execute(table.delete())
+            except Exception:
+                pass
         session.commit()
 
     yield session
@@ -300,7 +289,32 @@ def admin_auth_headers(admin_token):
 
 @pytest.fixture(scope="function")
 def app(db):
-    """Create FastAPI app with test database."""
+    """Create FastAPI app with test database.
+
+    Router imports are done here (lazy loading) to speed up pytest startup.
+    This defers loading the entire application until tests actually need the client.
+    """
+    from app.api.v1.endpoints.admin_reports import router as admin_reports_router
+    from app.api.v1.endpoints.auth import router as auth_router
+    from app.api.v1.endpoints.channel import router as channel_router
+    from app.api.v1.endpoints.connection import router as connection_router
+    from app.api.v1.endpoints.conversation import router as conversation_router
+    from app.api.v1.endpoints.dashboard import router as dashboard_router
+    from app.api.v1.endpoints.file_association import router as file_association_router
+    from app.api.v1.endpoints.files import router as file_router
+    from app.api.v1.endpoints.housing_category import router as category_router
+    from app.api.v1.endpoints.housing_offer import router as housing_offer_router
+    from app.api.v1.endpoints.interest import router as interest_router
+    from app.api.v1.endpoints.job_offer import router as job_offer_router
+    from app.api.v1.endpoints.members import router as members_router
+    from app.api.v1.endpoints.messages import router as messages_router
+    from app.api.v1.endpoints.reports import router as reports_router
+    from app.api.v1.endpoints.terms import router as terms_router
+    from app.api.v1.endpoints.user import router as user_router
+    from app.api.v1.endpoints.user_like import router as user_like_router
+    from app.api.v1.endpoints.user_terms import router as user_terms_router
+    from app.api.v1.endpoints.websocket import router as websocket_router
+
     app = FastAPI()
     app.include_router(user_router, prefix="/users")
     app.include_router(auth_router, prefix="/auth")
@@ -312,8 +326,13 @@ def app(db):
     app.include_router(file_association_router, prefix="/file-associations")
     app.include_router(websocket_router)
     app.include_router(category_router, prefix="/categories")
-    app.include_router(dashboard_router, prefix=f"{settings.API_VERSION}/dashboard")
-    app.include_router(job_offer_router, prefix=f"{settings.API_VERSION}/jobs")
+    app.include_router(dashboard_router, prefix="/dashboard")
+    app.include_router(job_offer_router, prefix="/jobs")
+    app.include_router(terms_router, prefix="/terms")
+    app.include_router(user_terms_router, prefix="/user_terms")
+    app.include_router(connection_router, prefix="/connection")
+    app.include_router(reports_router, prefix="/reports")
+    app.include_router(admin_reports_router, prefix="/admin/reports")
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
