@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, HTTPException, Request, status
+from fastapi import APIRouter, Depends, HTTPException, Query, Request, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
@@ -61,8 +61,8 @@ def log_connection(
     response_description="Returns list of connections for the logged-in user.",
 )
 def get_my_connection_history(
-    skip: int = 0,
-    limit: int = 20,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     service: ConnectionService = Depends(get_connection_service),
     current_user: TokenData = Depends(get_current_user),
 ):
@@ -82,8 +82,8 @@ def get_my_connection_history(
 )
 def get_connection_history_by_user(
     user_id: uuid.UUID,
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
     service: ConnectionService = Depends(get_connection_service),
     current_user: TokenData = Depends(get_current_user),
 ):
@@ -111,8 +111,8 @@ def get_connection_history_by_user(
 )
 def get_connections_by_ip(
     ip_address: str,
-    skip: int = 0,
-    limit: int = 50,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(50, ge=1, le=100),
     service: ConnectionService = Depends(get_connection_service),
     current_user: TokenData = Depends(get_current_user),
 ):

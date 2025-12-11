@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_role
@@ -53,8 +53,8 @@ def create_category(
     response_description="Returns a list of available housing categories.",
 )
 def list_categories(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
     service: HousingCategoryService = Depends(get_category_service),
 ):
     """

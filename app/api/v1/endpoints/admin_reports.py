@@ -1,7 +1,7 @@
 import uuid
 from typing import Optional
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_role
@@ -51,8 +51,8 @@ def get_report_stats(
     response_description="Returns paginated and filtered list of reports.",
 )
 def get_reports(
-    page: int = 1,
-    size: int = 20,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
     status: Optional[str] = None,
     priority: Optional[str] = None,
     category: Optional[str] = None,
