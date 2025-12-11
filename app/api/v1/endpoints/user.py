@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, require_role
@@ -67,8 +67,8 @@ def get_user(
 
 @router.get("/", response_model=List[UserRead])
 def list_users(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
     search: str | None = None,
     service: UserService = Depends(get_user_service),
     _: TokenData = Depends(require_role(Role.ADMIN)),

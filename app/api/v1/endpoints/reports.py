@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, status
+from fastapi import APIRouter, Depends, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user
@@ -41,8 +41,8 @@ def create_report(
     response_description="Returns paginated list of reports created by current user.",
 )
 def get_my_reports(
-    page: int = 1,
-    size: int = 20,
+    page: int = Query(1, ge=1),
+    size: int = Query(20, ge=1, le=100),
     service: ReportService = Depends(get_report_service),
     current_user: TokenData = Depends(get_current_user),
 ):

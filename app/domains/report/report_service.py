@@ -51,6 +51,11 @@ class ReportService:
         search: Optional[str] = None,
     ) -> dict:
         """Get paginated list of reports with filters."""
+        if page < 1:
+            raise HTTPException(status_code=400, detail="Page must be at least 1")
+        if size < 1:
+            raise HTTPException(status_code=400, detail="Size must be at least 1")
+
         skip = (page - 1) * size
         reports, total = self.repository.get_paginated(
             skip=skip,
@@ -66,6 +71,12 @@ class ReportService:
 
     def get_my_reports(self, user_id: uuid.UUID, page: int = 1, size: int = 20) -> dict:
         """Get reports created by a specific user."""
+        # Validate pagination parameters
+        if page < 1:
+            raise HTTPException(status_code=400, detail="Page must be at least 1")
+        if size < 1:
+            raise HTTPException(status_code=400, detail="Size must be at least 1")
+
         skip = (page - 1) * size
         reports, total = self.repository.get_by_reporter(user_id=user_id, skip=skip, limit=size)
 

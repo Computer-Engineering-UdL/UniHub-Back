@@ -1,4 +1,4 @@
-from fastapi import APIRouter, Depends, File, Form, UploadFile
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, require_verified_email
@@ -118,8 +118,8 @@ def delete_file(
 @router.get("/", response_model=list[FileList])
 @handle_api_errors()
 def list_files(
-    skip: int = 0,
-    limit: int = 100,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(100, ge=1, le=200),
     service: FileService = Depends(get_file_service),
     current_user: TokenData = Depends(get_current_user),
 ):
