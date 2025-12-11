@@ -2,7 +2,7 @@ import json
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, File, Form, UploadFile, status
+from fastapi import APIRouter, Depends, File, Form, Query, UploadFile, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_verified_email
@@ -104,8 +104,8 @@ def get_offer(
 )
 def list_offers(
     service: HousingOfferService = Depends(get_housing_offer_service),
-    skip: int = 0,
-    limit: int = 20,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
     city: str | None = None,
     category_name: str | None = None,
     min_price: float | None = None,
@@ -182,8 +182,8 @@ def delete_offer(
 def list_offers_by_user(
     user_id: uuid.UUID,
     service: HousingOfferService = Depends(get_housing_offer_service),
-    skip: int = 0,
-    limit: int = 20,
+    skip: int = Query(0, ge=0),
+    limit: int = Query(20, ge=1, le=100),
 ):
     """
     Retrieve all housing offers created by a specific user.
