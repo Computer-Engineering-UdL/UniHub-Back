@@ -11,12 +11,12 @@ from app.domains.housing import HousingAmenityRepository, HousingCategoryReposit
 from app.models import HousingCategoryTableModel, HousingOfferTableModel, User
 
 
-def seed_housing_data(db: Session, users: List[User]) -> None:
+def seed_housing_data(db: Session, users: List[User]) -> List[HousingOfferTableModel]:
     """Populate database with example housing categories, offers, and photos."""
 
     if not users:
         print("! No users found. Skipping housing seed.")
-        return
+        return []
 
     user = users[0]
 
@@ -485,6 +485,8 @@ def seed_housing_data(db: Session, users: List[User]) -> None:
         lleida_count = sum(1 for offer in created_offers if offer.city == "Lleida")
         if lleida_count:
             print(f"  → {lleida_count} Lleida housing offers added")
+
+    return created_offers
 
 
 def _process_offer_photos(

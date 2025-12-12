@@ -60,6 +60,8 @@ class ReportBase(BaseModel):
 class ReportCreate(ReportBase):
     """Schema for creating a new report."""
 
+    content_title: Optional[str] = None
+
     pass
 
 

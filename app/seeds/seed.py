@@ -41,11 +41,8 @@ def seed_database(nuke: bool = False):
         channels = seed_channels(db, users)
         print("- Channels seeded")
 
-        seed_messages(db, users, channels)
+        messages = seed_messages(db, users, channels)
         print("- Messages seeded")
-
-        seed_reports(db, users)
-        print("- Reports seeded")
 
         seed_housing_categories(db)
         print("- Categories seeded")
@@ -58,8 +55,12 @@ def seed_database(nuke: bool = False):
 
         seed_amenities(db)
         print("- Amenities seeded")
-        seed_housing_data(db, users)
+
+        housing_offers = seed_housing_data(db, users)
         print("- Housing data seeded")
+
+        seed_reports(db, users, channels, messages, housing_offers)
+        print("- Reports seeded")
 
         seed_conversations(db)
         print("- Conversations seeded")
