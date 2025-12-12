@@ -20,6 +20,7 @@ from app.api.v1.endpoints import (
     housing_category,
     housing_offer,
     interest,
+    job_offer,
     members,
     messages,
     reports,
@@ -123,6 +124,7 @@ app.include_router(
 )
 app.include_router(user_like.router, prefix=f"{settings.API_VERSION}/likes", tags=["user likes"])
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
+app.include_router(job_offer.router, prefix=f"{settings.API_VERSION}/job", tags=["job"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
 app.include_router(files.router, prefix=f"{settings.API_VERSION}/files", tags=["files"])
 app.include_router(
