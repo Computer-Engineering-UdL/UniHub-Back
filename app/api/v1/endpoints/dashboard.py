@@ -1,11 +1,12 @@
 from typing import List
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, Query
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import require_role
 from app.core.database import get_db
 from app.domains.dashboard.dashboard_service import DashboardService
+from app.literals.dashboard import TimeRange
 from app.literals.users import Role
 from app.schemas.dashboard import (
     ActivityItem,
@@ -42,17 +43,25 @@ def get_distribution_chart(
     return service.get_content_distribution()
 
 
-@router.get("/charts/weekly", response_model=ChartResponse)
-def get_weekly_chart(
+@router.get("/charts/activity", response_model=ChartResponse)
+def get_activity_chart(
+    time_range: TimeRange = Query(TimeRange.WEEK, description="Range: week, month, trimester, year"),
     db: Session = Depends(get_db),
     _: dict = Depends(require_role(Role.ADMIN)),
 ):
-    """
-    Get weekly activity data for bar charts.
-    Shows new users and new posts for the last 7 days.
-    """
+    """Get activity data for charts with dynamic range."""
     service = DashboardService(db)
-    return service.get_weekly_activity()
+    return service.get_activity_chart(time_range)
+
+
+@router.get("/charts/channels", response_model=ChartResponse)
+def get_channels_chart(
+    db: Session = Depends(get_db),
+    _: dict = Depends(require_role(Role.ADMIN)),
+):
+    """Get channel distribution stats."""
+    service = DashboardService(db)
+    return service.get_channels_distribution()
 
 
 @router.get("/activity", response_model=List[ActivityItem])
