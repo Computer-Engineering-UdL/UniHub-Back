@@ -20,6 +20,8 @@ from app.api.v1.endpoints import (
     housing_category,
     housing_offer,
     interest,
+    item,
+    item_category,
     job_offer,
     members,
     messages,
@@ -106,6 +108,9 @@ app.include_router(messages.router, prefix=f"{settings.API_VERSION}/channel", ta
 app.include_router(conversation.router, prefix=f"{settings.API_VERSION}/conversation", tags=["conversation"])
 
 app.include_router(dashboard.router, prefix=f"{settings.API_VERSION}/dashboard", tags=["dashboard"])
+
+app.include_router(item.router, prefix=f"{settings.API_VERSION}/items", tags=["items"])
+app.include_router(item_category.router, prefix=f"{settings.API_VERSION}/item-categories", tags=["item categories"])
 
 app.include_router(
     housing_offer.router,

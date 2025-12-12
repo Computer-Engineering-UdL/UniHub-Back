@@ -31,4 +31,4 @@ class ItemCategoryTableModel(Base):
     name: Mapped[str] = mapped_column(sa.String(50), nullable=False, unique=True)
 
     # ----- RELATIONSHIPS -----
-    items: Mapped[List[ItemTableModel]] = relationship(back_populates="category")
+    items: Mapped[List["ItemTableModel"]] = relationship(back_populates="category")

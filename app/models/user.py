@@ -17,6 +17,7 @@ if TYPE_CHECKING:
     from app.models.connection import ConnectionTableModel
     from app.models.housing_offer import HousingOfferTableModel
     from app.models.interest import Interest, UserInterest
+    from app.models.item import ItemTableModel
     from app.models.message import Message
     from app.models.password_history import PasswordHistory
     from app.models.university import Faculty
@@ -68,6 +69,10 @@ class User(Base):
     housing_offers: Mapped[List[HousingOfferTableModel]] = relationship("HousingOfferTableModel", back_populates="user")
 
     user_interest_links: Mapped[List[UserInterest]] = relationship("UserInterest", viewonly=True)
+
+    items: Mapped[List[ItemTableModel]] = relationship(
+        "ItemTableModel", back_populates="seller", cascade="all, delete-orphan"
+    )
 
     interests: Mapped[List[Interest]] = relationship(
         "Interest",
