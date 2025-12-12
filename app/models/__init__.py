@@ -10,6 +10,8 @@ from app.models.housing_amenity import HousingAmenityTableModel, HousingOfferAme
 from app.models.housing_category import HousingCategoryTableModel
 from app.models.housing_offer import HousingOfferTableModel, OfferStatus
 from app.models.interest import Interest, InterestCategory, UserInterest
+from app.models.item import ItemTableModel
+from app.models.item_category import ItemCategoryTableModel
 from app.models.job import JobApplication, JobOfferTableModel, SavedJob
 from app.models.message import Message
 from app.models.password_history import PasswordHistory
@@ -34,6 +36,8 @@ __all__ = [
     "Channel",
     "InterestCategory",
     "Interest",
+    "ItemTableModel",
+    "ItemCategoryTableModel",
     "UserInterest",
     "create_payload_from_user",
     "Conversation",

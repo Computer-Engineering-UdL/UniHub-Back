@@ -17,6 +17,7 @@ from app.models import User
 from app.schemas import LoginRequest
 from app.seeds import seed_channels, seed_housing_data, seed_interests, seed_reports, seed_users
 from app.seeds.category import seed_housing_categories
+from app.seeds.item_category import seed_item_categories
 from app.seeds.messages import seed_messages
 from app.seeds.terms import seed_terms
 
@@ -43,6 +44,7 @@ def seed_database_test(db: Session):
     seed_housing_categories(db)
     seed_housing_data(db, users)
     seed_interests(db)
+    seed_item_categories(db)
 
 
 @pytest.fixture(scope="session")
@@ -305,6 +307,8 @@ def app(db):
     from app.api.v1.endpoints.housing_category import router as category_router
     from app.api.v1.endpoints.housing_offer import router as housing_offer_router
     from app.api.v1.endpoints.interest import router as interest_router
+    from app.api.v1.endpoints.item import router as item_router
+    from app.api.v1.endpoints.item_category import router as item_cat_router
     from app.api.v1.endpoints.job_offer import router as job_offer_router
     from app.api.v1.endpoints.members import router as members_router
     from app.api.v1.endpoints.messages import router as messages_router
@@ -327,6 +331,8 @@ def app(db):
     app.include_router(websocket_router)
     app.include_router(category_router, prefix="/categories")
     app.include_router(dashboard_router, prefix="/dashboard")
+    app.include_router(item_router, prefix="/items")
+    app.include_router(item_cat_router, prefix="/item-categories")
     app.include_router(job_offer_router, prefix="/jobs")
     app.include_router(terms_router, prefix="/terms")
     app.include_router(user_terms_router, prefix="/user_terms")
