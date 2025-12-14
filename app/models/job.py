@@ -13,7 +13,7 @@ from app.literals.job import JobCategory, JobType, JobWorkplace
 
 if TYPE_CHECKING:
     from app.models.file_association import FileAssociation
-    from app.models.user import User
+    from app.models.user import Recruiter, User
 
 
 class SavedJob(Base):
@@ -35,7 +35,7 @@ class JobOfferTableModel(Base):
     __tablename__ = "job_offer"
 
     id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    recruiter_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("recruiter.id"), nullable=False)
     title: Mapped[str] = mapped_column(sa.String(255), nullable=False)
     description: Mapped[str] = mapped_column(sa.Text, nullable=False)
     category: Mapped[JobCategory] = mapped_column(sa.String(50), nullable=False)
@@ -52,7 +52,9 @@ class JobOfferTableModel(Base):
 
     created_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
     is_active: Mapped[bool] = mapped_column(sa.Boolean, default=True)
-    user: Mapped["User"] = relationship()
+    recruiter: Mapped["Recruiter"] = relationship(back_populates="job_offers")
+
+
     file_associations: Mapped[List["FileAssociation"]] = relationship(
         "FileAssociation",
         primaryjoin="and_(JobOfferTableModel.id==foreign(FileAssociation.entity_id), "

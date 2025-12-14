@@ -9,7 +9,7 @@ from app.core.database import get_db
 from app.core.types import TokenData
 from app.domains.user.like_service import UserLikeService
 from app.literals.like_status import LikeTargetType
-from app.schemas.user_like import UserLikeRead
+from app.schemas.student_like import UserLikeRead
 
 router = APIRouter()
 

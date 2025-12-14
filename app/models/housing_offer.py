@@ -16,7 +16,7 @@ if TYPE_CHECKING:
     from app.models.file_association import FileAssociation
     from app.models.housing_amenity import HousingAmenityTableModel
     from app.models.housing_category import HousingCategoryTableModel
-    from app.models.user import User
+    from app.models.user import Landlord, Student
 
 
 class HousingOfferTableModel(Base):
@@ -36,7 +36,7 @@ class HousingOfferTableModel(Base):
     id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
 
     # ----- FOREIGN KEYS -----
-    user_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("user.id"), nullable=False)
+    landlord_id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), ForeignKey("landlord.id"), nullable=False)
     category_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("housing_category.id"), nullable=False)
 
     # ----- REQUIRED FIELDS -----
@@ -78,7 +78,7 @@ class HousingOfferTableModel(Base):
     end_date: Mapped[date | None] = mapped_column()
 
     # ----- RELATIONSHIPS -----
-    user: Mapped["User"] = relationship(back_populates="housing_offers")
+    landlord: Mapped["Landlord"] = relationship(back_populates="housing_offers")
     category: Mapped["HousingCategoryTableModel"] = relationship(back_populates="housing_offers")
 
     file_associations: Mapped[List["FileAssociation"]] = relationship(
@@ -94,11 +94,11 @@ class HousingOfferTableModel(Base):
         "HousingAmenityTableModel", secondary="housing_offer_amenity", lazy="selectin", back_populates="offers"
     )
 
-    liked_by_users: Mapped[List["User"]] = relationship(
-        "User",
-        secondary="user_like",
-        primaryjoin="and_(HousingOfferTableModel.id==UserLike.target_id, UserLike.target_type=='housing_offer')",
-        secondaryjoin="User.id==UserLike.user_id",
+    liked_by_students: Mapped[List["Student"]] = relationship(
+        "Student",
+        secondary="student_like",
+        primaryjoin="and_(HousingOfferTableModel.id==StudentLike.target_id, StudentLike.target_type=='housing_offer')",
+        secondaryjoin="Student.id==StudentLike.user_id",
         viewonly=True,
         back_populates=None,
         lazy="selectin",
@@ -116,7 +116,7 @@ class HousingOfferTableModel(Base):
     @property
     def owner_id(self):
         """Alias for user_id for backward compatibility."""
-        return self.user_id
+        return self.landlord_id
 
     def __repr__(self) -> str:
         return f"<HousingOffer(id={self.id}, title={self.title}, status={self.status})>"

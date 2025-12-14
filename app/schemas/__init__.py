@@ -14,9 +14,10 @@ from app.schemas.housing_offer import *  # noqa
 from app.schemas.interest import *  # noqa
 from app.schemas.message import *  # noqa
 from app.schemas.report import *  # noqa
+from app.schemas.student_like import *  # noqa
 from app.schemas.terms import *  # noqa
 from app.schemas.user import *  # noqa
-from app.schemas.user_like import *  # noqa
+from app.schemas.user_preference import *  # noqa
 from app.schemas.user_terms_acceptance import *  # noqa
 
 from . import (
@@ -32,9 +33,10 @@ from . import (
     interest,
     message,
     report,
+    student_like,
     terms,
     user,
-    user_like,
+    user_preference,
     user_terms_acceptance,
 )
 
@@ -48,13 +50,15 @@ for module in (
     auth,
     message,
     conversation,
-    user_like,
+    student_like,
     files,
     file_association,
     terms,
     user_terms_acceptance,
     connection,
     report,
+    user,
+    user_preference,
 ):
     for name in dir(module):
         obj = getattr(module, name)
@@ -74,11 +78,12 @@ __all__ = (
     + auth.__all__
     + message.__all__
     + conversation.__all__
-    + user_like.__all__
+    + student_like.__all__
     + files.__all__
     + file_association.__all__
     + terms.__all__
     + user_terms_acceptance.__all__
     + connection.__all__
     + report.__all__
+    + user_preference.__all__
 )

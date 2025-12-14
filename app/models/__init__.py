@@ -9,20 +9,22 @@ from app.models.files import File
 from app.models.housing_amenity import HousingAmenityTableModel, HousingOfferAmenity
 from app.models.housing_category import HousingCategoryTableModel
 from app.models.housing_offer import HousingOfferTableModel, OfferStatus
-from app.models.interest import Interest, InterestCategory, UserInterest
+from app.models.interest import Interest, InterestCategory, StudentInterest
 from app.models.item import ItemTableModel
 from app.models.item_category import ItemCategoryTableModel
 from app.models.job import JobApplication, JobOfferTableModel, SavedJob
 from app.models.message import Message
 from app.models.password_history import PasswordHistory
 from app.models.report import Report
+from app.models.student_like import StudentLike
 from app.models.terms import TermsTableModel
-from app.models.user import User, create_payload_from_user
-from app.models.user_like import UserLike
+from app.models.user import Student, User, create_payload_from_user
+from app.models.user_preference import UserPreference
 from app.models.user_terms_acceptance import UserTermsAcceptanceTableModel
 
 __all__ = [
     "User",
+    "Student",
     "Message",
     "HousingOfferTableModel",
     "HousingCategoryTableModel",
@@ -38,11 +40,11 @@ __all__ = [
     "Interest",
     "ItemTableModel",
     "ItemCategoryTableModel",
-    "UserInterest",
+    "StudentInterest",
     "create_payload_from_user",
     "Conversation",
     "ConversationMessage",
-    "UserLike",
+    "StudentLike",
     "File",
     "FileAssociation",
     "TermsTableModel",
@@ -53,4 +55,5 @@ __all__ = [
     "JobOfferTableModel",
     "JobApplication",
     "SavedJob",
+    "UserPreference"
 ]

@@ -10,7 +10,7 @@ from sqlalchemy.orm import Mapped, mapped_column, relationship
 from app.core import Base
 
 if TYPE_CHECKING:
-    from app.models import User
+    from app.models import Student
 
 
 class InterestCategory(Base):
@@ -36,18 +36,31 @@ class Interest(Base):
     )
 
     category: Mapped[InterestCategory] = relationship(back_populates="interests")
-    users: Mapped[List["User"]] = relationship(secondary="user_interest", back_populates="interests")
 
-
-class UserInterest(Base):
-    __tablename__ = "user_interest"
-    __table_args__ = (sa.UniqueConstraint("user_id", "interest_id", name="uq_user_interest"),)
-
-    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id", ondelete="CASCADE"), nullable=False, index=True)
-    interest_id: Mapped[uuid.UUID] = mapped_column(
-        ForeignKey("interest.id", ondelete="CASCADE"), nullable=False, index=True
+    students: Mapped[List["Student"]] = relationship(
+        "Student",
+        secondary="student_interest",
+        back_populates="interests"
     )
 
-    user: Mapped["User"] = relationship(viewonly=True)
-    interest: Mapped[Interest] = relationship(viewonly=True)
+
+class StudentInterest(Base):
+    __tablename__ = "student_interest"
+
+    __table_args__ = (sa.UniqueConstraint("student_id", "interest_id", name="uq_student_interest"),)
+
+    id: Mapped[uuid.UUID] = mapped_column(primary_key=True, default=uuid.uuid4)
+
+    student_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("student.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+    interest_id: Mapped[uuid.UUID] = mapped_column(
+        ForeignKey("interest.id", ondelete="CASCADE"),
+        nullable=False,
+        index=True
+    )
+
+    student: Mapped["Student"] = relationship(viewonly=True)
+    interest: Mapped["Interest"] = relationship(viewonly=True)

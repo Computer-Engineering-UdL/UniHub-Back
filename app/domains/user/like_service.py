@@ -7,7 +7,7 @@ from starlette import status
 
 from app.domains.user.like_repository import UserLikeRepository
 from app.literals.like_status import LikeStatus, LikeTargetType
-from app.schemas.user_like import UserLikeRead
+from app.schemas.student_like import UserLikeRead
 
 
 class UserLikeService:
