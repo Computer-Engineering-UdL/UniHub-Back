@@ -181,3 +181,43 @@ class TestItemEndpoints:
         assert len(data) > 0
         names = [c["name"] for c in data]
         assert "Electronics" in names
+
+    def test_create_item_with_image(self, client, user_token, db):
+        """
+        Integration Test: Verify creating an item with an attached image.
+        This ensures create_associations_bulk works correctly.
+        """
+        import uuid
+
+        from app.models.files import File
+        from app.models.user import User
+
+        # 1. Identificar al usuario del token (normalmente user@user.com en los seeds)
+        # Necesitamos su ID para asignarle el archivo, si no dará 403 Forbidden.
+        user = db.query(User).filter(User.email == "user@user.com").first()
+        assert user is not None, "Test user not found in DB"
+
+        # 2. Insertar un registro de archivo 'dummy' en la DB
+        # No necesitamos el archivo físico real, solo el registro en SQL para que la FK funcione.
+        file_id = uuid.uuid4()
+        dummy_file = File(
+            id=file_id,
+            uploader_id=user.id,
+            filename="test_image.jpg",
+            content_type="image/jpeg",
+            file_size=1024,
+            file_data=b"fake_binary_data",  # Si tu modelo guarda binarios
+            storage_path="test/path.jpg",
+            storage_type="database",  # O el que uses por defecto
+            is_public=True,
+        )
+        db.add(dummy_file)
+        db.commit()
+        category = db.query(ItemCategoryTableModel).first()
+        payload = sample_item_payload(category_id=str(category.id))
+        payload["file_ids"] = [str(file_id)]
+        response = client.post("/items/", json=payload, headers=_auth(user_token))
+        assert response.status_code == 201, f"Failed with: {response.text}"
+        data = response.json()
+        assert "image_urls" in data
+        assert len(data["image_urls"]) == 1

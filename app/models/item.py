@@ -79,7 +79,7 @@ class ItemTableModel(Base):
     @property
     def images(self):
         """Helper for return URLs images."""
-        return [f.file_url for f in self.file_associations]
+        return [f.url for f in self.file_associations if f.url]
 
     @property
     def owner_name(self):
