@@ -493,8 +493,15 @@ def _process_offer_photos(
     db: Session, offer_index: int, uploader_id: uuid.UUID, file_repo: FileRepository
 ) -> List[uuid.UUID]:
     """Process photos for an offer and return list of file IDs."""
-    photo_dir = f"app/static_photos/offer{offer_index}"
+
+    TOTAL_AVAILABLE_FOLDERS = 6
+
+    folder_num = ((offer_index - 1) % TOTAL_AVAILABLE_FOLDERS) + 1
+
+    photo_dir = f"app/static_photos/offer{folder_num}"
+
     if not os.path.isdir(photo_dir):
+        print(f"! Warning: {photo_dir} not found (Calculated from index {offer_index}). Skipping.")
         return []
 
     photo_files = [f for f in os.listdir(photo_dir) if f.lower().endswith((".jpg", ".jpeg", ".png"))]
