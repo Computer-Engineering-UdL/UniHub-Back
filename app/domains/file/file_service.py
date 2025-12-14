@@ -10,6 +10,7 @@ from sqlalchemy.orm import Session
 from app.core.config import settings
 from app.core.types import TokenData
 from app.domains.file.file_repository import FileRepository
+from app.domains.file.image_processor import image_processor
 from app.domains.file.storage_service import storage_service
 from app.literals.users import Role
 from app.schemas import FileDetail, FileList, FileUpload, VisibilityUpdate
@@ -45,19 +46,33 @@ class FileService:
             )
 
         file_id = uuid.uuid4()
+
+        processed_content = content
+        final_content_type = file.content_type
+        final_filename = file.filename
+
+        if image_processor.can_process(file.content_type):
+            processed_content, final_content_type = image_processor.process_image(content, file.content_type)
+            if final_content_type != file.content_type and file.filename:
+                base_name = file.filename.rsplit(".", 1)[0]
+                if final_content_type == "image/webp":
+                    final_filename = f"{base_name}.webp"
+                elif final_content_type == "image/jpeg":
+                    final_filename = f"{base_name}.jpg"
+
         storage_path, storage_type, file_data = storage_service.upload(
             file_id,
-            content,
-            file.content_type,
+            processed_content,
+            final_content_type,
             prefer_minio=True,
         )
 
         file_data_dict = {
             "id": file_id,
-            "filename": file.filename,
-            "content_type": file.content_type,
+            "filename": final_filename,
+            "content_type": final_content_type,
             "file_data": file_data,
-            "file_size": len(content),
+            "file_size": len(processed_content),
             "uploader_id": current_user.id,
             "is_public": is_public,
             "storage_path": storage_path,
@@ -72,7 +87,7 @@ class FileService:
 
         return response
 
-    def view_public_file(self, file_id: str):
+    def view_public_file(self, file_id: str, thumbnail_width: int = None):
         """Public endpoint to view/serve publicly accessible files."""
         try:
             uuid_obj = uuid.UUID(file_id)
@@ -95,11 +110,22 @@ class FileService:
             file_db.file_data,
         )
 
+        media_type = file_db.content_type
+        filename = file_db.filename
+
+        if thumbnail_width and image_processor.can_process(file_db.content_type):
+            max_height = int(thumbnail_width * 0.75)
+            content, media_type = image_processor.create_thumbnail(
+                content, file_db.content_type, max_width=thumbnail_width, max_height=max_height
+            )
+            base_name = file_db.filename.rsplit(".", 1)[0] if file_db.filename else "thumbnail"
+            filename = f"{base_name}_thumb.webp"
+
         return StreamingResponse(
             io.BytesIO(content),
-            media_type=file_db.content_type,
+            media_type=media_type,
             headers={
-                "Content-Disposition": f"inline; filename={file_db.filename}",
+                "Content-Disposition": f"inline; filename={filename}",
                 "X-Content-Type-Options": "nosniff",
                 "Cache-Control": "public, max-age=3600",
             },
