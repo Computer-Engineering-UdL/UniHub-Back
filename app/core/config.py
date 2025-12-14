@@ -69,6 +69,12 @@ class Settings(BaseSettings):
     MINIO_BUCKET: str = "files"
     MINIO_SECURE: bool = False
 
+    IMAGE_COMPRESSION_ENABLED: bool = True
+    IMAGE_COMPRESSION_QUALITY: int = 80
+    IMAGE_MAX_WIDTH: int = 1920
+    IMAGE_MAX_HEIGHT: int = 1080
+    IMAGE_CONVERT_TO_WEBP: bool = True
+
     model_config = SettingsConfigDict(
         env_file=f"{Path(__file__).parent.parent.parent}/.env",
         env_file_encoding="utf-8",

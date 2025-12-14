@@ -35,13 +35,15 @@ async def upload_file(
 @handle_api_errors()
 def view_public_file(
     file_id: str,
+    width: int = Query(None, ge=50, le=1920, description="Optional max width for thumbnail"),
     service: FileService = Depends(get_file_service),
 ):
     """
     Public endpoint to view/serve publicly accessible files.
     No authentication required. Rate limited to 100 requests per minute.
+    Optionally pass ?width=300 to get a resized thumbnail.
     """
-    return service.view_public_file(file_id)
+    return service.view_public_file(file_id, thumbnail_width=width)
 
 
 @router.patch("/{file_id}/visibility")
