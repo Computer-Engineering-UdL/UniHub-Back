@@ -296,6 +296,7 @@ def app(db):
     Router imports are done here (lazy loading) to speed up pytest startup.
     This defers loading the entire application until tests actually need the client.
     """
+    from app.api.health import router as health_router
     from app.api.v1.endpoints.admin_reports import router as admin_reports_router
     from app.api.v1.endpoints.auth import router as auth_router
     from app.api.v1.endpoints.channel import router as channel_router
@@ -339,6 +340,7 @@ def app(db):
     app.include_router(connection_router, prefix="/connection")
     app.include_router(reports_router, prefix="/reports")
     app.include_router(admin_reports_router, prefix="/admin/reports")
+    app.include_router(health_router)
     for router in (channel_router, members_router, messages_router):
         app.include_router(router, prefix="/channels")
 
