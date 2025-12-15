@@ -33,7 +33,6 @@ from app.api.v1.endpoints import (
     user_terms,
     websocket,
 )
-from app.core import Base, engine
 from app.core.config import settings
 from app.core.middleware import AutoLoggingMiddleware, EndpointRateLimitMiddleware, global_exception_handler
 from app.core.valkey import valkey_client
@@ -52,10 +51,17 @@ uvicorn_error_logger.handlers = []
 @asynccontextmanager
 async def lifespan(app: FastAPI):
     try:
+        if settings.ENVIRONMENT != "dev":
+            from alembic import command
+            from alembic.config import Config
+
+            alembic_cfg = Config("alembic.ini")
+            command.upgrade(alembic_cfg, "head")
+            print("Migrations applied successfully")
+
         seed_database()
-        Base.metadata.create_all(bind=engine)
         await valkey_client.connect()
-        print("Tables created, app starting...")
+        print("App starting...")
         yield
     finally:
         print("App shutting down...")

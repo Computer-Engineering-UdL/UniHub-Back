@@ -17,6 +17,7 @@ from app.models.message import Message
 from app.models.password_history import PasswordHistory
 from app.models.report import Report
 from app.models.terms import TermsTableModel
+from app.models.university import Faculty, University
 from app.models.user import User, create_payload_from_user
 from app.models.user_like import UserLike
 from app.models.user_terms_acceptance import UserTermsAcceptanceTableModel
@@ -53,4 +54,6 @@ __all__ = [
     "JobOfferTableModel",
     "JobApplication",
     "SavedJob",
+    "University",
+    "Faculty",
 ]
