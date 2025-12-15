@@ -32,3 +32,10 @@ repos:
         entry: "lint-imports"
         language: system
         pass_filenames: false
+
+      - id: require-migration-with-model-changes
+        name: Require migration when models change
+        entry: python scripts/check_migration_included.py
+        language: system
+        pass_filenames: false
+        stages: [pre-commit]
