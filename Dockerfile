@@ -20,5 +20,7 @@ FROM base AS production
 COPY --from=builder /usr/local/lib/python3.13/site-packages /usr/local/lib/python3.13/site-packages
 COPY --from=builder /usr/local/bin /usr/local/bin
 COPY ./app /app/app
+COPY ./alembic.ini /app/alembic.ini
+COPY ./migrations /app/migrations
 
 CMD ["uvicorn", "app.main:app", "--reload", "--host", "0.0.0.0", "--port", "8080"]
