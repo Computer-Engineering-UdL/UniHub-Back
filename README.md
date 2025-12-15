@@ -119,6 +119,25 @@ uv add package-name
 uv add --dev package-name
 ```
 
+### Database Migrations
+
+```bash
+# Generate migration after model changes
+uv run alembic revision --autogenerate -m "description"
+
+# Apply all pending migrations
+uv run alembic upgrade head
+
+# Rollback last migration
+uv run alembic downgrade -1
+
+# View migration history
+uv run alembic history
+```
+
+> [!NOTE]
+> Migrations run automatically on app startup. Manual commands are only needed for development.
+
 ## Docker
 
 ```bash
