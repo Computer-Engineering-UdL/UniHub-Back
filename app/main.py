@@ -6,6 +6,7 @@ from fastapi.middleware.cors import CORSMiddleware
 from starlette.middleware.sessions import SessionMiddleware
 
 import app.models
+from app.api.health import router as health_router
 from app.api.v1.endpoints import (
     admin,
     admin_reports,
@@ -156,3 +157,6 @@ def read_root():
     Root endpoint for the application.
     """
     return {"message": "Welcome to the UniHub API!"}
+
+
+app.include_router(health_router)
