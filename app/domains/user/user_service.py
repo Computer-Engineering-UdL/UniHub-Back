@@ -129,6 +129,18 @@ class UserService:
         """
         update_data = user_in.model_dump(exclude_unset=True)
 
+        if "faculty" in update_data:
+            faculty_val = update_data.pop("faculty")
+            if faculty_val is None:
+                update_data["faculty_id"] = None
+            else:
+                if isinstance(faculty_val, dict):
+                    faculty_id = faculty_val.get("id")
+                else:
+                    faculty_id = getattr(faculty_val, "id", None)
+                if faculty_id is not None:
+                    update_data["faculty_id"] = faculty_id
+
         if "email" in update_data:
             existing = self.repository.get_by_email(update_data["email"])
             if existing and existing.id != user_id:
