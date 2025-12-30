@@ -68,4 +68,4 @@ class JobOfferTableModel(Base):
 
     @property
     def logo(self):
-        return self.file_associations[0].file_url if self.file_associations else None
+        return self.file_associations[0].url if self.file_associations else None
