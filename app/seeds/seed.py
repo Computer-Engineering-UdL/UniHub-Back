@@ -10,6 +10,8 @@ from app.seeds.channels import seed_channels
 from app.seeds.conversations import seed_conversations
 from app.seeds.interests import seed_interests
 from app.seeds.item_category import seed_item_categories
+from app.seeds.items import seed_items
+from app.seeds.job_offers import seed_job_offers
 from app.seeds.messages import seed_messages
 from app.seeds.reports import seed_reports
 from app.seeds.terms import seed_terms
@@ -50,6 +52,12 @@ def seed_database(nuke: bool = False):
 
         seed_item_categories(db)
         print("- Marketplace Item Categories seeded")
+
+        seed_items(db, users)
+        print("- Marketplace Items seeded")
+
+        seed_job_offers(db, users)
+        print("- Job Offers seeded")
 
         terms = seed_terms(db)
         print("- Terms seeded")
