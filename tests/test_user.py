@@ -1,4 +1,5 @@
 import uuid
+
 from app.core.config import settings
 
 
@@ -120,10 +121,7 @@ class TestUsersAPI:
             "faculty": {
                 "id": str(uuid.uuid4()),
                 "name": "Engineering",
-                "university": {
-                    "id": str(uuid.uuid4()),
-                    "name": "Test Uni"
-                }
+                "university": {"id": str(uuid.uuid4()), "name": "Test Uni"},
             }
         }
         r = client.patch("/users/me", json=payload, headers=_auth(user_token))
