@@ -15,7 +15,7 @@ class TestEmailVerification:
                 "password": "TestPass123!",
                 "first_name": "Verify",
                 "last_name": "Test",
-                "accepted_terms_version": "1.0.0",
+                "accepted_terms_version": "v1.0.0",
             },
         )
 
@@ -114,7 +114,7 @@ class TestPasswordChange:
                 "password": "OldPass123!",
                 "first_name": "PwChange",
                 "last_name": "User",
-                "accepted_terms_version": "1.0.0",
+                "accepted_terms_version": "v1.0.0",
             },
         )
         assert signup_response.status_code == 201
@@ -175,7 +175,7 @@ class TestPasswordChange:
                 "password": "StrongPass123!",
                 "first_name": "Weak",
                 "last_name": "Password",
-                "accepted_terms_version": "1.0.0",
+                "accepted_terms_version": "v1.0.0",
             },
         )
         token = signup_response.json()["access_token"]

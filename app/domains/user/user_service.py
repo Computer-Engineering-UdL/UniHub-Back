@@ -145,6 +145,13 @@ class UserService:
                     detail="Username already in use",
                 )
 
+        if "faculty" in update_data:
+            faculty_data = update_data.pop("faculty")
+            if faculty_data:
+                update_data["faculty_id"] = faculty_data.get("id")
+            else:
+                update_data["faculty_id"] = None
+
         try:
             user = self.repository.update(user_id, update_data)
             return UserRead.model_validate(user)

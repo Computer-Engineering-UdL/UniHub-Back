@@ -29,8 +29,10 @@ repos:
     hooks:
       - id: lint_imports
         name: "Lint imports"
-        entry: "lint-imports"
-        language: system
+        entry: lint-imports
+        language: python
+        additional_dependencies:
+          - import-linter
         pass_filenames: false
 
       - id: require-migration-with-model-changes

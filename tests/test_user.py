@@ -1,3 +1,5 @@
+import uuid
+
 from app.core.config import settings
 
 
@@ -104,7 +106,38 @@ class TestUsersAPI:
         uid = me["id"]
 
         r_user = client.patch(f"/users/{uid}", json={"last_name": "Hacked"}, headers=_auth(user_token))
-        assert r_user.status_code == 403
+        assert r_user.status_code == 200
+        assert r_user.json()["last_name"] == "Hacked"
+
+    def test_user_cannot_update_different_user_via_id(self, client, user_token, admin_token):
+        admin_me = client.get("/users/me", headers=_auth(admin_token)).json()
+        admin_uid = admin_me["id"]
+
+        r = client.patch(f"/users/{admin_uid}", json={"first_name": "Hacked"}, headers=_auth(user_token))
+        assert r.status_code == 403
+
+    def test_update_me_with_nested_faculty(self, client, user_token):
+        payload = {
+            "faculty": {
+                "id": str(uuid.uuid4()),
+                "name": "Engineering",
+                "university": {"id": str(uuid.uuid4()), "name": "Test Uni"},
+            }
+        }
+        r = client.patch("/users/me", json=payload, headers=_auth(user_token))
+        assert r.status_code != 500
+
+    def test_non_admin_cannot_set_restricted_fields(self, client, user_token):
+        me_before = client.get("/users/me", headers=_auth(user_token)).json()
+        original_role = me_before["role"]
+        original_verified = me_before["is_verified"]
+
+        r = client.patch("/users/me", json={"role": "Admin", "is_verified": True}, headers=_auth(user_token))
+        assert r.status_code == 200
+
+        me_after = client.get("/users/me", headers=_auth(user_token)).json()
+        assert me_after["role"] == original_role
+        assert me_after["is_verified"] == original_verified
 
     # ---------------------------------
     # Password changes

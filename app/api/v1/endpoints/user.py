@@ -1,7 +1,7 @@
 import uuid
 from typing import List
 
-from fastapi import APIRouter, Depends, Query, status
+from fastapi import APIRouter, Depends, HTTPException, Query, status
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, require_role
@@ -25,6 +25,17 @@ router = APIRouter()
 def get_user_service(db: Session = Depends(get_db)) -> UserService:
     """Dependency to inject UserService."""
     return UserService(db)
+
+
+ADMIN_ONLY_FIELDS = {"role", "is_verified"}
+
+
+def _filter_admin_only_fields(user_in: UserUpdate) -> UserUpdate:
+    """Remove admin-only fields from update payload for non-admin users."""
+    data = user_in.model_dump(exclude_unset=True)
+    for field in ADMIN_ONLY_FIELDS:
+        data.pop(field, None)
+    return UserUpdate(**data)
 
 
 @router.post("/", response_model=UserRead, status_code=status.HTTP_201_CREATED)
@@ -89,6 +100,8 @@ def update_current_user(
     """
     Update current authenticated user's profile.
     """
+    if current_user.role != Role.ADMIN:
+        user_in = _filter_admin_only_fields(user_in)
     return service.update_user(current_user.id, user_in)
 
 
@@ -98,11 +111,18 @@ def update_user(
     user_id: uuid.UUID,
     user_in: UserUpdate,
     service: UserService = Depends(get_user_service),
-    _: TokenData = Depends(require_role(Role.ADMIN)),
+    current_user: TokenData = Depends(get_current_user),
 ):
     """
-    Update a user (partial). Requires ADMIN role.
+    Update a user (partial). Users can update their own profile; admins can update any user.
     """
+    if current_user.id != user_id and current_user.role != Role.ADMIN:
+        raise HTTPException(
+            status_code=status.HTTP_403_FORBIDDEN,
+            detail="You can only update your own profile",
+        )
+    if current_user.role != Role.ADMIN:
+        user_in = _filter_admin_only_fields(user_in)
     return service.update_user(user_id, user_in)
 
 
