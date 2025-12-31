@@ -53,6 +53,17 @@ class AuthService:
                 detail="User account is inactive",
             )
 
+        if user.is_banned:
+            detail = {
+                "message": "User account is banned",
+                "banned_until": user.banned_until.isoformat() if user.banned_until else None,
+            }
+
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=detail,
+            )
+
         data = create_payload_from_user(user)
         access_token = create_access_token(data=data)
         refresh_token = create_refresh_token(data=data)
@@ -301,6 +312,23 @@ class AuthService:
             raise HTTPException(
                 status_code=status.HTTP_404_NOT_FOUND,
                 detail="User not found. Please register first.",
+            )
+
+        if not user.is_active:
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail="User account is inactive",
+            )
+
+        if user.is_banned:
+            detail = {
+                "message": "User account is banned",
+                "banned_until": user.banned_until.isoformat() if user.banned_until else None,
+            }
+
+            raise HTTPException(
+                status_code=status.HTTP_403_FORBIDDEN,
+                detail=detail,
             )
 
         data = create_payload_from_user(user)
