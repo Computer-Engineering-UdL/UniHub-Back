@@ -1,7 +1,8 @@
+import datetime
 import random
 import string
 import uuid
-from typing import List
+from typing import List, Optional
 
 from fastapi import HTTPException
 from sqlalchemy import select
@@ -223,19 +224,54 @@ class UserService:
 
         self.repository.delete(user)
 
+    def ban_user(
+        self,
+        user_id: uuid.UUID,
+        reason: Optional[str] = None,
+        banned_until: Optional[datetime.datetime] = None,
+        banned_by_id: Optional[uuid.UUID] = None,
+    ) -> UserDetail:
+        """Ban a user."""
+        user = self.repository.get_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id {user_id} not found",
+            )
+
+        user.banned_at = datetime.datetime.now(datetime.UTC)
+        user.banned_until = banned_until
+        user.ban_reason = reason
+        user.banned_by_id = banned_by_id
+
+        self.db.commit()
+        self.db.refresh(user)
+        return UserDetail.model_validate(user)
+
+    def unban_user(self, user_id: uuid.UUID) -> None:
+        """Unban a user."""
+        user = self.repository.get_by_id(user_id)
+        if not user:
+            raise HTTPException(
+                status_code=status.HTTP_404_NOT_FOUND,
+                detail=f"User with id {user_id} not found",
+            )
+
+        user.banned_at = None
+        user.banned_until = None
+        user.ban_reason = None
+        user.banned_by_id = None
+
+        self.db.commit()
+
     def _generate_referral_code(self, length=5) -> str:
         while True:
-            code = ''.join(random.choices(string.ascii_uppercase + string.digits, k=length))
+            code = "".join(random.choices(string.ascii_uppercase + string.digits, k=length))
             # check DB for uniqueness
             if not self.repository.get_by_referral_code(code):
                 return code
 
-    def register(
-            self,
-            data: UserRegister,
-            ip_address: str,
-            user_agent: str
-    ) -> UserRead:
+    def register(self, data: UserRegister, ip_address: str, user_agent: str) -> UserRead:
         """
         Public user registration (signup).
         Performs an atomic transaction:
@@ -261,13 +297,10 @@ class UserService:
             )
 
         # Accepting terms, search by the version
-        terms = self.db.scalar(
-            select(TermsTableModel).where(TermsTableModel.version == data.accepted_terms_version)
-        )
+        terms = self.db.scalar(select(TermsTableModel).where(TermsTableModel.version == data.accepted_terms_version))
         if not terms:
             raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Invalid terms version: {data.accepted_terms_version}"
+                status_code=status.HTTP_400_BAD_REQUEST, detail=f"Invalid terms version: {data.accepted_terms_version}"
             )
 
         # Optionally validating provided referral code
@@ -286,7 +319,7 @@ class UserService:
             # A. creating User
             new_user = User(
                 username=data.username,
-                email=data.email,  #pydantic validator make it lower().
+                email=data.email,  # pydantic validator make it lower().
                 password=hashed_pw,
                 first_name=data.first_name,
                 last_name=data.last_name,
@@ -298,23 +331,17 @@ class UserService:
                 role=Role.BASIC,
                 provider="local",
                 is_active=True,
-                is_verified=False
+                is_verified=False,
             )
             self.db.add(new_user)
             self.db.flush()
 
             # B. Creating record of accepted terms
-            acceptance = UserTermsAcceptanceTableModel(
-                user_id=new_user.id,
-                terms_id=terms.id
-            )
+            acceptance = UserTermsAcceptanceTableModel(user_id=new_user.id, terms_id=terms.id)
             self.db.add(acceptance)
 
             # C. Saving connection log (ip, user)
-            connection = ConnectionTableModel(
-                user_id=new_user.id,
-                ip_address=ip_address
-            )
+            connection = ConnectionTableModel(user_id=new_user.id, ip_address=ip_address)
             self.db.add(connection)
 
             # commit
@@ -334,7 +361,4 @@ class UserService:
             raise HTTPException(status_code=400, detail=str(e))
         except Exception as e:
             self.db.rollback()
-            raise HTTPException(
-                status_code=status.HTTP_400_BAD_REQUEST,
-                detail=f"Registration failed: {str(e)}"
-            )
+            raise HTTPException(status_code=status.HTTP_400_BAD_REQUEST, detail=f"Registration failed: {str(e)}")

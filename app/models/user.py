@@ -53,6 +53,22 @@ class User(Base):
     referral_code = Column(sa.String(5), unique=True, nullable=False)
     referred_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
 
+    banned_at = Column(sa.DateTime, nullable=True)
+    banned_until = Column(sa.DateTime, nullable=True)
+    ban_reason = Column(sa.String(500), nullable=True)
+    banned_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
+
+    @property
+    def is_banned(self) -> bool:
+        """Returns True if the user is currently banned."""
+        if not self.banned_at:
+            return False
+        if self.banned_until is None:
+            return True
+        if self.banned_until.tzinfo is None:
+            return self.banned_until > datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        return self.banned_until > datetime.datetime.now(datetime.UTC)
+
     faculty: Mapped[Faculty] = relationship("Faculty", back_populates="users")
 
     # Use string references for relationships
