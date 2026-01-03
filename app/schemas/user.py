@@ -88,6 +88,7 @@ class UserRead(UserBase):
     is_active: bool
     is_verified: bool
     is_banned: bool = False
+    onboarding_step: str = "not_started"
     created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -207,7 +208,6 @@ class UserRegister(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
 
     referral_code: Optional[str] = Field(None, min_length=5, max_length=5)
-    accepted_terms_version: str = Field(..., min_length=1, max_length=20)
 
     model_config = ConfigDict(from_attributes=True)
 
@@ -222,8 +222,7 @@ class UserSignUp(BaseModel):
 
     email: EmailStr
     password: str = Field(min_length=8, max_length=255)
-    referral_code: Optional[str] = Field(None, min_length=5, max_length=5)  # used code
-    accepted_terms_version: str = Field(min_length=1, max_length=20)
+    referral_code: Optional[str] = Field(None, min_length=5, max_length=5)
 
 
 __all__ = [

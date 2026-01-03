@@ -2,7 +2,7 @@ import uuid
 
 from pydantic import BaseModel
 
-from app.literals.users import Role
+from app.literals.users import OnboardingStep, Role
 
 
 class TokenData(BaseModel):
@@ -10,3 +10,4 @@ class TokenData(BaseModel):
     username: str
     email: str
     role: Role = Role.BASIC
+    onboarding_step: str = OnboardingStep.NOT_STARTED
