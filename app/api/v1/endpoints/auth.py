@@ -1,5 +1,5 @@
 from authlib.integrations.starlette_client import OAuth
-from fastapi import APIRouter, Body, Depends
+from fastapi import APIRouter, Body, Depends, HTTPException
 from fastapi.security import OAuth2PasswordRequestForm
 from sqlalchemy.orm import Session
 from starlette import status
@@ -15,6 +15,8 @@ from app.core.types import TokenData
 from app.domains import UserService
 from app.domains.auth.auth_service import AuthService
 from app.literals.auth import OAuthProvider
+from app.literals.users import OnboardingStep
+from app.models import User
 from app.schemas import LoginRequest, Token, UserRegister
 from app.schemas.auth import (
     MessageResponse,
@@ -77,10 +79,10 @@ async def logout_all(auth_service: AuthService = Depends(get_auth_service), toke
 # but maybe this is better approach, I dunno
 # @rate_limit(max_requests=5, window_seconds=3600, per_user=False)
 async def signup(
-        request: Request,
-        data: UserRegister,
-        user_service: UserService = Depends(get_user_service),
-        auth_service: AuthService = Depends(get_auth_service),
+    request: Request,
+    data: UserRegister,
+    user_service: UserService = Depends(get_user_service),
+    auth_service: AuthService = Depends(get_auth_service),
 ):
     """
     Register a new user, send verification email and auto-login.
@@ -88,19 +90,13 @@ async def signup(
     client_ip = get_client_ip(request)
     user_agent = request.headers.get("User-Agent", "Unknown")
 
-    user_service.register(
-        data=data,
-        ip_address=client_ip,
-        user_agent=user_agent
-    )
+    user_service.register(data=data, ip_address=client_ip, user_agent=user_agent)
     await auth_service.send_verification_email(data.email)
-    login_req = LoginRequest(
-        username=data.email,
-        password=data.password
-    )
+    login_req = LoginRequest(username=data.email, password=data.password)
     token = await auth_service.authenticate_user(login_req)
 
     return token
+
 
 @router.post("/verify/send", response_model=MessageResponse)
 @rate_limit(
@@ -196,6 +192,22 @@ async def change_password(
 ####################################################
 # Those two should be the last methods on the file #
 ####################################################
+
+
+@router.patch("/onboarding/step")
+async def update_onboarding_step(
+    step: OnboardingStep,
+    current_user: TokenData = Depends(get_current_user),
+    db: Session = Depends(get_db),
+):
+    """Update user's current onboarding step."""
+    user = db.get(User, current_user.id)
+    if not user:
+        raise HTTPException(status_code=404, detail="User not found")
+
+    user.onboarding_step = step.value
+    db.commit()
+    return {"onboarding_step": step}
 
 
 @router.get("/{provider}", response_class=RedirectResponse, include_in_schema=True)

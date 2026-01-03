@@ -9,7 +9,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 
 from app.core.database import Base
-from app.literals.users import Role
+from app.literals.users import OnboardingStep, Role
 
 if TYPE_CHECKING:
     from app.models.channel import Channel
@@ -44,6 +44,8 @@ class User(Base):
     is_active = Column(sa.Boolean, nullable=False, default=True)
     is_verified = Column(sa.Boolean, nullable=False, default=False)
     verified_at = Column(sa.DateTime, nullable=True)
+
+    onboarding_step = Column(sa.String(20), default=OnboardingStep.NOT_STARTED, nullable=False)
 
     created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
 
@@ -130,4 +132,5 @@ def create_payload_from_user(db_user: User) -> Dict[str, Any]:
         "username": db_user.username,
         "email": db_user.email,
         "role": db_user.role,
+        "onboarding_step": db_user.onboarding_step,
     }

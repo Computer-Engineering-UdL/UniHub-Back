@@ -286,6 +286,9 @@ class AuthService:
         oauth: OAuth,
     ) -> Token:
         """Handle OAuth callback and authenticate user."""
+        from app.core.middleware import get_client_ip
+        from app.domains.user.user_service import UserService
+
         provider_str = provider.value
         oauth_client = oauth.create_client(provider_str)
         token = await oauth_client.authorize_access_token(request)
@@ -298,9 +301,33 @@ class AuthService:
                     detail="Could not validate credentials",
                 )
             email = user_info["email"]
+            first_name = user_info.get("given_name")
+            last_name = user_info.get("family_name")
+            avatar_url = user_info.get("picture")
+
         elif provider == OAuthProvider.GITHUB:
             email_resp = await oauth_client.get("user/emails", token=token)
-            email = next(e["email"] for e in email_resp.json() if e["primary"])
+            email_data = email_resp.json()
+            email = next((e["email"] for e in email_data if e.get("primary")), None)
+            if not email:
+                email = email_data[0]["email"] if email_data else None
+
+            if not email:
+                raise HTTPException(
+                    status_code=status.HTTP_400_BAD_REQUEST,
+                    detail="No email found from GitHub provider",
+                )
+
+            user_resp = await oauth_client.get("user", token=token)
+            user_data = user_resp.json()
+            full_name = user_data.get("name") or user_data.get("login")
+            if " " in full_name:
+                first_name, last_name = full_name.split(" ", 1)
+            else:
+                first_name = full_name
+                last_name = ""
+            avatar_url = user_data.get("avatar_url")
+
         else:
             raise HTTPException(
                 status_code=status.HTTP_400_BAD_REQUEST,
@@ -309,10 +336,20 @@ class AuthService:
 
         user = self.user_repository.get_by_email(email)
         if not user:
-            raise HTTPException(
-                status_code=status.HTTP_404_NOT_FOUND,
-                detail="User not found. Please register first.",
+            client_ip = get_client_ip(request)
+            user_agent = request.headers.get("User-Agent", "Unknown")
+            user_service = UserService(self.db)
+
+            user_service.register_oauth(
+                email=email,
+                first_name=first_name,
+                last_name=last_name,
+                avatar_url=avatar_url,
+                provider=provider_str,
+                ip_address=client_ip,
+                user_agent=user_agent,
             )
+            user = self.user_repository.get_by_email(email)
 
         if not user.is_active:
             raise HTTPException(

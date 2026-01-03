@@ -14,3 +14,11 @@ ROLE_HIERARCHY = {
     Role.RECRUITER: 2,
     Role.BASIC: 3,
 }
+
+
+class OnboardingStep(str, Enum):
+    NOT_STARTED = "not_started"
+    PERSONAL_INFO = "personal_info"
+    ACADEMIC_INFO = "academic_info"
+    PREFERENCES = "preferences"
+    COMPLETED = "completed"
