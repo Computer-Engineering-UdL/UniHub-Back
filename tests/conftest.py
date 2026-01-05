@@ -348,6 +348,18 @@ def app(db):
         yield db
 
     app.dependency_overrides[get_db] = override_get_db
+
+    from starlette.middleware.sessions import SessionMiddleware
+
+    app.add_middleware(
+        SessionMiddleware,
+        secret_key=settings.SECRET_KEY,
+        session_cookie="session",
+        max_age=3600,
+        same_site="lax",
+        https_only=False,
+    )
+
     return app
 
 

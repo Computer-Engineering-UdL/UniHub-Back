@@ -1,6 +1,5 @@
 import atexit
 import os
-import tempfile
 
 from sqlalchemy import create_engine
 from sqlalchemy.orm import declarative_base, sessionmaker
@@ -9,8 +8,8 @@ from app.core.config import settings
 
 db_fd, db_path = None, None
 if settings.ENVIRONMENT == "dev":
-    db_fd, db_path = tempfile.mkstemp(suffix=".db")
-    print("Created database at {}".format(db_path))
+    db_path = "dev.db"
+    print(f"Using persistent database at {db_path}")
     engine = create_engine(f"sqlite:///{db_path}", pool_pre_ping=True)
 else:
     engine = create_engine(

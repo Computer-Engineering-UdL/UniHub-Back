@@ -8,9 +8,12 @@ from app.api.dependencies import get_current_user, require_role
 from app.api.utils import handle_api_errors
 from app.core.database import get_db
 from app.core.types import TokenData
+from app.core.valkey import valkey_client
 from app.domains.user.user_service import UserService
 from app.literals.users import Role
 from app.schemas.user import (
+    UserBanRequest,
+    UserBanResponse,
     UserCreate,
     UserDetail,
     UserPasswordChange,
@@ -177,3 +180,68 @@ def get_public_user_profile(
     Get public profile of a user by ID.
     """
     return service.get_public_profile(user_id)
+
+
+@router.post("/{user_id}/ban", response_model=UserBanResponse)
+@handle_api_errors()
+async def ban_user(
+    user_id: uuid.UUID,
+    ban_data: UserBanRequest,
+    service: UserService = Depends(get_user_service),
+    current_user: TokenData = Depends(require_role(Role.ADMIN)),
+):
+    """
+    Ban a user. Requires ADMIN role.
+    """
+    user = service.ban_user(
+        user_id,
+        reason=ban_data.reason,
+        banned_until=ban_data.banned_until,
+        banned_by_id=uuid.UUID(str(current_user.id)),
+    )
+
+    await valkey_client.unset(str(user_id))
+
+    return UserBanResponse(
+        banned_at=user.banned_at,
+        banned_until=user.banned_until,
+        ban_reason=user.ban_reason,
+        banned_by_id=user.banned_by_id,
+        is_banned=True,
+    )
+
+
+@router.delete("/{user_id}/ban", status_code=status.HTTP_204_NO_CONTENT)
+@handle_api_errors()
+def unban_user(
+    user_id: uuid.UUID,
+    service: UserService = Depends(get_user_service),
+    _: TokenData = Depends(require_role(Role.ADMIN)),
+):
+    """
+    Unban a user. Requires ADMIN role.
+    """
+    service.unban_user(user_id)
+
+
+@router.get("/{user_id}/ban", response_model=UserBanResponse)
+@handle_api_errors()
+def get_ban_status(
+    user_id: uuid.UUID,
+    service: UserService = Depends(get_user_service),
+    _: TokenData = Depends(require_role(Role.ADMIN)),
+):
+    """
+    Get ban status of a user. Requires ADMIN role.
+    """
+    user_detail = service.get_user_detail(user_id)
+    if not user_detail.is_banned:
+        raise HTTPException(status_code=404, detail="User is not banned")
+
+    return UserBanResponse(
+        banned_at=user_detail.banned_at,
+        banned_until=user_detail.banned_until,
+        ban_reason=user_detail.ban_reason,
+        banned_by_id=user_detail.banned_by_id,
+        is_banned=True,
+    )

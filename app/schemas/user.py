@@ -34,7 +34,8 @@ class UserBase(BaseModel):
     is_active: bool = Field(default=True)
     is_verified: bool = Field(default=False)
     created_at: datetime.datetime = Field(default_factory=datetime.datetime.now)
-    referral_code: str = Field(min_length=5,max_length=5)
+    referral_code: str = Field(min_length=5, max_length=5)
+
 
 # ==========================================
 # Create Schema (for POST)
@@ -86,6 +87,8 @@ class UserRead(UserBase):
     role: Role
     is_active: bool
     is_verified: bool
+    is_banned: bool = False
+    onboarding_step: str = "not_started"
     created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -103,6 +106,7 @@ class UserList(BaseModel):
     last_name: str
     role: Role
     is_verified: bool
+    is_banned: bool = False
     created_at: datetime.datetime
     model_config = ConfigDict(from_attributes=True)
 
@@ -153,6 +157,23 @@ class UserVerify(BaseModel):
     verification_token: str
 
 
+class UserBanRequest(BaseModel):
+    """Schema for banning a user."""
+
+    reason: Optional[str] = Field(None, max_length=500)
+    banned_until: Optional[datetime.datetime] = None
+
+
+class UserBanResponse(BaseModel):
+    """Schema for ban response."""
+
+    banned_at: datetime.datetime
+    banned_until: Optional[datetime.datetime]
+    ban_reason: Optional[str]
+    banned_by_id: Optional[uuid.UUID]
+    is_banned: bool
+
+
 # ==========================================
 # Detail Schema (with relationships)
 # ==========================================
@@ -161,10 +182,17 @@ class UserDetail(UserRead):
     Full user profile.
     """
 
+    banned_at: Optional[datetime.datetime] = None
+    banned_until: Optional[datetime.datetime] = None
+    ban_reason: Optional[str] = None
+    banned_by_id: Optional[uuid.UUID] = None
+    is_banned: bool = False
+
     interests: List[InterestRead]
     housing_offer_count: int = 0
     housing_search_count: int = 0
     listings_active: int = 0
+
 
 # ==========================================
 # Register Schema (for sign-up endpoint)
@@ -180,22 +208,21 @@ class UserRegister(BaseModel):
     phone: Optional[str] = Field(None, max_length=20)
 
     referral_code: Optional[str] = Field(None, min_length=5, max_length=5)
-    accepted_terms_version: str = Field(..., min_length=1, max_length=20)
 
     model_config = ConfigDict(from_attributes=True)
 
-    @field_validator('email')
+    @field_validator("email")
     @classmethod
     def email_to_lower(cls, v: str) -> str:
         return v.lower()
 
+
 class UserSignUp(BaseModel):
     """Schema used for public sign up."""
+
     email: EmailStr
     password: str = Field(min_length=8, max_length=255)
-    referral_code: Optional[str] = Field(None, min_length=5, max_length=5)  # used code
-    accepted_terms_version: str = Field(min_length=1, max_length=20)
-
+    referral_code: Optional[str] = Field(None, min_length=5, max_length=5)
 
 
 __all__ = [
@@ -211,5 +238,7 @@ __all__ = [
     "UserPublic",
     "UserSimplified",
     "UserRegister",
-    "UserSignUp"
+    "UserSignUp",
+    "UserBanRequest",
+    "UserBanResponse",
 ]

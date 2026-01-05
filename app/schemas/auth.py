@@ -99,6 +99,15 @@ class MessageResponse(BaseModel):
     message: str
 
 
+class OAuthUserInfo(BaseModel):
+    """Internal schema for passing OAuth user info."""
+
+    email: EmailStr
+    first_name: str | None = None
+    last_name: str | None = None
+    avatar_url: str | None = None
+
+
 __all__ = [
     "LoginRequest",
     "Token",
@@ -109,4 +118,5 @@ __all__ = [
     "PasswordResetRequest",
     "PasswordChangeRequest",
     "MessageResponse",
+    "OAuthUserInfo",
 ]

@@ -9,7 +9,7 @@ from sqlalchemy import Column, ForeignKey
 from sqlalchemy.orm import Mapped, relationship
 
 from app.core.database import Base
-from app.literals.users import Role
+from app.literals.users import OnboardingStep, Role
 
 if TYPE_CHECKING:
     from app.models.channel import Channel
@@ -45,6 +45,8 @@ class User(Base):
     is_verified = Column(sa.Boolean, nullable=False, default=False)
     verified_at = Column(sa.DateTime, nullable=True)
 
+    onboarding_step = Column(sa.String(20), default=OnboardingStep.NOT_STARTED, nullable=False)
+
     created_at = Column(sa.DateTime, nullable=False, default=datetime.datetime.now(datetime.UTC))
 
     created_ip = Column(sa.String(45), nullable=True)
@@ -52,6 +54,22 @@ class User(Base):
 
     referral_code = Column(sa.String(5), unique=True, nullable=False)
     referred_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
+
+    banned_at = Column(sa.DateTime, nullable=True)
+    banned_until = Column(sa.DateTime, nullable=True)
+    ban_reason = Column(sa.String(500), nullable=True)
+    banned_by_id = Column(sa.UUID, ForeignKey("user.id"), nullable=True)
+
+    @property
+    def is_banned(self) -> bool:
+        """Returns True if the user is currently banned."""
+        if not self.banned_at:
+            return False
+        if self.banned_until is None:
+            return True
+        if self.banned_until.tzinfo is None:
+            return self.banned_until > datetime.datetime.now(datetime.UTC).replace(tzinfo=None)
+        return self.banned_until > datetime.datetime.now(datetime.UTC)
 
     faculty: Mapped[Faculty] = relationship("Faculty", back_populates="users")
 
@@ -114,4 +132,5 @@ def create_payload_from_user(db_user: User) -> Dict[str, Any]:
         "username": db_user.username,
         "email": db_user.email,
         "role": db_user.role,
+        "onboarding_step": db_user.onboarding_step,
     }
