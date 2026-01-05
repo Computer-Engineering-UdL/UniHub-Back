@@ -2,7 +2,7 @@ from datetime import datetime
 from typing import List, Optional
 from uuid import UUID
 
-from pydantic import BaseModel, ConfigDict
+from pydantic import BaseModel, ConfigDict, EmailStr
 
 from app.literals.job import JobCategory, JobType, JobWorkplace
 
@@ -39,9 +39,25 @@ class JobOfferUpdate(BaseModel):
     company_name: Optional[str] = None
 
 
+class JobApplicationCreate(BaseModel):
+    full_name: str
+    email: EmailStr
+    phone: Optional[str] = None
+    cover_letter: Optional[str] = None
+
+
 class JobApplicationRead(BaseModel):
+    id: UUID
     user_id: UUID
+    job_offer_id: UUID
+    full_name: str
+    email: str
+    phone: Optional[str] = None
+    cover_letter: Optional[str] = None
+    cv_url: Optional[str] = None
     applied_at: datetime
+
+    model_config = ConfigDict(from_attributes=True)
 
 
 class JobOfferRead(JobOfferBase):

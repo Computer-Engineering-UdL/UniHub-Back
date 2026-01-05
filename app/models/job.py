@@ -5,7 +5,7 @@ import uuid
 from typing import TYPE_CHECKING, List
 
 import sqlalchemy as sa
-from sqlalchemy import ForeignKey
+from sqlalchemy import ForeignKey, UniqueConstraint
 from sqlalchemy.orm import Mapped, mapped_column, relationship
 
 from app.core import Base
@@ -13,6 +13,7 @@ from app.literals.job import JobCategory, JobType, JobWorkplace
 
 if TYPE_CHECKING:
     from app.models.file_association import FileAssociation
+    from app.models.files import File
     from app.models.user import User
 
 
@@ -25,10 +26,19 @@ class SavedJob(Base):
 
 class JobApplication(Base):
     __tablename__ = "job_application"
-    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), primary_key=True)
-    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("job_offer.id"), primary_key=True)
+    id: Mapped[uuid.UUID] = mapped_column(sa.UUID(as_uuid=True), primary_key=True, default=uuid.uuid4)
+    user_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("user.id"), nullable=False)
+    job_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("job_offer.id"), nullable=False)
+    full_name: Mapped[str] = mapped_column(sa.String(100), nullable=False)
+    email: Mapped[str] = mapped_column(sa.String(255), nullable=False)
+    phone: Mapped[str | None] = mapped_column(sa.String(20), nullable=True)
+    cover_letter: Mapped[str | None] = mapped_column(sa.Text, nullable=True)
+    cv_file_id: Mapped[uuid.UUID] = mapped_column(ForeignKey("files.id"), nullable=False)
     applied_at: Mapped[datetime.datetime] = mapped_column(sa.DateTime, default=datetime.datetime.now(datetime.UTC))
     user: Mapped["User"] = relationship()
+    cv_file: Mapped["File"] = relationship()
+
+    __table_args__ = (UniqueConstraint("user_id", "job_id", name="uq_job_application_user_job"),)
 
 
 class JobOfferTableModel(Base):

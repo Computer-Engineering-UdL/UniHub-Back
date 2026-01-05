@@ -1,7 +1,8 @@
+import json
 from typing import List, Optional
 from uuid import UUID
 
-from fastapi import APIRouter, Depends
+from fastapi import APIRouter, Depends, File, Form, HTTPException, UploadFile
 from sqlalchemy.orm import Session
 
 from app.api.dependencies import get_current_user, get_optional_current_user, require_verified_email
@@ -9,7 +10,7 @@ from app.core.database import get_db
 from app.domains.job.job_service import JobService
 from app.literals.job import JobCategory, JobType
 from app.models.user import User
-from app.schemas.job import JobOfferCreate, JobOfferRead, JobOfferUpdate
+from app.schemas.job import JobApplicationCreate, JobApplicationRead, JobOfferCreate, JobOfferRead, JobOfferUpdate
 
 router = APIRouter()
 
@@ -93,14 +94,29 @@ def delete_job_offer(
 
 
 @router.post("/{job_id}/apply", status_code=200)
-def apply_to_job(
+async def apply_to_job(
     job_id: UUID,
+    application_data: str = Form(...),
+    file: UploadFile = File(...),
     current_user: User = Depends(require_verified_email),
     db: Session = Depends(get_db),
 ):
-    """(BASIC Only) Apply to a job."""
+    """(BASIC Only) Apply to a job uploading a CV (PDF, DOC, DOCX)."""
     service = JobService(db)
-    return service.apply_to_job(job_id, current_user)
+
+    try:
+        # 1. Intentamos parsear el JSON string
+        data_dict = json.loads(application_data)
+        # 2. Intentamos validar con Pydantic
+        application_in = JobApplicationCreate(**data_dict)
+    except json.JSONDecodeError:
+        # [CORRECCIÓN 2] Usar argumentos explícitos (status_code y detail) evita errores
+        raise HTTPException(status_code=400, detail="Invalid JSON format in application_data")
+    except Exception as e:
+        print(f"Error validating application data: {e}")
+        raise HTTPException(status_code=400, detail=f"Validation error: {str(e)}")
+
+    return await service.apply_to_job(job_id, current_user, application_in, file)
 
 
 @router.post("/{job_id}/save", status_code=200)
@@ -112,3 +128,17 @@ def toggle_save_job(
     """Toggle save/unsave a job offer."""
     service = JobService(db)
     return service.toggle_save_job(job_id, current_user)
+
+
+@router.get("/{job_id}/applications", response_model=List[JobApplicationRead])
+def list_job_applications(
+    job_id: UUID,
+    current_user: User = Depends(require_verified_email),
+    db: Session = Depends(get_db),
+):
+    """
+    List all applications for a specific job offer.
+    Only accessible by the Job Creator or an Admin.
+    """
+    service = JobService(db)
+    return service.get_job_applications(job_id, current_user)
