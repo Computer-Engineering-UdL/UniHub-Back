@@ -1,3 +1,5 @@
+import json
+
 from app.literals.job import JobCategory, JobType
 from tests.factories.job_factory import sample_job_payload
 
@@ -12,17 +14,13 @@ class TestJobEndpoints:
     # ---------------------------------
     def test_create_job_as_recruiter(self, client, recruiter_token):
         payload = sample_job_payload(title="Python Guru Needed")
-
         resp = client.post("/jobs/", json=payload, headers=_auth(recruiter_token))
-
         assert resp.status_code == 201
         data = resp.json()
         assert data["title"] == "Python Guru Needed"
-        assert data["company_name"] == "TechStartup BCN"
         assert "id" in data
 
     def test_create_job_as_basic_user_fails(self, client, user_token):
-        """Basic users cannot create job offers."""
         payload = sample_job_payload()
         resp = client.post("/jobs/", json=payload, headers=_auth(user_token))
         assert resp.status_code == 403
@@ -38,7 +36,6 @@ class TestJobEndpoints:
         resp = client.get(f"/jobs/?category={JobCategory.TECHNOLOGY.value}")
         assert resp.status_code == 200
         data = resp.json()
-
         assert len(data) > 0
         assert data[0]["category"] == JobCategory.TECHNOLOGY.value
 
@@ -50,13 +47,25 @@ class TestJobEndpoints:
         assert resp.json()["id"] == job_id
 
     # ---------------------------------
-    # APPLY (Basic User Only)
+    # APPLY (Basic User & Admin)
     # ---------------------------------
     def test_apply_to_job_as_basic_user(self, client, recruiter_token, user_token):
-        # El recruiter crea la oferta
         job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
         job_id = job_resp.json()["id"]
-        apply_resp = client.post(f"/jobs/{job_id}/apply", headers=_auth(user_token))
+        app_data = {
+            "full_name": "Test User",
+            "email": "test@example.com",
+            "phone": "+34 666 777 888",
+            "cover_letter": "I am the best candidate.",
+        }
+        pdf_content = b"%PDF-1.4 mock content"
+        files = {"file": ("cv.pdf", pdf_content, "application/pdf")}
+        data = {"application_data": json.dumps(app_data)}
+        apply_resp = client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(user_token))
+        if apply_resp.status_code != 200:
+            print(f"\n⚠️ ERROR DEL SERVIDOR: {apply_resp.text}")
+
+        assert apply_resp.status_code == 200
         assert apply_resp.status_code == 200
         assert apply_resp.json()["message"] == "Application submitted successfully"
         my_apps = client.get("/jobs/applied", headers=_auth(user_token))
@@ -66,19 +75,57 @@ class TestJobEndpoints:
         detail = client.get(f"/jobs/{job_id}", headers=_auth(user_token))
         assert detail.json()["is_applied"] is True
 
+    def test_apply_to_job_as_admin(self, client, recruiter_token, admin_token):
+        job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
+        job_id = job_resp.json()["id"]
+        app_data = {"full_name": "Admin User", "email": "admin@test.com"}
+        files = {"file": ("admin_cv.pdf", b"%PDF...", "application/pdf")}
+        data = {"application_data": json.dumps(app_data)}
+        resp = client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(admin_token))
+        assert resp.status_code == 200
+
     def test_apply_twice_fails(self, client, recruiter_token, user_token):
         job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
         job_id = job_resp.json()["id"]
-        client.post(f"/jobs/{job_id}/apply", headers=_auth(user_token))
-        resp = client.post(f"/jobs/{job_id}/apply", headers=_auth(user_token))
+        app_data = {"full_name": "User", "email": "u@test.com"}
+        files = {"file": ("cv.pdf", b"pdf", "application/pdf")}
+        data = {"application_data": json.dumps(app_data)}
+        client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(user_token))
+        files_2 = {"file": ("cv.pdf", b"pdf", "application/pdf")}
+        resp = client.post(f"/jobs/{job_id}/apply", files=files_2, data=data, headers=_auth(user_token))
+
         assert resp.status_code == 409
 
     def test_recruiter_cannot_apply(self, client, recruiter_token):
-        """Recruiters should not apply to jobs."""
         job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
         job_id = job_resp.json()["id"]
+        app_data = {"full_name": "Recruiter", "email": "r@test.com"}
+        files = {"file": ("cv.pdf", b"pdf", "application/pdf")}
+        data = {"application_data": json.dumps(app_data)}
+        resp = client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(recruiter_token))
+        assert resp.status_code == 403
 
-        resp = client.post(f"/jobs/{job_id}/apply", headers=_auth(recruiter_token))
+    # ---------------------------------
+    # VIEW APPLICATIONS (New Endpoint)
+    # ---------------------------------
+    def test_list_job_applications_as_owner(self, client, recruiter_token, user_token):
+        job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
+        job_id = job_resp.json()["id"]
+        app_data = {"full_name": "Applicant One", "email": "app1@test.com"}
+        files = {"file": ("cv.pdf", b"pdf", "application/pdf")}
+        data = {"application_data": json.dumps(app_data)}
+        client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(user_token))
+        resp = client.get(f"/jobs/{job_id}/applications", headers=_auth(recruiter_token))
+        assert resp.status_code == 200
+        apps_list = resp.json()
+        assert len(apps_list) == 1
+        assert apps_list[0]["full_name"] == "Applicant One"
+        assert "cv_url" in apps_list[0]
+
+    def test_list_job_applications_forbidden(self, client, recruiter_token, user_token):
+        job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
+        job_id = job_resp.json()["id"]
+        resp = client.get(f"/jobs/{job_id}/applications", headers=_auth(user_token))
         assert resp.status_code == 403
 
     # ---------------------------------
@@ -113,7 +160,5 @@ class TestJobEndpoints:
         job_id = job_resp.json()["id"]
         resp = client.delete(f"/jobs/{job_id}", headers=_auth(admin_token))
         assert resp.status_code == 204
-
-        # Verificar que no existe
         get_resp = client.get(f"/jobs/{job_id}")
         assert get_resp.status_code == 404

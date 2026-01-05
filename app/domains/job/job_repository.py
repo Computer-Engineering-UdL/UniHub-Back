@@ -57,8 +57,25 @@ class JobRepository:
         self.db.commit()
 
     # --- APPS & SAVES ---
-    def add_application(self, user_id: uuid.UUID, job_id: uuid.UUID):
-        app = JobApplication(user_id=user_id, job_id=job_id)
+    def add_application(
+        self,
+        user_id: uuid.UUID,
+        job_id: uuid.UUID,
+        cv_file_id: uuid.UUID,
+        full_name: str,
+        email: str,
+        phone: Optional[str] = None,
+        cover_letter: Optional[str] = None,
+    ):
+        app = JobApplication(
+            user_id=user_id,
+            job_id=job_id,
+            cv_file_id=cv_file_id,
+            full_name=full_name,
+            email=email,
+            phone=phone,
+            cover_letter=cover_letter,
+        )
         self.db.add(app)
         self.db.commit()
 
