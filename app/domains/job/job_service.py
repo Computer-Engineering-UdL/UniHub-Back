@@ -1,3 +1,4 @@
+import math
 import uuid
 from typing import List, Optional
 
@@ -13,7 +14,14 @@ from app.literals.users import Role
 from app.models.job import JobOfferTableModel
 from app.models.user import User
 from app.schemas import FileAssociationCreate
-from app.schemas.job import JobApplicationCreate, JobApplicationRead, JobOfferCreate, JobOfferRead, JobOfferUpdate
+from app.schemas.job import (
+    JobApplicationCreate,
+    JobApplicationRead,
+    JobOfferCreate,
+    JobOfferRead,
+    JobOfferUpdate,
+    PagedJobOffersResult,
+)
 
 
 class JobService:
@@ -65,12 +73,19 @@ class JobService:
     def list_offers(
         self,
         user: Optional[User] = None,
+        page: int = 1,  # Nuevo parámetro
+        page_size: int = 20,  # Nuevo parámetro
         category: Optional[JobCategory] = None,
         job_type: Optional[JobType] = None,
         search: Optional[str] = None,
-    ) -> List[JobOfferRead]:
-        jobs = self.repo.get_all(category=category, job_type=job_type, search=search)
-        return [self._enrich_job_read(job, user) for job in jobs]
+    ) -> PagedJobOffersResult:
+        skip = (page - 1) * page_size
+        items, total = self.repo.get_all(
+            skip=skip, limit=page_size, category=category, job_type=job_type, search=search
+        )
+        items_schemas = [self._enrich_job_read(job, user) for job in items]
+        total_pages = math.ceil(total / page_size) if page_size > 0 else 0
+        return PagedJobOffersResult(items=items_schemas, total=total, page=page, size=page_size, pages=total_pages)
 
     def get_offer(self, job_id: uuid.UUID, user: Optional[User] = None) -> JobOfferRead:
         job = self.repo.get_by_id(job_id)

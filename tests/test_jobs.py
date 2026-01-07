@@ -36,8 +36,12 @@ class TestJobEndpoints:
         resp = client.get(f"/jobs/?category={JobCategory.TECHNOLOGY.value}")
         assert resp.status_code == 200
         data = resp.json()
-        assert len(data) > 0
-        assert data[0]["category"] == JobCategory.TECHNOLOGY.value
+        assert "items" in data
+        assert "total" in data
+        assert "page" in data
+        items = data["items"]
+        assert len(items) > 0
+        assert items[0]["category"] == JobCategory.TECHNOLOGY.value
 
     def test_get_job_detail(self, client, recruiter_token):
         create_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
@@ -106,7 +110,7 @@ class TestJobEndpoints:
         assert resp.status_code == 403
 
     # ---------------------------------
-    # VIEW APPLICATIONS (New Endpoint)
+    # VIEW APPLICATIONS
     # ---------------------------------
     def test_list_job_applications_as_owner(self, client, recruiter_token, user_token):
         job_resp = client.post("/jobs/", json=sample_job_payload(), headers=_auth(recruiter_token))
@@ -115,6 +119,7 @@ class TestJobEndpoints:
         files = {"file": ("cv.pdf", b"pdf", "application/pdf")}
         data = {"application_data": json.dumps(app_data)}
         client.post(f"/jobs/{job_id}/apply", files=files, data=data, headers=_auth(user_token))
+
         resp = client.get(f"/jobs/{job_id}/applications", headers=_auth(recruiter_token))
         assert resp.status_code == 200
         apps_list = resp.json()
