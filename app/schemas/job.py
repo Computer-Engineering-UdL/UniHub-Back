@@ -73,5 +73,13 @@ class JobOfferRead(JobOfferBase):
     model_config = ConfigDict(from_attributes=True)
 
 
+class PagedJobOffersResult(BaseModel):
+    items: List[JobOfferRead]
+    total: int
+    page: int
+    size: int
+    pages: int
+
+
 class JobOfferDetail(JobOfferRead):
     pass

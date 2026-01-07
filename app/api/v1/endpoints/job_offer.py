@@ -10,7 +10,14 @@ from app.core.database import get_db
 from app.domains.job.job_service import JobService
 from app.literals.job import JobCategory, JobType
 from app.models.user import User
-from app.schemas.job import JobApplicationCreate, JobApplicationRead, JobOfferCreate, JobOfferRead, JobOfferUpdate
+from app.schemas.job import (
+    JobApplicationCreate,
+    JobApplicationRead,
+    JobOfferCreate,
+    JobOfferRead,
+    JobOfferUpdate,
+    PagedJobOffersResult,
+)
 
 router = APIRouter()
 
@@ -26,8 +33,10 @@ def create_job_offer(
     return service.create_offer(current_user, offer_in)
 
 
-@router.get("/", response_model=List[JobOfferRead])
+@router.get("/", response_model=PagedJobOffersResult)
 def list_job_offers(
+    page: int = 1,
+    page_size: int = 20,
     category: Optional[JobCategory] = None,
     job_type: Optional[JobType] = None,
     search: Optional[str] = None,
@@ -36,7 +45,7 @@ def list_job_offers(
 ):
     """List all active job offers with filters."""
     service = JobService(db)
-    return service.list_offers(current_user, category, job_type, search)
+    return service.list_offers(current_user, page, page_size, category, job_type, search)
 
 
 @router.get("/saved", response_model=List[JobOfferRead])

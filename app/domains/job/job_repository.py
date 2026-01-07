@@ -1,7 +1,7 @@
 import uuid
-from typing import List, Optional
+from typing import List, Optional, Tuple
 
-from sqlalchemy import and_, desc, select
+from sqlalchemy import and_, desc, func, select
 from sqlalchemy.orm import Session, selectinload
 
 from app.literals.job import JobCategory, JobType
@@ -33,7 +33,7 @@ class JobRepository:
         category: Optional[JobCategory] = None,
         job_type: Optional[JobType] = None,
         search: Optional[str] = None,
-    ) -> List[JobOfferTableModel]:
+    ) -> Tuple[List[JobOfferTableModel], int]:
         stmt = select(JobOfferTableModel).where(JobOfferTableModel.is_active.is_(True))
 
         if category:
@@ -42,10 +42,12 @@ class JobRepository:
             stmt = stmt.where(JobOfferTableModel.job_type == job_type)
         if search:
             stmt = stmt.where(JobOfferTableModel.title.ilike(f"%{search}%"))
+        count_stmt = select(func.count()).select_from(stmt.subquery())
+        total = self.db.scalar(count_stmt) or 0
         stmt = stmt.order_by(desc(JobOfferTableModel.created_at)).offset(skip).limit(limit)
         stmt = stmt.options(selectinload(JobOfferTableModel.file_associations))
-
-        return list(self.db.scalars(stmt).all())
+        items = list(self.db.scalars(stmt).all())
+        return items, total
 
     def update(self, job: JobOfferTableModel) -> JobOfferTableModel:
         self.db.commit()
