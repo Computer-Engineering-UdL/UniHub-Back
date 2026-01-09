@@ -1,3 +1,5 @@
+from app.domains.admin_settings.settings_repository import SettingsRepository
+from app.domains.admin_settings.settings_service import SettingsService
 from app.domains.user.interest_repository import InterestRepository
 from app.domains.user.interest_service import InterestService
 from app.domains.user.like_repository import UserLikeRepository
@@ -12,4 +14,6 @@ __all__ = [
     "InterestService",
     "UserLikeRepository",
     "UserLikeService",
+    "SettingsRepository",
+    "SettingsService",
 ]
