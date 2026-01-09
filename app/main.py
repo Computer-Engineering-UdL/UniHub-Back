@@ -10,6 +10,7 @@ from app.api.health import router as health_router
 from app.api.v1.endpoints import (
     admin,
     admin_reports,
+    admin_settings,
     auth,
     channel,
     connection,
@@ -138,6 +139,7 @@ app.include_router(user_like.router, prefix=f"{settings.API_VERSION}/likes", tag
 app.include_router(interest.router, prefix=f"{settings.API_VERSION}/interest", tags=["interest"])
 app.include_router(job_offer.router, prefix=f"{settings.API_VERSION}/job", tags=["job"])
 app.include_router(admin.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin"])
+app.include_router(admin_settings.router, prefix=f"{settings.API_VERSION}/admin", tags=["admin settings"])
 app.include_router(files.router, prefix=f"{settings.API_VERSION}/files", tags=["files"])
 app.include_router(
     file_association.router, prefix=f"{settings.API_VERSION}/file-associations", tags=["file associations"]
